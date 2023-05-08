@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from mkdocs.plugins import BasePlugin
 
 
-class DescriptionImagePlugin(BasePlugin):
+class MetaPlugin(BasePlugin):
 
     def on_page_content(self, content, page, config, files):
         soup = BeautifulSoup(content, 'html.parser')
