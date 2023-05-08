@@ -4,7 +4,7 @@ The MkDocs Ultralytics Plugin is an easy-to-use plugin that generates meta descr
 
 ## Installation
 
-To install the MkDocs Ultralytics Plugin, run the following command:
+To install the MkDocs Ultralytics Plugin from [pip](https://pypi.org/project/mkdocs-ultralytics-plugin/), run the following command:
 
 ```bash
 pip install mkdocs-ultralytics-plugin
