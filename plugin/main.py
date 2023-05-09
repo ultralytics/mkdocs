@@ -69,10 +69,10 @@ class MetaPlugin(BasePlugin):
             share_buttons = f'''
             <div class="share-buttons" style="text-align: right;">
                 <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="margin-right: 20px;">
-                    <i class="fab fa-twitter"></i> Share on Twitter
+                    <i class="fa-brands fa-twitter fa-xl"></i> Share on Twitter
                 </a>
                 <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer">
-                    <i class="fab fa-linkedin"></i> Share on LinkedIn
+                    <i class="fa-brands fa-linkedin fa-xl"></i> Share on LinkedIn
                 </a>
             </div>
             '''
