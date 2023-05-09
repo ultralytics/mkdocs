@@ -4,8 +4,12 @@ from mkdocs.config import config_options
 
 
 class MetaPlugin(BasePlugin):
-    config_scheme = (('verbose', config_options.Type(bool, default=True)),
-                     ('enabled', config_options.Type(bool, default=True)))
+    # Plugin arguments
+    config_scheme = (
+        ('verbose', config_options.Type(bool, default=True)),
+        ('enabled', config_options.Type(bool, default=True)),
+        ('default_image', config_options.Type(str, default=None)),
+    )
 
     def on_page_content(self, content, page, config, files):
         if not self.config['enabled']:
@@ -22,6 +26,8 @@ class MetaPlugin(BasePlugin):
         if first_image := soup.find('img'):
             meta_image = first_image['src']
             page.meta['image'] = meta_image
+        elif self.config['default_image']:
+            page.meta['image'] = self.config['default_image']
 
         return content
 
