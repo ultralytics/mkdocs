@@ -4,6 +4,7 @@ from mkdocs.config import config_options
 
 
 class MetaPlugin(BasePlugin):
+    
     # Plugin arguments
     config_scheme = (
         ('verbose', config_options.Type(bool, default=True)),
