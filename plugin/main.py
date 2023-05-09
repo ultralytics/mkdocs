@@ -66,11 +66,11 @@ class MetaPlugin(BasePlugin):
 
         share_buttons = f'''
         <div class="share-buttons" style="text-align: right;">
-            <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="color: #1DA1F2; text-decoration: none; margin-right: 10px;">
-                <i class="fa-icons fa-twitter" style="vertical-align: middle;"></i> Share on Twitter
+            <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="margin-right: 20px;">
+                <i class="fab fa-twitter"></i> Share on Twitter
             </a>
-            <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer" style="color: #0E76A8; text-decoration: none;">
-                <i class="fa-icons fa-linkedin" style="vertical-align: middle;"></i> Share on LinkedIn
+            <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i> Share on LinkedIn
             </a>
         </div>
         '''
