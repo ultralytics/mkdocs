@@ -7,9 +7,11 @@ class MetaPlugin(BasePlugin):
     def on_page_content(self, content, page, config, files):
         soup = BeautifulSoup(content, 'html.parser')
 
-        if first_paragraph := soup.find('p'):
-            meta_description = first_paragraph.text.strip()
-            page.meta['description'] = meta_description
+        # Check if custom description is already defined in the Markdown header
+        if 'description' not in page.meta:
+            if first_paragraph := soup.find('p'):
+                meta_description = first_paragraph.text.strip()
+                page.meta['description'] = meta_description
 
         if first_image := soup.find('img'):
             meta_image = first_image['src']
