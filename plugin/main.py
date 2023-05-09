@@ -11,6 +11,7 @@ class MetaPlugin(BasePlugin):
         ('default_image', config_options.Type(str, default=None)),
         ('add_desc', config_options.Type(bool, default=True)),
         ('add_image', config_options.Type(bool, default=True)),
+        ('add_share_buttons', config_options.Type(bool, default=True)),  # Add new argument
     )
 
     def on_page_content(self, content, page, config, files):
@@ -59,24 +60,29 @@ class MetaPlugin(BasePlugin):
                 meta_image.attrs.update({'property': 'og:image', 'content': page.meta['image']})
                 soup.head.append(meta_image)
 
-        # Add share buttons to the footer
-        page_url = config['site_url'].rstrip('/') + page.url
-        twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
-        linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
+        # Add share buttons to the footer, if enabled
+        if self.config['add_share_buttons']:  # Check if share buttons are enabled
+            page_url = config['site_url'].rstrip('/') + page.url
+            twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
+            linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-        share_buttons = f'''
-        <div class="share-buttons" style="text-align: right;">
-            <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="margin-right: 20px;">
-                <i class="fab fa-twitter"></i> Share on Twitter
-            </a>
-            <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-linkedin"></i> Share on LinkedIn
-            </a>
-        </div>
-        '''
+            share_buttons = f'''
+            <div class="share-buttons" style="text-align: right;">
+                <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="margin-right: 20px;">
+                    <i class="fab fa-twitter"></i> Share on Twitter
+                </a>
+                <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-linkedin"></i> Share on LinkedIn
+                </a>
+            </div>
+            '''
 
-        md_typeset = soup.select_one('.md-typeset')
-        if md_typeset:
-            md_typeset.append(BeautifulSoup(share_buttons, 'html.parser'))
+            md_source_file_div = soup.select_one('.md-source-file')
+            if md_source_file_div:
+                md_source_file_div.insert_before(BeautifulSoup(share_buttons, 'html.parser'))
+            else:
+                md_typeset = soup.select_one('.md-typeset')
+                if md_typeset:
+                    md_typeset.append(BeautifulSoup(share_buttons, 'html.parser'))
 
         return str(soup)
