@@ -58,4 +58,25 @@ class MetaPlugin(BasePlugin):
                 meta_image = soup.new_tag("meta")
                 meta_image.attrs.update({'property': 'og:image', 'content': page.meta['image']})
                 soup.head.append(meta_image)
+
+        # Add share buttons to the footer
+        page_url = config['site_url'].rstrip('/') + page.url
+        twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
+        linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
+
+        share_buttons = f'''
+        <div class="share-buttons" style="text-align: right;">
+            <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="color: #1DA1F2; text-decoration: none; margin-right: 10px;">
+                <i class="fa-icons fa-twitter" style="vertical-align: middle;"></i> Share on Twitter
+            </a>
+            <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer" style="color: #0E76A8; text-decoration: none;">
+                <i class="fa-icons fa-linkedin" style="vertical-align: middle;"></i> Share on LinkedIn
+            </a>
+        </div>
+        '''
+
+        md_typeset = soup.select_one('.md-typeset')
+        if md_typeset:
+            md_typeset.append(BeautifulSoup(share_buttons, 'html.parser'))
+
         return str(soup)
