@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 from mkdocs.plugins import BasePlugin
 from mkdocs.config import config_options
+import os
+import subprocess
 
 
 class MetaPlugin(BasePlugin):
@@ -12,7 +14,37 @@ class MetaPlugin(BasePlugin):
         ('add_desc', config_options.Type(bool, default=True)),
         ('add_image', config_options.Type(bool, default=True)),
         ('add_share_buttons', config_options.Type(bool, default=True)),  # Add new argument
+        ('add_dates', config_options.Type(bool, default=True)),  # Add dates section
+        ('add_authors', config_options.Type(bool, default=True)),  # Add authors section
     )
+
+    def get_git_info(self, file_path):
+        git_info = {}
+        os.chdir(os.path.dirname(file_path))
+
+        # Get the creation date
+        creation_date = \
+        subprocess.check_output(['git', 'log', '--reverse', '--pretty=format:%ai', os.path.basename(file_path)]).decode(
+            'utf-8').split('\n')[0]
+        git_info['creation_date'] = creation_date
+
+        # Get the last modification date
+        last_modification_date = subprocess.check_output(
+            ['git', 'log', '-1', '--pretty=format:%ai', os.path.basename(file_path)]).decode('utf-8')
+        git_info['last_modification_date'] = last_modification_date
+
+        # Get the authors and their contributions count
+        authors = subprocess.check_output(['git', 'log', '--pretty=format:%an', os.path.basename(file_path)]).decode(
+            'utf-8').split('\n')
+        authors_count = {}
+        for author in authors:
+            if author not in authors_count:
+                authors_count[author] = 1
+            else:
+                authors_count[author] += 1
+        git_info['authors'] = sorted(authors_count.items(), key=lambda x: x[1], reverse=True)
+
+        return git_info
 
     def on_page_content(self, content, page, config, files):
         if not self.config['enabled']:
@@ -104,6 +136,27 @@ class MetaPlugin(BasePlugin):
             twitter_image_tag = soup.new_tag("meta")
             twitter_image_tag.attrs.update({'property': 'twitter:image', 'content': page.meta['image']})
             soup.head.append(twitter_image_tag)
+
+        # Add git information (dates and authors) to the footer, if enabled
+        if self.config['add_dates'] or self.config['add_authors']:
+            git_info = self.get_git_info(page.file.abs_src_path)
+            dates_and_authors_div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;">'
+
+            if self.config['add_dates']:
+                dates_and_authors_div += f"Created: {git_info['creation_date'][:10]}, Updated: {git_info['last_modification_date'][:10]}"
+
+            if self.config['add_authors']:
+                if self.config['add_dates']:
+                    dates_and_authors_div += '<br>'
+                dates_and_authors_div += f"Authors: {', '.join(git_info['authors'])}"
+
+            dates_and_authors_div += '</div>'
+            dates_and_authors_div = BeautifulSoup(dates_and_authors_div, 'html.parser')
+
+            if md_source_file_div := soup.select_one('.md-source-file'):
+                md_source_file_div.insert_before(dates_and_authors_div)
+            elif md_typeset := soup.select_one('.md-typeset'):
+                md_typeset.insert(0, dates_and_authors_div)
 
         # Add share buttons to the footer, if enabled
         if self.config['add_share_buttons']:  # Check if share buttons are enabled
