@@ -36,6 +36,7 @@ class MetaPlugin(BasePlugin):
         return content
 
     def on_post_page(self, output, page, config):
+        page_url = config['site_url'] + page.url
         if not self.config['enabled']:
             return output
 
@@ -44,24 +45,68 @@ class MetaPlugin(BasePlugin):
 
         # Update meta description
         soup = BeautifulSoup(output, 'html.parser')
+
+        # Primary Meta Tags
+        title_tag = soup.new_tag("meta")
+        title_tag.attrs.update({'name': 'title', 'content': page.title})
+        soup.head.append(title_tag)
+
         if meta_description := soup.find("meta", attrs={"name": "description"}):
             if self.config['add_desc'] and 'description' in page.meta and (10 < len(page.meta['description']) < 500):
                 if self.config['verbose']:
                     print(f'File: {page.file.src_path}, Description: {page.meta["description"]}')
                 meta_description['content'] = page.meta['description']
 
+        # Open Graph / Facebook
+        og_type_tag = soup.new_tag("meta")
+        og_type_tag.attrs.update({'property': 'og:type', 'content': 'website'})
+        soup.head.append(og_type_tag)
+
+        og_url_tag = soup.new_tag("meta")
+        og_url_tag.attrs.update({'property': 'og:url', 'content': page_url})
+        soup.head.append(og_url_tag)
+
+        og_title_tag = soup.new_tag("meta")
+        og_title_tag.attrs.update({'property': 'og:title', 'content': page.title})
+        soup.head.append(og_title_tag)
+
+        og_description_tag = soup.new_tag("meta")
+        og_description_tag.attrs.update({'property': 'og:description', 'content': page.meta.get('description', '')})
+        soup.head.append(og_description_tag)
+
         if self.config['add_image'] and 'image' in page.meta:
             if meta_image := soup.find("meta", attrs={"property": "og:image"}):
                 meta_image['content'] = page.meta['image']
-
             else:
                 meta_image = soup.new_tag("meta")
                 meta_image.attrs.update({'property': 'og:image', 'content': page.meta['image']})
                 soup.head.append(meta_image)
 
+        # Twitter
+        twitter_card_tag = soup.new_tag("meta")
+        twitter_card_tag.attrs.update({'property': 'twitter:card', 'content': 'summary_large_image'})
+        soup.head.append(twitter_card_tag)
+
+        twitter_url_tag = soup.new_tag("meta")
+        twitter_url_tag.attrs.update({'property': 'twitter:url', 'content': page_url})
+        soup.head.append(twitter_url_tag)
+
+        twitter_title_tag = soup.new_tag("meta")
+        twitter_title_tag.attrs.update({'property': 'twitter:title', 'content': page.title})
+        soup.head.append(twitter_title_tag)
+
+        twitter_description_tag = soup.new_tag("meta")
+        twitter_description_tag.attrs.update(
+            {'property': 'twitter:description', 'content': page.meta.get('description', '')})
+        soup.head.append(twitter_description_tag)
+
+        if self.config['add_image'] and 'image' in page.meta:
+            twitter_image_tag = soup.new_tag("meta")
+            twitter_image_tag.attrs.update({'property': 'twitter:image', 'content': page.meta['image']})
+            soup.head.append(twitter_image_tag)
+
         # Add share buttons to the footer, if enabled
         if self.config['add_share_buttons']:  # Check if share buttons are enabled
-            page_url = config['site_url'] + page.url
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
