@@ -5,7 +5,7 @@ from pathlib import Path
 
 setup(
     name='mkdocs-ultralytics-plugin',
-    version='0.0.14',
+    version='0.0.16',
     description='An MkDocs plugin that provides Ultralytics Docs customizations at https://docs.ultralytics.com.',
     long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
