@@ -19,15 +19,12 @@ class MetaPlugin(BasePlugin):
     )
 
     def get_git_info(self, file_path):
-        git_info = {}
         os.chdir(os.path.dirname(file_path))
 
         # Get the creation date
         creation_date = \
-        subprocess.check_output(['git', 'log', '--reverse', '--pretty=format:%ai', os.path.basename(file_path)]).decode(
-            'utf-8').split('\n')[0]
-        git_info['creation_date'] = creation_date
-
+            subprocess.check_output(['git', 'log', '--reverse', '--pretty=format:%ai', os.path.basename(file_path)]).decode('utf-8').split('\n')[0]
+        git_info = {'creation_date': creation_date}
         # Get the last modification date
         last_modification_date = subprocess.check_output(
             ['git', 'log', '-1', '--pretty=format:%ai', os.path.basename(file_path)]).decode('utf-8')
@@ -148,7 +145,8 @@ class MetaPlugin(BasePlugin):
             if self.config['add_authors']:
                 if self.config['add_dates']:
                     dates_and_authors_div += '<br>'
-                dates_and_authors_div += f"Authors: {', '.join(git_info['authors'])}"
+                authors_str = ', '.join([f"{author[0]} ({author[1]})" for author in git_info['authors']])
+                dates_and_authors_div += f"Authors: {authors_str}"
 
             dates_and_authors_div += '</div>'
             dates_and_authors_div = BeautifulSoup(dates_and_authors_div, 'html.parser')
