@@ -61,7 +61,7 @@ class MetaPlugin(BasePlugin):
 
         # Add share buttons to the footer, if enabled
         if self.config['add_share_buttons']:  # Check if share buttons are enabled
-            page_url = config['site_url'].rstrip('/') + page.url
+            page_url = config['site_url'] + page.url
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
