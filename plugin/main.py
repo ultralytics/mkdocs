@@ -107,17 +107,38 @@ class MetaPlugin(BasePlugin):
 
         # Add share buttons to the footer, if enabled
         if self.config['add_share_buttons']:  # Check if share buttons are enabled
+            page_url = 'https://docs.ultralytics.com/modes/train'
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
+            # share_buttons = f'''
+            # <div class="share-buttons" style="text-align: right;">
+            #     <a href="javascript:void(0);" onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" style="margin-right: 20px;">
+            #         <i class="fa-brands fa-twitter fa-xl"></i> Tweet
+            #     </a>
+            #     <a href="javascript:void(0);" onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;">
+            #         <i class="fa-brands fa-linkedin fa-xl"></i> Share
+            #     </a>
+            # </div>
+            # '''
+
             share_buttons = f'''
-            <div class="share-buttons" style="text-align: right;">
-                <a href="{twitter_share_link}" target="_blank" rel="noopener noreferrer" style="margin-right: 20px;">
-                    <i class="fa-brands fa-twitter fa-xl"></i> Share on Twitter
-                </a>
-                <a href="{linkedin_share_link}" target="_blank" rel="noopener noreferrer">
-                    <i class="fa-brands fa-linkedin fa-xl"></i> Share on LinkedIn
-                </a>
+            <style>
+                .share-button:hover {{
+                    filter: brightness(1.2);
+                }}
+                .share-buttons {{
+                    display: flex;
+                    justify-content: flex-end;
+                }}
+            </style>
+            <div class="share-buttons">
+                <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button" style="background-color: #1da1f2; color: white; padding: 5px 10px; border-radius: 5px; margin-right: 10px; cursor: pointer; display: flex; align-items: center;">
+                    <i class="fa-brands fa-twitter" style="margin-right: 5px;"></i> Tweet
+                </button>
+                <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button" style="background-color: #0077b5; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; display: flex; align-items: center;">
+                    <i class="fa-brands fa-linkedin" style="margin-right: 5px;"></i> Share
+                </button>
             </div>
             '''
 
