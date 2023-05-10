@@ -140,7 +140,7 @@ class MetaPlugin(BasePlugin):
             dates_and_authors_div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;">'
 
             if self.config['add_dates']:
-                dates_and_authors_div += f"Created: {git_info['creation_date'][:10]}, Updated: {git_info['last_modification_date'][:10]}"
+                dates_and_authors_div += f"Created {git_info['creation_date'][:10]}, Updated {git_info['last_modification_date'][:10]}"
 
             if self.config['add_authors']:
                 if self.config['add_dates']:
