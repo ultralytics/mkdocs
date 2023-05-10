@@ -36,7 +36,7 @@ class MetaPlugin(BasePlugin):
         return content
 
     def on_post_page(self, output, page, config):
-        page_url = config['site_url'] + page.url
+        page_url = config['site_url'] + page.url.rstrip('/')
         if not self.config['enabled']:
             return output
 
