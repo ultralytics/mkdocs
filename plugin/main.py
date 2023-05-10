@@ -50,7 +50,6 @@ class MetaPlugin(BasePlugin):
                     print(f'File: {page.file.src_path}, Description: {page.meta["description"]}')
                 meta_description['content'] = page.meta['description']
 
-        # Update meta image
         if self.config['add_image'] and 'image' in page.meta:
             if meta_image := soup.find("meta", attrs={"property": "og:image"}):
                 meta_image['content'] = page.meta['image']
@@ -77,12 +76,9 @@ class MetaPlugin(BasePlugin):
             </div>
             '''
 
-            md_source_file_div = soup.select_one('.md-source-file')
-            if md_source_file_div:
+            if md_source_file_div := soup.select_one('.md-source-file'):
                 md_source_file_div.insert_before(BeautifulSoup(share_buttons, 'html.parser'))
-            else:
-                md_typeset = soup.select_one('.md-typeset')
-                if md_typeset:
-                    md_typeset.append(BeautifulSoup(share_buttons, 'html.parser'))
+            elif md_typeset := soup.select_one('.md-typeset'):
+                md_typeset.append(BeautifulSoup(share_buttons, 'html.parser'))
 
         return str(soup)
