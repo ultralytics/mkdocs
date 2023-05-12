@@ -64,6 +64,13 @@ class MetaPlugin(BasePlugin):
 
         return content
 
+    def insert_content(self, soup, content_to_insert):
+        if comments_header := soup.find('h2', id='__comments'):
+            comments_header.insert_before(content_to_insert)
+        # Fallback: append the content to the md-typeset div if the comments header is not found
+        if md_typeset := soup.select_one('.md-typeset'):
+            md_typeset.append(content_to_insert)
+
     def on_post_page(self, output, page, config):
         page_url = config['site_url'] + page.url.rstrip('/')
         if not self.config['enabled']:
@@ -137,7 +144,7 @@ class MetaPlugin(BasePlugin):
         # Add git information (dates and authors) to the footer, if enabled
         if self.config['add_dates'] or self.config['add_authors']:
             git_info = self.get_git_info(page.file.abs_src_path)
-            dates_and_authors_div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;">'
+            dates_and_authors_div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;"><br>'
 
             if self.config['add_dates']:
                 dates_and_authors_div += f"Created {git_info['creation_date'][:10]}, Updated {git_info['last_modification_date'][:10]}"
@@ -150,11 +157,7 @@ class MetaPlugin(BasePlugin):
 
             dates_and_authors_div += '</div>'
             dates_and_authors_div = BeautifulSoup(dates_and_authors_div, 'html.parser')
-
-            if md_source_file_div := soup.select_one('.md-source-file'):
-                md_source_file_div.insert_before(dates_and_authors_div)
-            elif md_typeset := soup.select_one('.md-typeset'):
-                md_typeset.insert(0, dates_and_authors_div)
+            self.insert_content(soup, dates_and_authors_div)
 
         # Add share buttons to the footer, if enabled
         if self.config['add_share_buttons']:  # Check if share buttons are enabled
@@ -192,10 +195,7 @@ class MetaPlugin(BasePlugin):
                 </button>
             </div>
             '''
-
-            if md_source_file_div := soup.select_one('.md-source-file'):
-                md_source_file_div.insert_before(BeautifulSoup(share_buttons, 'html.parser'))
-            elif md_typeset := soup.select_one('.md-typeset'):
-                md_typeset.append(BeautifulSoup(share_buttons, 'html.parser'))
+            share_buttons = BeautifulSoup(share_buttons, 'html.parser')
+            self.insert_content(soup, share_buttons)
 
         return str(soup)
