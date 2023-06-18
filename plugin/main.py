@@ -1,8 +1,9 @@
-from bs4 import BeautifulSoup
-from mkdocs.plugins import BasePlugin
-from mkdocs.config import config_options
 import os
 import subprocess
+
+from bs4 import BeautifulSoup
+from mkdocs.config import config_options
+from mkdocs.plugins import BasePlugin
 
 
 class MetaPlugin(BasePlugin):
@@ -13,17 +14,19 @@ class MetaPlugin(BasePlugin):
         ('default_image', config_options.Type(str, default=None)),
         ('add_desc', config_options.Type(bool, default=True)),
         ('add_image', config_options.Type(bool, default=True)),
+        ('add_keywords', config_options.Type(bool, default=True)),  # Add new argument for keywords
         ('add_share_buttons', config_options.Type(bool, default=True)),  # Add new argument
         ('add_dates', config_options.Type(bool, default=True)),  # Add dates section
         ('add_authors', config_options.Type(bool, default=True)),  # Add authors section
     )
 
-    def get_git_info(self, file_path):
+    @staticmethod
+    def get_git_info(file_path):
         os.chdir(os.path.dirname(file_path))
 
         # Get the creation date
-        creation_date = \
-            subprocess.check_output(['git', 'log', '--reverse', '--pretty=format:%ai', os.path.basename(file_path)]).decode('utf-8').split('\n')[0]
+        args = ['git', 'log', '--reverse', '--pretty=format:%ai', os.path.basename(file_path)]
+        creation_date = subprocess.check_output(args).decode('utf-8').split('\n')[0]
         git_info = {'creation_date': creation_date}
         # Get the last modification date
         last_modification_date = subprocess.check_output(
@@ -64,7 +67,8 @@ class MetaPlugin(BasePlugin):
 
         return content
 
-    def insert_content(self, soup, content_to_insert):
+    @staticmethod
+    def insert_content(soup, content_to_insert):
         if comments_header := soup.find('h2', id='__comments'):
             comments_header.insert_before(content_to_insert)
         # Fallback: append the content to the md-typeset div if the comments header is not found
@@ -86,6 +90,12 @@ class MetaPlugin(BasePlugin):
         title_tag = soup.new_tag("meta")
         title_tag.attrs.update({'name': 'title', 'content': page.title})
         soup.head.append(title_tag)
+
+        # New block for keywords
+        if self.config['add_keywords'] and 'keywords' in page.meta:
+            meta_keywords = soup.new_tag("meta")
+            meta_keywords.attrs.update({'name': 'keywords', 'content': page.meta['keywords']})
+            soup.head.append(meta_keywords)
 
         if meta_description := soup.find("meta", attrs={"name": "description"}):
             if self.config['add_desc'] and 'description' in page.meta and (10 < len(page.meta['description']) < 500):
