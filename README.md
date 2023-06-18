@@ -38,6 +38,7 @@ The plugin supports the following arguments:
 - `default_image`: Set a default image URL if no image is found in the content (default: `None`)
 - `add_desc`: Enable or disable the generation of meta description tags (default: `True`)
 - `add_image`: Enable or disable the generation of meta image tags (default: `True`)
+- `add_keywords`: Enable or disable the generation of meta keyword tags (default: `True`)
 - `add_share_buttons`: Enable or disable the addition of share buttons for Twitter and LinkedIn (default: `True`)
 - `add_dates`: Enable or disable the addition of git dates to the page footer (default: `True`)
 - `add_authors`: Enable or disable the addition of git authors to the page footer (default: `True`)
@@ -54,6 +55,7 @@ plugins:
       default_image: "https://example.com/default-image.png"
       add_desc: True
       add_image: True
+      add_keywords: True
       add_share_buttons: True
       add_dates: True
       add_authors: True
