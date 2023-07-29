@@ -14,6 +14,8 @@ The MkDocs Ultralytics Plugin is an easy-to-use plugin that enhances your MkDocs
 
 To install the MkDocs Ultralytics Plugin from [pip](https://pypi.org/project/mkdocs-ultralytics-plugin/), run the following command:
 
+[![PyPI version](https://badge.fury.io/py/mkdocs-ultralytics-plugin.svg)](https://badge.fury.io/py/mkdocs-ultralytics-plugin) [![Downloads](https://static.pepy.tech/badge/mkdocs-ultralytics-plugin)](https://pepy.tech/project/mkdocs-ultralytics-plugin)
+
 ```bash
 pip install mkdocs-ultralytics-plugin
 ```
