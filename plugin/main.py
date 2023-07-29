@@ -1,9 +1,12 @@
-import os
 import subprocess
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
+
+# import get_github_usernames_from_file function from the previous script
+from .utils import get_github_usernames_from_file
 
 
 class MetaPlugin(BasePlugin):
@@ -22,27 +25,21 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def get_git_info(file_path):
-        os.chdir(os.path.dirname(file_path))
+        file_path = Path(file_path).resolve()
 
         # Get the creation date
-        args = ['git', 'log', '--reverse', '--pretty=format:%ai', os.path.basename(file_path)]
+        args = ['git', 'log', '--reverse', '--pretty=format:%ai', str(file_path)]
         creation_date = subprocess.check_output(args).decode('utf-8').split('\n')[0]
         git_info = {'creation_date': creation_date}
+
         # Get the last modification date
         last_modification_date = subprocess.check_output(
-            ['git', 'log', '-1', '--pretty=format:%ai', os.path.basename(file_path)]).decode('utf-8')
+            ['git', 'log', '-1', '--pretty=format:%ai', str(file_path)]).decode('utf-8')
         git_info['last_modification_date'] = last_modification_date
 
-        # Get the authors and their contributions count
-        authors = subprocess.check_output(['git', 'log', '--pretty=format:%an', os.path.basename(file_path)]).decode(
-            'utf-8').split('\n')
-        authors_count = {}
-        for author in authors:
-            if author not in authors_count:
-                authors_count[author] = 1
-            else:
-                authors_count[author] += 1
-        git_info['authors'] = sorted(authors_count.items(), key=lambda x: x[1], reverse=True)
+        # Get the authors and their contributions count using get_github_usernames_from_file function
+        authors_info = get_github_usernames_from_file(file_path)
+        git_info['authors'] = [(author, info['url'], info['changes']) for author, info in authors_info.items()]
 
         return git_info
 
@@ -162,7 +159,8 @@ class MetaPlugin(BasePlugin):
             if self.config['add_authors']:
                 if self.config['add_dates']:
                     dates_and_authors_div += '<br>'
-                authors_str = ', '.join([f"{author[0]} ({author[1]})" for author in git_info['authors']])
+                authors_str = ', '.join(
+                    [f"<a href='{author[1]}'>{author[0]} ({author[2]})</a>" for author in git_info['authors']])
                 dates_and_authors_div += f"Authors: {authors_str}"
 
             dates_and_authors_div += '</div>'
