@@ -1,11 +1,12 @@
 import subprocess
 from collections import Counter
 from pathlib import Path
+
 import requests
 import yaml  # install this with `pip install PyYAML` if not installed yet
 
 
-def get_github_username_from_email(email, local_cache):
+def get_github_username_from_email(email, local_cache, verbose=True):
     # First, check if the email exists in the local cache file
     if email in local_cache:
         return local_cache[email]
@@ -18,7 +19,8 @@ def get_github_username_from_email(email, local_cache):
 
     # If the email is not found in the cache, query GitHub REST API
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
-    print(f'Running GitHub REST API for {email}')
+    if verbose:
+        print(f'Running GitHub REST API for {email}')
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
@@ -27,7 +29,9 @@ def get_github_username_from_email(email, local_cache):
             local_cache[email] = username  # save the username in the local cache for future use
             return username
 
-    print(f'WARNING: No username found for {email}')
+    if verbose:
+        print(f'WARNING: No username found for {email}')
+    local_cache[email] = None  # save the username in the local cache for future use
     return None  # couldn't find username
 
 
@@ -44,18 +48,25 @@ def get_github_usernames_from_file(file_path):
     else:
         local_cache = {}
 
+    github_repo_url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']).decode('utf-8').strip()
+    if github_repo_url.endswith(".git"):
+        github_repo_url = github_repo_url[:-4]
+    if github_repo_url.startswith("git@"):
+        github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
+
+    file_url = f"{github_repo_url}/blob/master/{file_path}"
     info = {}
     for k, v in emails.items():
         username = get_github_username_from_email(k, local_cache)
-        if username:
-            info[username] = {'email': k, 'url': f'https://github.com/{username}', 'changes': v}
+        # if we can't determine the user URL, revert to the GitHub file URL
+        user_url = f'https://github.com/{username}' if username else file_url
+        info[username or k] = {'email': k, 'url': user_url, 'changes': v}
 
     # Save the local cache of GitHub usernames
     with local_cache_file.open('w') as f:
         yaml.safe_dump(local_cache, f)
 
     return info
-
 
 # Example usage:
 # print(get_github_usernames_from_file('mkdocs.yml'))

@@ -160,7 +160,7 @@ class MetaPlugin(BasePlugin):
                 if self.config['add_dates']:
                     dates_and_authors_div += '<br>'
                 authors_str = ', '.join(
-                    [f"<a href='{author[1]}'>{author[0]} ({author[2]})</a>" for author in git_info['authors']])
+                    [f"<a href='{author[1]}'>{author[0]}</a> ({author[2]})" for author in git_info['authors']])
                 dates_and_authors_div += f"Authors: {authors_str}"
 
             dates_and_authors_div += '</div>'

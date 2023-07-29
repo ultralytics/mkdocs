@@ -1,7 +1,8 @@
 # Ultralytics MkDocs plugin
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import setup, find_packages
 
 setup(
     name='mkdocs-ultralytics-plugin',
@@ -21,6 +22,8 @@ setup(
     install_requires=[
         'mkdocs>=1.0',
         'beautifulsoup4>=4.9.3',
+        'pyyaml',
+        'requests',
     ],
     entry_points={
         'mkdocs.plugins': [
