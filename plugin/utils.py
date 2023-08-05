@@ -20,7 +20,7 @@ def get_github_username_from_email(email, local_cache, verbose=True):
     # If the email is not found in the cache, query GitHub REST API
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
     if verbose:
-        print(f'Running GitHub REST API for {email}')
+        print(f'Running GitHub REST API for author {email}')
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
