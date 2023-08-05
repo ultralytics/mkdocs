@@ -94,17 +94,16 @@ the plugin fetches relevant git information from your repository and appends it 
 The core functionality of the plugin is implemented in `plugin.py`, which defines the `MetaPlugin` class:
 
 ```python
-from bs4 import BeautifulSoup
 from mkdocs.plugins import BasePlugin
 
 
 class MetaPlugin(BasePlugin):
 
     def on_page_content(self, content, page, config, files):
-    # ... (code to generate meta description and image)
+        # ... (code to generate meta description and image)
 
     def on_post_page(self, output, page, config):
-    # ... (code to update the output with the generated meta tags)
+        # ... (code to update the output with the generated meta tags)
 ```
 
 ## License

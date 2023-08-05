@@ -20,7 +20,7 @@ def get_github_username_from_email(email, local_cache, verbose=True):
     # If the email is not found in the cache, query GitHub REST API
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
     if verbose:
-        print(f'Running GitHub REST API for {email}')
+        print(f'Running GitHub REST API for author {email}')
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
@@ -54,7 +54,7 @@ def get_github_usernames_from_file(file_path):
     if github_repo_url.startswith("git@"):
         github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
 
-    file_url = f"{github_repo_url}/blob/master/{file_path}"
+    file_url = f"{github_repo_url}/blob/main/{get_relative_path_to_git_root(file_path)}"
     info = {}
     for k, v in emails.items():
         username = get_github_username_from_email(k, local_cache)
@@ -67,6 +67,14 @@ def get_github_usernames_from_file(file_path):
         yaml.safe_dump(local_cache, f)
 
     return info
+
+
+def get_relative_path_to_git_root(file_path):
+    # Get the Git root directory
+    git_root_directory = Path(subprocess.getoutput('git rev-parse --show-toplevel').strip())
+
+    # Join the relative path with the given file_path
+    return Path(file_path).resolve().relative_to(git_root_directory)
 
 # Example usage:
 # print(get_github_usernames_from_file('mkdocs.yml'))
