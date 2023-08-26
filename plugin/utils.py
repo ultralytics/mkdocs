@@ -41,7 +41,7 @@ def get_github_usernames_from_file(file_path):
     emails = dict(Counter(authors_emails))  # dict of {author: changes}
 
     # Load the local cache of GitHub usernames
-    local_cache_file = Path('mkdocs_github_authors.yaml')
+    local_cache_file = Path('docs' if Path('docs').is_dir() else '') / 'mkdocs_github_authors.yaml'
     if local_cache_file.is_file():
         with local_cache_file.open('r') as f:
             local_cache = yaml.safe_load(f)
