@@ -2,11 +2,11 @@
 
 from pathlib import Path
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name='mkdocs-ultralytics-plugin',
-    version='0.0.26',
+    version='0.0.27',
     description='An MkDocs plugin that provides Ultralytics Docs customizations at https://docs.ultralytics.com.',
     long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
