@@ -1,9 +1,30 @@
+import re
 import subprocess
 from collections import Counter
 from pathlib import Path
 
 import requests
 import yaml  # install this with `pip install PyYAML` if not installed yet
+from bs4 import BeautifulSoup
+
+
+def get_youtube_video_ids(soup: BeautifulSoup) -> list:
+    """
+    Extract YouTube video IDs from iframes in the BeautifulSoup object.
+
+    Args:
+        soup (BeautifulSoup): BeautifulSoup object containing the HTML content.
+
+    Returns:
+        list: A list of YouTube video IDs.
+    """
+    youtube_ids = []
+    iframes = soup.find_all('iframe', src=True)
+    for iframe in iframes:
+        match = re.search(r'youtube\.com/embed/([a-zA-Z0-9_-]+)', iframe['src'])
+        if match:
+            youtube_ids.append(match[1])
+    return youtube_ids
 
 
 def get_github_username_from_email(email, local_cache, verbose=True):
