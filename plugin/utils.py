@@ -28,6 +28,29 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
 
 
 def get_github_username_from_email(email, local_cache, verbose=True):
+    """
+        Retrieves the GitHub username associated with the given email address.
+
+        Args:
+            email (str): The email address to retrieve the GitHub username for.
+            local_cache (dict): A dictionary containing cached email-GitHub username mappings.
+            verbose (bool, optional): Whether to print verbose output. Defaults to True.
+
+        Returns:
+            str or None: The GitHub username associated with the email address, or None if not found.
+
+        Raises:
+            None
+
+        Examples:
+            ```python
+            email = "example@example.com"
+            cache = {"example@example.com": "example"}
+            username = get_github_username_from_email(email, cache)
+            print(username)  # Output: "example"
+            ```
+    """
+
     # First, check if the email exists in the local cache file
     if email in local_cache:
         return local_cache[email]
