@@ -48,7 +48,8 @@ class MetaPlugin(BasePlugin):
             return content
 
         soup = BeautifulSoup(content, 'html.parser')
-
+        
+        # Check if custom description is already defined in the Markdown header
         if first_paragraph := soup.find('p'):
             if self.config['add_desc'] and 'description' not in page.meta:
                 meta_description = first_paragraph.text.strip()
