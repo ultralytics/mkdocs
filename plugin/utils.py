@@ -21,8 +21,7 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     youtube_ids = []
     iframes = soup.find_all('iframe', src=True)
     for iframe in iframes:
-        match = re.search(r'youtube\.com/embed/([a-zA-Z0-9_-]+)', iframe['src'])
-        if match:
+        if match := re.search(r'youtube\.com/embed/([a-zA-Z0-9_-]+)', iframe['src'])
             youtube_ids.append(match[1])
     return youtube_ids
 
