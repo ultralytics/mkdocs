@@ -1,12 +1,55 @@
+import re
 import subprocess
 from collections import Counter
 from pathlib import Path
 
 import requests
 import yaml  # install this with `pip install PyYAML` if not installed yet
+from bs4 import BeautifulSoup
+
+
+def get_youtube_video_ids(soup: BeautifulSoup) -> list:
+    """
+    Extract YouTube video IDs from iframes in the BeautifulSoup object.
+
+    Args:
+        soup (BeautifulSoup): BeautifulSoup object containing the HTML content.
+
+    Returns:
+        list: A list of YouTube video IDs.
+    """
+    youtube_ids = []
+    iframes = soup.find_all('iframe', src=True)
+    for iframe in iframes:
+        if match := re.search(r'youtube\.com/embed/([a-zA-Z0-9_-]+)', iframe['src'])
+            youtube_ids.append(match[1])
+    return youtube_ids
 
 
 def get_github_username_from_email(email, local_cache, verbose=True):
+    """
+        Retrieves the GitHub username associated with the given email address.
+
+        Args:
+            email (str): The email address to retrieve the GitHub username for.
+            local_cache (dict): A dictionary containing cached email-GitHub username mappings.
+            verbose (bool, optional): Whether to print verbose output. Defaults to True.
+
+        Returns:
+            str or None: The GitHub username associated with the email address, or None if not found.
+
+        Raises:
+            None
+
+        Examples:
+            ```python
+            email = "example@example.com"
+            cache = {"example@example.com": "example"}
+            username = get_github_username_from_email(email, cache)
+            print(username)  # Output: "example"
+            ```
+    """
+
     # First, check if the email exists in the local cache file
     if email in local_cache:
         return local_cache[email]

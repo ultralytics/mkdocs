@@ -6,7 +6,7 @@ from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
 # import get_github_usernames_from_file function from the previous script
-from .utils import get_github_usernames_from_file
+from .utils import get_github_usernames_from_file, get_youtube_video_ids
 
 
 class MetaPlugin(BasePlugin):
@@ -50,8 +50,8 @@ class MetaPlugin(BasePlugin):
         soup = BeautifulSoup(content, 'html.parser')
 
         # Check if custom description is already defined in the Markdown header
-        if self.config['add_desc'] and 'description' not in page.meta:
-            if first_paragraph := soup.find('p'):
+        if first_paragraph := soup.find('p'):
+            if self.config['add_desc'] and 'description' not in page.meta:
                 meta_description = first_paragraph.text.strip()
                 page.meta['description'] = meta_description
 
@@ -59,6 +59,12 @@ class MetaPlugin(BasePlugin):
             if first_image := soup.find('img'):
                 meta_image = first_image['src']
                 page.meta['image'] = meta_image
+            # Check for embedded YouTube videos
+            elif youtube_ids := get_youtube_video_ids(soup):
+                # Just use the first YouTube video ID to get the thumbnail.
+                first_youtube_id = youtube_ids[0]
+                youtube_thumbnail_url = f"https://img.youtube.com/vi/{first_youtube_id}/maxresdefault.jpg"
+                page.meta['image'] = youtube_thumbnail_url
             elif self.config['default_image']:
                 page.meta['image'] = self.config['default_image']
 

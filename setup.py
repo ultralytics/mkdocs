@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='mkdocs-ultralytics-plugin',
-    version='0.0.27',
+    version='0.0.29',
     description='An MkDocs plugin that provides Ultralytics Docs customizations at https://docs.ultralytics.com.',
     long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
@@ -23,7 +23,7 @@ setup(
         'mkdocs>=1.0',
         'beautifulsoup4>=4.9.3',
         'pyyaml',
-        'requests',
+        'requests>=2.31.0',
     ],
     entry_points={
         'mkdocs.plugins': [
