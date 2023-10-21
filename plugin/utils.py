@@ -21,18 +21,19 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     youtube_ids = []
     iframes = soup.find_all('iframe', src=True)
     for iframe in iframes:
-        if match := re.search(r'youtube\.com/embed/([a-zA-Z0-9_-]+)', iframe['src'])
+        if match := re.search(r'youtube\.com/embed/([a-zA-Z0-9_-]+)', iframe['src']):
             youtube_ids.append(match[1])
     return youtube_ids
 
 
-def get_github_username_from_email(email, local_cache, verbose=True):
+def get_github_username_from_email(email, local_cache, file_path='', verbose=True):
     """
         Retrieves the GitHub username associated with the given email address.
 
         Args:
             email (str): The email address to retrieve the GitHub username for.
             local_cache (dict): A dictionary containing cached email-GitHub username mappings.
+            file_path (str, optional): Name of the file the user authored. Defaults to ''.
             verbose (bool, optional): Whether to print verbose output. Defaults to True.
 
         Returns:
@@ -53,6 +54,10 @@ def get_github_username_from_email(email, local_cache, verbose=True):
     # First, check if the email exists in the local cache file
     if email in local_cache:
         return local_cache[email]
+    elif not email.strip():
+        if verbose:
+            print(f'WARNING: No author found for {file_path}')
+        return None
 
     # If the email ends with "@users.noreply.github.com", parse the username directly
     if email.endswith("@users.noreply.github.com"):
@@ -100,8 +105,8 @@ def get_github_usernames_from_file(file_path):
     file_url = f"{github_repo_url}/blob/main/{get_relative_path_to_git_root(file_path)}"
     info = {}
     for k, v in emails.items():
-        username = get_github_username_from_email(k, local_cache)
-        # if we can't determine the user URL, revert to the GitHub file URL
+        username = get_github_username_from_email(k, local_cache, file_path)
+        # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f'https://github.com/{username}' if username else file_url
         info[username or k] = {'email': k, 'url': user_url, 'changes': v}
 
