@@ -84,9 +84,25 @@ def get_github_username_from_email(email, local_cache, file_path='', verbose=Tru
 
 
 def get_github_usernames_from_file(file_path):
-    authors_emails = subprocess.check_output(['git', 'log', '--pretty=format:%ae', Path(file_path).resolve()]).decode(
+    """Fetch GitHub usernames from Git Log and Git Blame for a given file."""
+    # Fetch author emails using 'git log'
+    authors_emails_log = subprocess.check_output(
+        ['git', 'log', '--pretty=format:%ae', Path(file_path).resolve()]).decode(
         'utf-8').split('\n')
-    emails = dict(Counter(authors_emails))  # dict of {author: changes}
+    emails_log = dict(Counter(authors_emails_log))
+
+    # Fetch author emails using 'git blame'
+    authors_emails_blame = subprocess.check_output(
+        ['git', 'blame', '--line-porcelain', Path(file_path).resolve()]).decode('utf-8').split('\n')
+    authors_emails_blame = [line.split(' ')[1] for line in authors_emails_blame if line.startswith('author-mail')]
+    authors_emails_blame = [email.strip('<>') for email in authors_emails_blame]
+    emails_blame = dict(Counter(authors_emails_blame))
+
+    # Merge the two email lists, adding any missing authors from 'git blame' as a 1-commit change
+    for email in emails_blame:
+        if email not in emails_log:
+            emails_log[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
+    emails = emails_log
 
     # Load the local cache of GitHub usernames
     local_cache_file = Path('docs' if Path('docs').is_dir() else '') / 'mkdocs_github_authors.yaml'
