@@ -1,3 +1,4 @@
+import contextlib
 import re
 import subprocess
 from collections import Counter
@@ -89,20 +90,20 @@ def get_github_usernames_from_file(file_path):
     authors_emails_log = subprocess.check_output(
         ['git', 'log', '--pretty=format:%ae', Path(file_path).resolve()]).decode(
         'utf-8').split('\n')
-    emails_log = dict(Counter(authors_emails_log))
+    emails = dict(Counter(authors_emails_log))
 
     # Fetch author emails using 'git blame'
-    authors_emails_blame = subprocess.check_output(
-        ['git', 'blame', '--line-porcelain', Path(file_path).resolve()]).decode('utf-8').split('\n')
-    authors_emails_blame = [line.split(' ')[1] for line in authors_emails_blame if line.startswith('author-mail')]
-    authors_emails_blame = [email.strip('<>') for email in authors_emails_blame]
-    emails_blame = dict(Counter(authors_emails_blame))
+    with contextlib.suppress(Exception):
+        authors_emails_blame = subprocess.check_output(
+            ['git', 'blame', '--line-porcelain', Path(file_path).resolve()]).decode('utf-8').split('\n')
+        authors_emails_blame = [line.split(' ')[1] for line in authors_emails_blame if line.startswith('author-mail')]
+        authors_emails_blame = [email.strip('<>') for email in authors_emails_blame]
+        emails_blame = dict(Counter(authors_emails_blame))
 
-    # Merge the two email lists, adding any missing authors from 'git blame' as a 1-commit change
-    for email in emails_blame:
-        if email not in emails_log:
-            emails_log[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
-    emails = emails_log
+        # Merge the two email lists, adding any missing authors from 'git blame' as a 1-commit change
+        for email in emails_blame:
+            if email not in emails:
+                emails[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
 
     # Load the local cache of GitHub usernames
     local_cache_file = Path('docs' if Path('docs').is_dir() else '') / 'mkdocs_github_authors.yaml'
