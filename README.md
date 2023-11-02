@@ -101,9 +101,11 @@ class MetaPlugin(BasePlugin):
 
     def on_page_content(self, content, page, config, files):
         # ... (code to generate meta description and image)
+        return
 
     def on_post_page(self, output, page, config):
         # ... (code to update the output with the generated meta tags)
+        return
 ```
 
 ## License
