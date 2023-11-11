@@ -8,6 +8,8 @@ import requests
 import yaml  # install this with `pip install PyYAML` if not installed yet
 from bs4 import BeautifulSoup
 
+WARNING = 'WARNING (mkdocs_ultralytics_plugin):'
+
 
 def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     """
@@ -57,7 +59,7 @@ def get_github_username_from_email(email, local_cache, file_path='', verbose=Tru
         return local_cache[email]
     elif not email.strip():
         if verbose:
-            print(f'WARNING: No author found for {file_path}')
+            print(f'{WARNING} No author found for {file_path}')
         return None
 
     # If the email ends with "@users.noreply.github.com", parse the username directly
@@ -79,7 +81,7 @@ def get_github_username_from_email(email, local_cache, file_path='', verbose=Tru
             return username
 
     if verbose:
-        print(f'WARNING: No username found for {email}')
+        print(f'{WARNING} No username found for {email}')
     local_cache[email] = None  # save the username in the local cache for future use
     return None  # couldn't find username
 
@@ -88,14 +90,15 @@ def get_github_usernames_from_file(file_path):
     """Fetch GitHub usernames from Git Log and Git Blame for a given file."""
     # Fetch author emails using 'git log'
     authors_emails_log = subprocess.check_output(
-        ['git', 'log', '--pretty=format:%ae', Path(file_path).resolve()]).decode(
-        'utf-8').split('\n')
+        ['git', 'log', '--pretty=format:%ae', Path(file_path).resolve()]
+    ).decode('utf-8').split('\n')
     emails = dict(Counter(authors_emails_log))
 
     # Fetch author emails using 'git blame'
     with contextlib.suppress(Exception):
         authors_emails_blame = subprocess.check_output(
-            ['git', 'blame', '--line-porcelain', Path(file_path).resolve()]).decode('utf-8').split('\n')
+            ['git', 'blame', '--line-porcelain', Path(file_path).resolve()], stderr=subprocess.DEVNULL
+        ).decode('utf-8').split('\n')
         authors_emails_blame = [line.split(' ')[1] for line in authors_emails_blame if line.startswith('author-mail')]
         authors_emails_blame = [email.strip('<>') for email in authors_emails_blame]
         emails_blame = dict(Counter(authors_emails_blame))
