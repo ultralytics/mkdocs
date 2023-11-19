@@ -94,6 +94,12 @@ class MetaPlugin(BasePlugin):
         title_tag.attrs.update({'name': 'title', 'content': page.title})
         soup.head.append(title_tag)
 
+        # Append the Font Awesome CSS <link> tag to the <head> section for Twitter and LinkedIn emojis
+        if self.config['add_share_buttons']:
+            soup.head.append(soup.new_tag(
+                "link", rel="stylesheet",
+                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"))
+
         # New block for keywords
         if self.config['add_keywords'] and 'keywords' in page.meta:
             meta_keywords = soup.new_tag("meta")
