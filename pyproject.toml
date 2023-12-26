@@ -13,12 +13,12 @@ requires-python = ">=3.8"
 license = { file = "LICENSE" }
 keywords = ["Ultralytics", "Docs", "MkDocs", "Plugin"]  # Optional
 authors = [
-    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" } # Optional
+    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" }  # Optional
 ]
 maintainers = [
-    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" } # Optional
+    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" }  # Optional
 ]
-classifiers = [# Optional, for a list of valid classifiers, see https://pypi.org/classifiers/
+classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'Intended Audience :: Education',
@@ -35,8 +35,8 @@ classifiers = [# Optional, for a list of valid classifiers, see https://pypi.org
     'Operating System :: POSIX :: Linux',
     'Operating System :: MacOS',
     'Operating System :: Microsoft :: Windows',
-]
-dependencies = [# Optional
+]  # Optional, for a list of valid classifiers, see https://pypi.org/classifiers/
+dependencies = [
     'mkdocs>=1.0',
     'beautifulsoup4>=4.9.3',
     'pyyaml',
@@ -48,11 +48,11 @@ dependencies = [# Optional
 "Funding" = "https://ultralytics.com"
 "Source" = "https://github.com/ultralytics/mkdocs/"
 
-[project.scripts]  # Optional
+[project.entry-points."mkdocs.plugins"]
 ultralytics = "plugin:MetaPlugin"  # executes the function `MetaPlugin` from this package when 'plugin' is called.
+
+[project.optional-dependencies]  # Optional
+dev = ["pytest"]
 
 [tool.setuptools]  # This is configuration specific to the `setuptools` build backend.
 package-data = { "sample" = ["*.yaml"] }
-
-[project.optional-dependencies] # Optional
-dev = ["pytest"]
