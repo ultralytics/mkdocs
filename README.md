@@ -121,6 +121,7 @@ class MetaPlugin(BasePlugin):
 Join in on the collaboration! 🤗 The success of Ultralytics' open-source initiatives springs from the vibrant contributions of our community. Whether you're fixing bugs, adding features, warming up our discussions, or sharing your Ultralytics project tale, [check out](https://docs.ultralytics.com/help/contributing) how you can be part of the journey. Filling out our [survey](https://ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey) is another great way to share your feedback. We are deeply thankful 🙇‍♂️ for each contributor's time and efforts!
 
 <!-- A visual tribute to our contributors! -->
+
 <a href="https://github.com/ultralytics/yolov5/graphs/contributors">
 <img width="100%" src="https://github.com/ultralytics/assets/raw/main/im/image-contributors.png" alt="Ultralytics open-source contributors"></a>
 
