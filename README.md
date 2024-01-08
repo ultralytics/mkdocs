@@ -5,6 +5,8 @@
 
 Welcome to the MkDocs Ultralytics Plugin documentation! 📄 This delightful plugin enhances your MkDocs-generated documentation with savvy SEO optimizations and interactive social elements. Through the autogeneration of meta tags and incorporation of social sharing features, it aims to elevate user engagement and broaden your Markdown project's footprint on the web.
 
+[![Ultralytics Actions](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml)
+
 ## 🌟 Features
 
 This plugin seamlessly integrates a variety of features into your MkDocs site:
