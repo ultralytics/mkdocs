@@ -25,7 +25,7 @@ jobs:
       - name: Set up Python environment
         uses: actions/setup-python@v5
         with:
-          # python-version: '3.11'
+          python-version: '3.11'
           cache: 'pip' # caching pip dependencies
       - name: Install dependencies
         run: |
@@ -34,13 +34,14 @@ jobs:
       - name: Check PyPI version
         shell: python
         run: |
+          import os
           import toml
           from ultralytics.utils.checks import check_latest_pypi_version
 
           # Read version from pyproject.toml
           with open('pyproject.toml', 'r') as file:
-              pyproject = toml.load(file)
-          v_local = tuple(map(int, pyproject['project']['version'].split('.')))
+              pyproject_version = toml.load(file)['project']['version']
+          v_local = tuple(map(int, pyproject_version.split('.')))
 
           # Compare with version on PyPI
           v_pypi = tuple(map(int, check_latest_pypi_version('mkdocs-ultralytics-plugin').split('.')))
@@ -48,8 +49,8 @@ jobs:
           print(f'PyPI version is {v_pypi}')
           d = [a - b for a, b in zip(v_local, v_pypi)]  # diff
           increment = (d[0] == d[1] == 0) and (0 < d[2] < 3)  # only publish if patch version increments by 1 or 2
-          echo "increment=${increment}" >> $GITHUB_ENV
-          echo "version=${pyproject['project']['version']}" >> $GITHUB_ENV
+          os.system(f'echo "increment={increment}" >> $GITHUB_OUTPUT')
+          os.system(f'echo "version={pyproject_version}" >> $GITHUB_OUTPUT')
           if increment:
               print('Local version is higher than PyPI version. Publishing new version to PyPI ✅.')
         id: check_pypi
