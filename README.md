@@ -21,8 +21,6 @@ This plugin seamlessly integrates a variety of features into your MkDocs site:
 
 Getting started with the MkDocs Ultralytics Plugin is easy! Install it via [pip](https://pypi.org/project/mkdocs-ultralytics-plugin/) with the following command:
 
-
-
 ```bash
 pip install mkdocs-ultralytics-plugin
 ```
