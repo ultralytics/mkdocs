@@ -78,7 +78,7 @@ class MetaPlugin(BasePlugin):
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
         # Fallback: append the content to the md-typeset div if the comments header is not found
-        if md_typeset := soup.select_one(".md-typeset"):
+        if md_typeset := soup.select_one(".md-content__inner"):
             md_typeset.append(content_to_insert)
 
     def on_post_page(self, output, page, config):
@@ -183,9 +183,7 @@ class MetaPlugin(BasePlugin):
             if self.config["add_authors"]:
                 if self.config["add_dates"]:
                     dates_and_authors_div += "<br>"
-                authors_str = ", ".join(
-                    [f"<a href='{author[1]}'>{author[0]}</a> ({author[2]})" for author in git_info["authors"]]
-                )
+                authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
                 dates_and_authors_div += f"Authors: {authors_str}"
 
             dates_and_authors_div += "</div>"
