@@ -83,8 +83,8 @@ class MetaPlugin(BasePlugin):
 
     def on_post_page(self, output, page, config):
         if not config["site_url"]:
-            print("WARNING - mkdocs-ultralytics-plugin: Please add a 'site_url' to your mkdocs.yml 
-                to enable all Ultralytics features, i.e. 'site_url: https://docs.ultralytics.com'")
+            print("WARNING - mkdocs-ultralytics-plugin: Please add a 'site_url' to your mkdocs.yml "
+                  "to enable all Ultralytics features, i.e. 'site_url: https://docs.ultralytics.com'")
         page_url = (config["site_url"] or "") + page.url.rstrip("/")
         if not self.config["enabled"]:
             return output
