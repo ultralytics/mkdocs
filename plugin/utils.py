@@ -147,4 +147,3 @@ def get_github_usernames_from_file(file_path):
         yaml.safe_dump(local_cache, f)
 
     return info
-
