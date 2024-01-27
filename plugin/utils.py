@@ -89,7 +89,12 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
 
 
 def get_github_usernames_from_file(file_path):
-    """Fetch GitHub usernames from Git Log and Git Blame for a given file."""
+    """
+    Fetch GitHub usernames from Git Log and Git Blame for a given file.
+
+    Examples:
+        >>> print(get_github_usernames_from_file('mkdocs.yml'))
+    """
     # Fetch author emails using 'git log'
     authors_emails_log = (
         subprocess.check_output(["git", "log", "--pretty=format:%ae", Path(file_path).resolve()])
@@ -130,12 +135,11 @@ def get_github_usernames_from_file(file_path):
     if github_repo_url.startswith("git@"):
         github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
 
-    file_url = f"{github_repo_url}/blob/main/{get_relative_path_to_git_root(file_path)}"
     info = {}
     for k, v in emails.items():
         username = get_github_username_from_email(k, local_cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
-        user_url = f"https://github.com/{username}" if username else file_url
+        user_url = f"https://github.com/{username}" if username else github_repo_url
         info[username or k] = {"email": k, "url": user_url, "changes": v}
 
     # Save the local cache of GitHub usernames
@@ -144,14 +148,3 @@ def get_github_usernames_from_file(file_path):
 
     return info
 
-
-def get_relative_path_to_git_root(file_path):
-    # Get the Git root directory
-    git_root_directory = Path(subprocess.getoutput("git rev-parse --show-toplevel").strip())
-
-    # Join the relative path with the given file_path
-    return Path(file_path).resolve().relative_to(git_root_directory)
-
-
-# Example usage:
-# print(get_github_usernames_from_file('mkdocs.yml'))
