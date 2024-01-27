@@ -1,6 +1,6 @@
 # Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
 
-import subprocess
+from subprocess import check_output
 from pathlib import Path
 
 from bs4 import BeautifulSoup
@@ -31,14 +31,12 @@ class MetaPlugin(BasePlugin):
 
         # Get the creation date
         args = ["git", "log", "--reverse", "--pretty=format:%ai", str(file_path)]
-        creation_date = subprocess.check_output(args).decode("utf-8").split("\n")[0]
+        creation_date = check_output(args).decode("utf-8").split("\n")[0]
         git_info = {"creation_date": creation_date}
 
         # Get the last modification date
-        last_modification_date = subprocess.check_output(
-            ["git", "log", "-1", "--pretty=format:%ai", str(file_path)]
-        ).decode("utf-8")
-        git_info["last_modification_date"] = last_modification_date
+        last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", str(file_path)]).decode("utf-8")
+        git_info["last_modified_date"] = last_modified_date
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
         authors_info = get_github_usernames_from_file(file_path)
@@ -137,9 +135,9 @@ class MetaPlugin(BasePlugin):
         og_title_tag.attrs.update({"property": "og:title", "content": page.title})
         soup.head.append(og_title_tag)
 
-        og_description_tag = soup.new_tag("meta")
-        og_description_tag.attrs.update({"property": "og:description", "content": page.meta.get("description", "")})
-        soup.head.append(og_description_tag)
+        og_desc_tag = soup.new_tag("meta")
+        og_desc_tag.attrs.update({"property": "og:description", "content": page.meta.get("description", "")})
+        soup.head.append(og_desc_tag)
 
         if self.config["add_image"] and "image" in page.meta:
             if meta_image := soup.find("meta", attrs={"property": "og:image"}):
@@ -162,11 +160,9 @@ class MetaPlugin(BasePlugin):
         twitter_title_tag.attrs.update({"property": "twitter:title", "content": page.title})
         soup.head.append(twitter_title_tag)
 
-        twitter_description_tag = soup.new_tag("meta")
-        twitter_description_tag.attrs.update(
-            {"property": "twitter:description", "content": page.meta.get("description", "")}
-        )
-        soup.head.append(twitter_description_tag)
+        twitter_desc_tag = soup.new_tag("meta")
+        twitter_desc_tag.attrs.update({"property": "twitter:description", "content": page.meta.get("description", "")})
+        soup.head.append(twitter_desc_tag)
 
         if self.config["add_image"] and "image" in page.meta:
             twitter_image_tag = soup.new_tag("meta")
@@ -175,29 +171,25 @@ class MetaPlugin(BasePlugin):
 
         # Add git information (dates and authors) to the footer, if enabled
         if self.config["add_dates"] or self.config["add_authors"]:
-            git_info = self.get_git_info(page.file.abs_src_path)
-            dates_and_authors_div = (
-                '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;"><br>'
-            )
+            info = self.get_git_info(page.file.abs_src_path)
+            if info["creation_date"]:  # otherwise page is missing git info and step should be skipped
+                div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;"><br>'
 
-            if self.config["add_dates"]:
-                dates_and_authors_div += (
-                    f"Created {git_info['creation_date'][:10]}, Updated {git_info['last_modification_date'][:10]}"
-                )
-
-            if self.config["add_authors"]:
                 if self.config["add_dates"]:
-                    dates_and_authors_div += "<br>"
-                authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
-                dates_and_authors_div += f"Authors: {authors_str}"
+                    div += f"Created {info['creation_date'][:10]}, Updated {info['last_modified_date'][:10]}"
 
-            dates_and_authors_div += "</div>"
-            dates_and_authors_div = BeautifulSoup(dates_and_authors_div, "html.parser")
-            self.insert_content(soup, dates_and_authors_div)
+                if self.config["add_authors"]:
+                    if self.config["add_dates"]:
+                        div += "<br>"
+                    authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in info["authors"]])
+                    div += f"Authors: {authors_str}"
+
+                div += "</div>"
+                div = BeautifulSoup(div, "html.parser")
+                self.insert_content(soup, div)
 
         # Add share buttons to the footer, if enabled
         if self.config["add_share_buttons"]:  # Check if share buttons are enabled
-            # page_url = 'https://docs.ultralytics.com/modes/train'
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
