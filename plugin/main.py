@@ -2,6 +2,7 @@
 
 from subprocess import check_output
 from pathlib import Path
+import json
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
@@ -23,6 +24,7 @@ class MetaPlugin(BasePlugin):
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
         ("add_dates", config_options.Type(bool, default=True)),  # Add dates section
         ("add_authors", config_options.Type(bool, default=True)),  # Add authors section
+        ("add_ld+json", config_options.Type(bool, default=False)),  # Add structured data
     )
 
     @staticmethod
@@ -170,18 +172,18 @@ class MetaPlugin(BasePlugin):
             soup.head.append(twitter_image_tag)
 
         # Add git information (dates and authors) to the footer, if enabled
+        git_info = self.get_git_info(page.file.abs_src_path)
         if self.config["add_dates"] or self.config["add_authors"]:
-            info = self.get_git_info(page.file.abs_src_path)
-            if info["creation_date"]:  # otherwise page is missing git info and step should be skipped
+            if git_info["creation_date"]:  # otherwise page is missing git info and step should be skipped
                 div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;"><br>'
 
                 if self.config["add_dates"]:
-                    div += f"Created {info['creation_date'][:10]}, Updated {info['last_modified_date'][:10]}"
+                    div += f"Created {git_info['creation_date'][:10]}, Updated {git_info['last_modified_date'][:10]}"
 
                 if self.config["add_authors"]:
                     if self.config["add_dates"]:
                         div += "<br>"
-                    authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in info["authors"]])
+                    authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
                     div += f"Authors: {authors_str}"
 
                 div += "</div>"
@@ -225,5 +227,24 @@ class MetaPlugin(BasePlugin):
             """
             share_buttons = BeautifulSoup(share_buttons, "html.parser")
             self.insert_content(soup, share_buttons)
+
+        # Check if LD+JSON is enabled and add structured data to the <head>
+        if self.config["add_ld+json"]:
+            ld_json_script = soup.new_tag("script", type="application/ld+json")
+            ld_json_content = {
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": page.title,
+                "image": [page.meta["image"]] if "image" in page.meta else [],
+                "datePublished": git_info["creation_date"],
+                "dateModified": git_info["last_modified_date"],
+                "author": [{
+                    "@type": "Organization",
+                    "name": "Ultralytics",
+                    "url": "https://ultralytics.com/"
+                }]
+            }
+            ld_json_script.string = json.dumps(ld_json_content)
+            soup.head.append(ld_json_script)
 
         return str(soup)
