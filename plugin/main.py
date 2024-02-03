@@ -24,7 +24,7 @@ class MetaPlugin(BasePlugin):
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
         ("add_dates", config_options.Type(bool, default=True)),  # Add dates section
         ("add_authors", config_options.Type(bool, default=True)),  # Add authors section
-        ("add_ld+json", config_options.Type(bool, default=False)),  # Add structured data
+        ("add_json_ld", config_options.Type(bool, default=True)),  # Add JSON-LD structured data
     )
 
     @staticmethod
@@ -229,7 +229,7 @@ class MetaPlugin(BasePlugin):
             self.insert_content(soup, share_buttons)
 
         # Check if LD+JSON is enabled and add structured data to the <head>
-        if self.config["add_ld+json"]:
+        if self.config["add_json_ld"]:
             ld_json_script = soup.new_tag("script", type="application/ld+json")
             ld_json_content = {
                 "@context": "https://schema.org",
