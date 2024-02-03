@@ -238,11 +238,7 @@ class MetaPlugin(BasePlugin):
                 "image": [page.meta["image"]] if "image" in page.meta else [],
                 "datePublished": git_info["creation_date"],
                 "dateModified": git_info["last_modified_date"],
-                "author": [{
-                    "@type": "Organization",
-                    "name": "Ultralytics",
-                    "url": "https://ultralytics.com/"
-                }]
+                "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
             }
             ld_json_script.string = json.dumps(ld_json_content)
             soup.head.append(ld_json_script)
