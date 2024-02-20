@@ -24,7 +24,7 @@ class MetaPlugin(BasePlugin):
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
         ("add_dates", config_options.Type(bool, default=True)),  # Add dates section
         ("add_authors", config_options.Type(bool, default=True)),  # Add authors section
-        ("add_json_ld", config_options.Type(bool, default=True)),  # Add JSON-LD structured data
+        ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
     )
 
     def get_git_info(self, file_path):
