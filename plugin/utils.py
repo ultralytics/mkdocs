@@ -66,7 +66,7 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
 
     # If the email ends with "@users.noreply.github.com", parse the username directly
     if email.endswith("@users.noreply.github.com"):
-        username = email.split("+")[1].split("@")[0]
+        username = email.split("+")[-1].split("@")[0]
         local_cache[email] = username  # save the username in the local cache for future use
         return username
 

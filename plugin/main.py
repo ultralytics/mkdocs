@@ -27,8 +27,7 @@ class MetaPlugin(BasePlugin):
         ("add_json_ld", config_options.Type(bool, default=True)),  # Add JSON-LD structured data
     )
 
-    @staticmethod
-    def get_git_info(file_path):
+    def get_git_info(self, file_path):
         file_path = Path(file_path).resolve()
 
         # Get the creation date
@@ -41,8 +40,9 @@ class MetaPlugin(BasePlugin):
         git_info["last_modified_date"] = last_modified_date
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
-        authors_info = get_github_usernames_from_file(file_path)
-        git_info["authors"] = [(author, info["url"], info["changes"]) for author, info in authors_info.items()]
+        if self.config["add_authors"]:
+            authors_info = get_github_usernames_from_file(file_path)
+            git_info["authors"] = [(author, info["url"], info["changes"]) for author, info in authors_info.items()]
 
         return git_info
 
@@ -194,17 +194,6 @@ class MetaPlugin(BasePlugin):
         if self.config["add_share_buttons"]:  # Check if share buttons are enabled
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
-
-            # share_buttons = f'''
-            # <div class="share-buttons" style="text-align: right;">
-            #     <a href="javascript:void(0);" onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" style="margin-right: 20px;">
-            #         <i class="fa-brands fa-twitter fa-xl"></i> Tweet
-            #     </a>
-            #     <a href="javascript:void(0);" onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;">
-            #         <i class="fa-brands fa-linkedin fa-xl"></i> Share
-            #     </a>
-            # </div>
-            # '''
 
             share_buttons = f"""
             <style>
