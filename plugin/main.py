@@ -28,6 +28,7 @@ class MetaPlugin(BasePlugin):
     )
 
     def get_git_info(self, file_path):
+        """Retrieves git information including hash, date, and branch."""
         file_path = Path(file_path).resolve()
 
         # Get the creation date
@@ -47,6 +48,7 @@ class MetaPlugin(BasePlugin):
         return git_info
 
     def on_page_content(self, content, page, config, files):
+        """Processes page content with optional enhancements like images and keywords."""
         if not self.config["enabled"]:
             return content
 
@@ -75,6 +77,7 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def insert_content(soup, content_to_insert):
+        """Enhances page content with images and meta descriptions if not already present."""
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
         # Fallback: append the content to the md-typeset div if the comments header is not found
@@ -82,6 +85,7 @@ class MetaPlugin(BasePlugin):
             md_typeset.append(content_to_insert)
 
     def on_post_page(self, output, page, config):
+        """Enhances page content with images and meta descriptions if not already present."""
         if not config["site_url"]:
             print(
                 "WARNING - mkdocs-ultralytics-plugin: Please add a 'site_url' to your mkdocs.yml "
