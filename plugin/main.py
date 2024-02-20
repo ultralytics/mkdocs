@@ -23,12 +23,12 @@ class MetaPlugin(BasePlugin):
         ("add_keywords", config_options.Type(bool, default=True)),  # Add new argument for keywords
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
         ("add_dates", config_options.Type(bool, default=True)),  # Add dates section
-        ("add_authors", config_options.Type(bool, default=True)),  # Add authors section
-        ("add_json_ld", config_options.Type(bool, default=True)),  # Add JSON-LD structured data
+        ("add_authors", config_options.Type(bool, default=False)),  # Add authors section
+        ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
     )
 
-    @staticmethod
-    def get_git_info(file_path):
+    def get_git_info(self, file_path):
+        """Retrieves git information including hash, date, and branch."""
         file_path = Path(file_path).resolve()
 
         # Get the creation date
@@ -41,12 +41,14 @@ class MetaPlugin(BasePlugin):
         git_info["last_modified_date"] = last_modified_date
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
-        authors_info = get_github_usernames_from_file(file_path)
-        git_info["authors"] = [(author, info["url"], info["changes"]) for author, info in authors_info.items()]
+        if self.config["add_authors"]:
+            authors_info = get_github_usernames_from_file(file_path)
+            git_info["authors"] = [(author, info["url"], info["changes"]) for author, info in authors_info.items()]
 
         return git_info
 
     def on_page_content(self, content, page, config, files):
+        """Processes page content with optional enhancements like images and keywords."""
         if not self.config["enabled"]:
             return content
 
@@ -75,6 +77,7 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def insert_content(soup, content_to_insert):
+        """Enhances page content with images and meta descriptions if not already present."""
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
         # Fallback: append the content to the md-typeset div if the comments header is not found
@@ -82,6 +85,7 @@ class MetaPlugin(BasePlugin):
             md_typeset.append(content_to_insert)
 
     def on_post_page(self, output, page, config):
+        """Enhances page content with images and meta descriptions if not already present."""
         if not config["site_url"]:
             print(
                 "WARNING - mkdocs-ultralytics-plugin: Please add a 'site_url' to your mkdocs.yml "
@@ -194,17 +198,6 @@ class MetaPlugin(BasePlugin):
         if self.config["add_share_buttons"]:  # Check if share buttons are enabled
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
-
-            # share_buttons = f'''
-            # <div class="share-buttons" style="text-align: right;">
-            #     <a href="javascript:void(0);" onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" style="margin-right: 20px;">
-            #         <i class="fa-brands fa-twitter fa-xl"></i> Tweet
-            #     </a>
-            #     <a href="javascript:void(0);" onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;">
-            #         <i class="fa-brands fa-linkedin fa-xl"></i> Share
-            #     </a>
-            # </div>
-            # '''
 
             share_buttons = f"""
             <style>
