@@ -1,10 +1,9 @@
 # Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
 
 
-
-from subprocess import check_output
-from pathlib import Path
 import json
+from pathlib import Path
+from subprocess import check_output
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
