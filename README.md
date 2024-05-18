@@ -100,9 +100,9 @@ The `MetaPlugin` class within `plugin.py` is the heart of the plugin, orchestrat
 # Our MkDocs plugin inherits features from the BasePlugin available in mkdocs
 from mkdocs.plugins import BasePlugin
 
+
 # The MetaPlugin class holds the core functionality
 class MetaPlugin(BasePlugin):
-
     # Acts on the page content to generate meta tags
     def on_page_content(self, content, page, config, files):
         # ... (omitted code handling meta description and image generation)
