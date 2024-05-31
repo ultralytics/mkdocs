@@ -1,7 +1,25 @@
 # Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
 
+# Overview:
+# This pyproject.toml file manages the build, packaging, and distribution of the MkDocs Ultralytics Plugin.
+# It defines essential project metadata, dependencies, and settings used to develop and deploy the plugin.
+
+# Key Sections:
+# - [build-system]: Specifies the build requirements and backend (e.g., setuptools, wheel).
+# - [project]: Includes details like name, version, description, authors, dependencies, and more.
+# - [project.optional-dependencies]: Provides additional, optional packages for extended features.
+# - [tool.*]: Configures settings for various tools (e.g., pytest) used in the project.
+
+# Installation:
+# The MkDocs Ultralytics Plugin can be installed using the command: 'pip install mkdocs-ultralytics-plugin'
+# For development purposes, you can install the package in editable mode with: 'pip install -e .'
+# This approach allows for real-time code modifications without the need for re-installation.
+
+# Documentation:
+# For comprehensive documentation and usage instructions, visit: https://github.com/ultralytics/mkdocs
+
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel"]
+requires = ["setuptools>=57.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
