@@ -57,6 +57,8 @@ jobs:
       - name: Publish new tag
         if: steps.check_pypi.outputs.increment == 'True'
         run: |
+          git config --global user.name "UltralyticsAssistant"
+          git config --global user.email "web@ultralytics.com"
           git tag -a "v${{ steps.check_pypi.outputs.version }}" -m "Release v${{ steps.check_pypi.outputs.version }}"
           git push origin "v${{ steps.check_pypi.outputs.version }}"
       - name: Publish to PyPI
