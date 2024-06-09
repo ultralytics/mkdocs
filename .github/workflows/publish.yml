@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: "0" # pulls all commits (needed correct last updated dates in Docs)
+          fetch-depth: "0" # pulls all commits (needed for correct last-update dates in Docs)
       - name: Set up Python environment
         uses: actions/setup-python@v5
         with:
@@ -54,6 +54,11 @@ jobs:
           if increment:
               print('Local version is higher than PyPI version. Publishing new version to PyPI ✅.')
         id: check_pypi
+      - name: Publish new tag
+        if: steps.check_pypi.outputs.increment == 'True'
+        run: |
+          git tag -a "v${{ steps.check_pypi.outputs.version }}" -m "Release v${{ steps.check_pypi.outputs.version }}"
+          git push origin "v${{ steps.check_pypi.outputs.version }}"
       - name: Publish to PyPI
         continue-on-error: true
         if: (github.event_name == 'push' || github.event.inputs.pypi == 'true')  && steps.check_pypi.outputs.increment == 'True'
