@@ -59,7 +59,7 @@ jobs:
         run: |
           git config --global user.name "UltralyticsAssistant"
           git config --global user.email "web@ultralytics.com"
-          git tag -a "v${{ steps.check_pypi.outputs.version }}" -m "Release v${{ steps.check_pypi.outputs.version }}"
+          git tag -a "v${{ steps.check_pypi.outputs.version }}" -m "$(git log -1 --pretty=%B)"  # i.e. "v0.1.2 commit message"
           git push origin "v${{ steps.check_pypi.outputs.version }}"
       - name: Publish to PyPI
         continue-on-error: true
