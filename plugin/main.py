@@ -85,6 +85,33 @@ class MetaPlugin(BasePlugin):
         if md_typeset := soup.select_one(".md-content__inner"):
             md_typeset.append(content_to_insert)
 
+    def parse_faq(soup):
+        """Parse the FAQ questions and answers from the page content."""
+        faqs = []
+        faq_sections = soup.find_all('h2')
+        
+        for section in faq_sections:
+            question = section.text.strip()
+            answer = ""
+            next_sibling = section.find_next_sibling()
+            
+            while next_sibling and next_sibling.name != 'h2':
+                if next_sibling.name == 'p':
+                    answer += next_sibling.text.strip() + "\n"
+                next_sibling = next_sibling.find_next_sibling()
+            
+            if question and answer:
+                faqs.append({
+                    "@type": "Question",
+                    "name": question,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": answer.strip()
+                    }
+                })
+        
+        return faqs
+
     def on_post_page(self, output, page, config):
         """Enhances page content with images and meta descriptions if not already present."""
         if not config["site_url"]:
@@ -224,15 +251,27 @@ class MetaPlugin(BasePlugin):
         # Check if LD+JSON is enabled and add structured data to the <head>
         if self.config["add_json_ld"]:
             ld_json_script = soup.new_tag("script", type="application/ld+json")
-            ld_json_content = {
-                "@context": "https://schema.org",
-                "@type": "Article",
-                "headline": page.title,
-                "image": [page.meta["image"]] if "image" in page.meta else [],
-                "datePublished": git_info["creation_date"],
-                "dateModified": git_info["last_modified_date"],
-                "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
-            }
+            
+            # Check if the page is an FAQ page based on title or keywords
+            if "FAQ" in page.title or "faq" in page.meta.get("keywords", "").lower():
+                faqs = self.parse_faq(soup)
+                if faqs:
+                    ld_json_content = {
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": faqs
+                    }
+            else:
+                ld_json_content = {
+                    "@context": "https://schema.org",
+                    "@type": "Article",
+                    "headline": page.title,
+                    "image": [page.meta["image"]] if "image" in page.meta else [],
+                    "datePublished": git_info["creation_date"],
+                    "dateModified": git_info["last_modified_date"],
+                    "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
+                }
+                
             ld_json_script.string = json.dumps(ld_json_content)
             soup.head.append(ld_json_script)
 
