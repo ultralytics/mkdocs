@@ -260,7 +260,7 @@ class MetaPlugin(BasePlugin):
                 "dateModified": git_info["last_modified_date"],
                 "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
             }
-            # Check if it is a FAQ page
+            # Check if the page is an FAQ page based on title or keywords
             if "FAQ" in page.title or "faq" in page.meta.get("keywords", "").lower():
                 faqs = self.parse_faq(soup)
                 if faqs:
