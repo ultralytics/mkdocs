@@ -85,7 +85,7 @@ class MetaPlugin(BasePlugin):
         if md_typeset := soup.select_one(".md-content__inner"):
             md_typeset.append(content_to_insert)
 
-    def parse_faq(soup):
+    def parse_faq(self, soup):
         """Parse the FAQ questions and answers from the page content."""
         faqs = []
         faq_sections = soup.find_all('h2')
@@ -251,7 +251,15 @@ class MetaPlugin(BasePlugin):
         # Check if LD+JSON is enabled and add structured data to the <head>
         if self.config["add_json_ld"]:
             ld_json_script = soup.new_tag("script", type="application/ld+json")
-            
+            ld_json_content = {
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": page.title,
+                "image": [page.meta["image"]] if "image" in page.meta else [],
+                "datePublished": git_info["creation_date"],
+                "dateModified": git_info["last_modified_date"],
+                "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
+            }
             # Check if the page is an FAQ page based on title or keywords
             if "FAQ" in page.title or "faq" in page.meta.get("keywords", "").lower():
                 faqs = self.parse_faq(soup)
@@ -260,18 +268,7 @@ class MetaPlugin(BasePlugin):
                         "@context": "https://schema.org",
                         "@type": "FAQPage",
                         "mainEntity": faqs
-                    }
-            else:
-                ld_json_content = {
-                    "@context": "https://schema.org",
-                    "@type": "Article",
-                    "headline": page.title,
-                    "image": [page.meta["image"]] if "image" in page.meta else [],
-                    "datePublished": git_info["creation_date"],
-                    "dateModified": git_info["last_modified_date"],
-                    "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
-                }
-                
+                    }               
             ld_json_script.string = json.dumps(ld_json_content)
             soup.head.append(ld_json_script)
 
