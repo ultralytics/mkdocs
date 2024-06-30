@@ -29,7 +29,18 @@ class MetaPlugin(BasePlugin):
     )
 
     def get_git_info(self, file_path):
-        """Retrieves git information including hash, date, and branch."""
+        """
+        Retrieves git information of a specified file including hash, date, and branch.
+        
+        Args:
+            file_path (str): The path to the file for which git information is to be retrieved.
+        
+        Returns:
+            (dict): A dictionary containing git information. The dictionary contains the following keys:
+                - 'creation_date' (str): The creation date of the file.
+                - 'last_modified_date' (str): The last modified date of the file.
+                - 'authors' (list[tuple], optional): A list of tuples where each tuple contains author information (name, url, changes) if `add_authors` is enabled in the plugin config.
+        """
         file_path = Path(file_path).resolve()
 
         # Get the creation date
@@ -49,7 +60,18 @@ class MetaPlugin(BasePlugin):
         return git_info
 
     def on_page_content(self, content, page, config, files):
-        """Processes page content with optional enhancements like images and keywords."""
+        """
+        Processes page content with optional enhancements like images and keywords.
+        
+        Args:
+            content (str): The content of the page in HTML format.
+            page (mkdocs.structure.pages.Page): The MkDocs page object.
+            config (mkdocs.config.Config): The global MkDocs configuration object.
+            files (mkdocs.structure.files.Files): A collection of files in the documentation directory.
+        
+        Returns:
+            (str): The modified page content with additional meta tags as per plugin configuration.
+        """
         if not self.config["enabled"]:
             return content
 
@@ -78,7 +100,16 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def insert_content(soup, content_to_insert):
-        """Enhances page content with images and meta descriptions if not already present."""
+        """
+        Inserts additional content into a BeautifulSoup object at a specified location.
+        
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
+            content_to_insert (Tag or NavigableString): The HTML content to be inserted.
+        
+        Returns:
+            None
+        """
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
         # Fallback: append the content to the md-typeset div if the comments header is not found
@@ -86,7 +117,17 @@ class MetaPlugin(BasePlugin):
             md_typeset.append(content_to_insert)
 
     def on_post_page(self, output, page, config):
-        """Enhances page content with images and meta descriptions if not already present."""
+        """
+        Enhances the HTML output of a page with metadata tags, git information, and share buttons.
+        
+        Args:
+            output (str): The HTML content of the rendered page.
+            page (Page): An object representing the current processed page.
+            config (Config): The MkDocs configuration object.
+        
+        Returns:
+            (str): The updated HTML content with additional metadata and enhancements.
+        """
         if not config["site_url"]:
             print(
                 "WARNING - mkdocs-ultralytics-plugin: Please add a 'site_url' to your mkdocs.yml "
