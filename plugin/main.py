@@ -31,10 +31,10 @@ class MetaPlugin(BasePlugin):
     def get_git_info(self, file_path):
         """
         Retrieves git information of a specified file including hash, date, and branch.
-        
+
         Args:
             file_path (str): The path to the file for which git information is to be retrieved.
-        
+
         Returns:
             (dict): A dictionary containing git information. The dictionary contains the following keys:
                 - 'creation_date' (str): The creation date of the file.
@@ -62,13 +62,13 @@ class MetaPlugin(BasePlugin):
     def on_page_content(self, content, page, config, files):
         """
         Processes page content with optional enhancements like images and keywords.
-        
+
         Args:
             content (str): The content of the page in HTML format.
             page (mkdocs.structure.pages.Page): The MkDocs page object.
             config (mkdocs.config.Config): The global MkDocs configuration object.
             files (mkdocs.structure.files.Files): A collection of files in the documentation directory.
-        
+
         Returns:
             (str): The modified page content with additional meta tags as per plugin configuration.
         """
@@ -102,11 +102,11 @@ class MetaPlugin(BasePlugin):
     def insert_content(soup, content_to_insert):
         """
         Inserts additional content into a BeautifulSoup object at a specified location.
-        
+
         Args:
             soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
             content_to_insert (Tag or NavigableString): The HTML content to be inserted.
-        
+
         Returns:
             None
         """
@@ -119,12 +119,12 @@ class MetaPlugin(BasePlugin):
     def on_post_page(self, output, page, config):
         """
         Enhances the HTML output of a page with metadata tags, git information, and share buttons.
-        
+
         Args:
             output (str): The HTML content of the rendered page.
             page (Page): An object representing the current processed page.
             config (Config): The MkDocs configuration object.
-        
+
         Returns:
             (str): The updated HTML content with additional metadata and enhancements.
         """

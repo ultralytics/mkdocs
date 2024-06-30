@@ -16,10 +16,10 @@ WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     """
     Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
-    
+
     Args:
         soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need to be extracted.
-    
+
     Returns:
         list: A list containing YouTube video IDs in string format extracted from the HTML content.
     """
@@ -34,13 +34,13 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
 def get_github_username_from_email(email, local_cache, file_path="", verbose=True):
     """
     Retrieves the GitHub username associated with the given email address.
-    
+
     Args:
         email (str): The email address to retrieve the GitHub username for.
         local_cache (dict): A dictionary containing cached email-GitHub username mappings.
         file_path (str, optional): Name of the file the user authored. Defaults to ''.
         verbose (bool, optional): Whether to print verbose output. Defaults to True.
-    
+
     Returns:
         (str or None): The GitHub username associated with the email address, or None if not found.
     """
@@ -80,13 +80,13 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
 def get_github_usernames_from_file(file_path):
     """
     Fetch GitHub usernames from Git Log and Git Blame for a given file.
-    
+
     Args:
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
-    
+
     Returns:
         (None): This function does not return a value but prints the fetched GitHub usernames.
-    
+
     Examples:
         >>> print(get_github_usernames_from_file('mkdocs.yml'))
     """
