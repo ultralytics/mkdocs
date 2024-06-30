@@ -15,13 +15,13 @@ WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 
 def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     """
-    Extract YouTube video IDs from iframes in the BeautifulSoup object.
+    Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
 
     Args:
-        soup (BeautifulSoup): BeautifulSoup object containing the HTML content.
+        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need to be extracted.
 
     Returns:
-        list: A list of YouTube video IDs.
+        list: A list containing YouTube video IDs in string format extracted from the HTML content.
     """
     youtube_ids = []
     iframes = soup.find_all("iframe", src=True)
@@ -42,18 +42,7 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         verbose (bool, optional): Whether to print verbose output. Defaults to True.
 
     Returns:
-        str or None: The GitHub username associated with the email address, or None if not found.
-
-    Raises:
-        None
-
-    Examples:
-        ```python
-        email = "example@example.com"
-        cache = {"example@example.com": "example"}
-        username = get_github_username_from_email(email, cache)
-        print(username)  # Output: "example"
-        ```
+        (str or None): The GitHub username associated with the email address, or None if not found.
     """
 
     # First, check if the email exists in the local cache file
@@ -91,6 +80,12 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
 def get_github_usernames_from_file(file_path):
     """
     Fetch GitHub usernames from Git Log and Git Blame for a given file.
+
+    Args:
+        file_path (str): The path to the file for which GitHub usernames are to be retrieved.
+
+    Returns:
+        (None): This function does not return a value but prints the fetched GitHub usernames.
 
     Examples:
         >>> print(get_github_usernames_from_file('mkdocs.yml'))
