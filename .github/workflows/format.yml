@@ -11,7 +11,7 @@ on:
 
 jobs:
   format:
-    runs-on: latest-ubuntu
+    runs-on: ubuntu-latest
     steps:
       - name: Run Ultralytics Formatting
         uses: ultralytics/actions@main
