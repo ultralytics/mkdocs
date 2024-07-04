@@ -119,26 +119,32 @@ class MetaPlugin(BasePlugin):
     def parse_faq(self, soup):
         """Parse the FAQ questions and answers from the page content."""
         faqs = []
-        faq_sections = soup.find_all("h2")
+        faq_section = soup.find("h2", string="FAQ")
 
-        for section in faq_sections:
-            question = section.text.strip()
-            answer = ""
-            next_sibling = section.find_next_sibling()
+        if faq_section:
+            current_section = faq_section.find_next_sibling()
 
-            while next_sibling and next_sibling.name != "h2":
-                if next_sibling.name == "p":
-                    answer += next_sibling.text.strip() + "\n"
-                next_sibling = next_sibling.find_next_sibling()
+            while current_section and current_section.name != "h2":
+                if current_section.name == "h3":
+                    question = current_section.text.strip()
+                    answer = ""
+                    next_sibling = current_section.find_next_sibling()
 
-            if question and answer:
-                faqs.append(
-                    {
-                        "@type": "Question",
-                        "name": question,
-                        "acceptedAnswer": {"@type": "Answer", "text": answer.strip()},
-                    }
-                )
+                    while next_sibling and next_sibling.name != "h3" and next_sibling.name != "h2":
+                        if next_sibling.name == "p":
+                            answer += f"{next_sibling.text.strip()} "
+                        next_sibling = next_sibling.find_next_sibling()
+
+                    if question and answer:
+                        faqs.append(
+                            {
+                                "@type": "Question",
+                                "name": question,
+                                "acceptedAnswer": {"@type": "Answer", "text": answer.strip()},
+                            }
+                        )
+
+                current_section = current_section.find_next_sibling()
 
         return faqs
 
@@ -299,12 +305,14 @@ class MetaPlugin(BasePlugin):
                 "datePublished": git_info["creation_date"],
                 "dateModified": git_info["last_modified_date"],
                 "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
+                "abstract": page.meta.get("description", "")
             }
-            # Check if the page is an FAQ page based on title or keywords
-            if "FAQ" in page.title or "faq" in page.meta.get("keywords", "").lower():
-                faqs = self.parse_faq(soup)
-                if faqs:
-                    ld_json_content = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": faqs}
+
+            faqs = self.parse_faq(soup)
+            if faqs:
+                ld_json_content["@type"] = ["Article", "FAQPage"]
+                ld_json_content["mainEntity"] = faqs
+
             ld_json_script.string = json.dumps(ld_json_content)
             soup.head.append(ld_json_script)
 
