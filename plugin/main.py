@@ -39,17 +39,18 @@ class MetaPlugin(BasePlugin):
             (dict): A dictionary containing git information. The dictionary contains the following keys:
                 - 'creation_date' (str): The creation date of the file.
                 - 'last_modified_date' (str): The last modified date of the file.
-                - 'authors' (list[tuple], optional): A list of tuples where each tuple contains author information (name, url, changes) if `add_authors` is enabled in the plugin config.
+                - 'authors' (list[tuple], optional): A list of tuples where each tuple contains author
+                    information (name, url, changes) if `add_authors` is enabled in the plugin config.
         """
-        file_path = Path(file_path).resolve()
+        file_path = str(Path(file_path).resolve())
 
         # Get the creation date
-        args = ["git", "log", "--reverse", "--pretty=format:%ai", str(file_path)]
+        args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
         git_info = {"creation_date": creation_date}
 
         # Get the last modification date
-        last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", str(file_path)]).decode("utf-8")
+        last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
         git_info["last_modified_date"] = last_modified_date
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
@@ -115,6 +116,39 @@ class MetaPlugin(BasePlugin):
         # Fallback: append the content to the md-typeset div if the comments header is not found
         if md_typeset := soup.select_one(".md-content__inner"):
             md_typeset.append(content_to_insert)
+
+    @staticmethod
+    def parse_faq(soup):
+        """Parse the FAQ questions and answers from the page content."""
+        faqs = []
+        faq_section = soup.find("h2", string="FAQ")
+
+        if faq_section:
+            current_section = faq_section.find_next_sibling()
+
+            while current_section and current_section.name != "h2":
+                if current_section.name == "h3":
+                    question = current_section.text.strip()
+                    answer = ""
+                    next_sibling = current_section.find_next_sibling()
+
+                    while next_sibling and next_sibling.name != "h3" and next_sibling.name != "h2":
+                        if next_sibling.name == "p":
+                            answer += f"{next_sibling.text.strip()} "
+                        next_sibling = next_sibling.find_next_sibling()
+
+                    if question and answer:
+                        faqs.append(
+                            {
+                                "@type": "Question",
+                                "name": question,
+                                "acceptedAnswer": {"@type": "Answer", "text": answer.strip()},
+                            }
+                        )
+
+                current_section = current_section.find_next_sibling()
+
+        return faqs
 
     def on_post_page(self, output, page, config):
         """
@@ -273,7 +307,14 @@ class MetaPlugin(BasePlugin):
                 "datePublished": git_info["creation_date"],
                 "dateModified": git_info["last_modified_date"],
                 "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
+                "abstract": page.meta.get("description", ""),
             }
+
+            faqs = self.parse_faq(soup)
+            if faqs:
+                ld_json_content["@type"] = ["Article", "FAQPage"]
+                ld_json_content["mainEntity"] = faqs
+
             ld_json_script.string = json.dumps(ld_json_content)
             soup.head.append(ld_json_script)
 
