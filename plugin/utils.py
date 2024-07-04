@@ -85,7 +85,7 @@ def get_github_usernames_from_file(file_path):
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
 
     Returns:
-        (None): This function does not return a value but prints the fetched GitHub usernames.
+        (dict): A dictionary of the fetched GitHub usernames.
 
     Examples:
         >>> print(get_github_usernames_from_file('mkdocs.yml'))

@@ -39,17 +39,18 @@ class MetaPlugin(BasePlugin):
             (dict): A dictionary containing git information. The dictionary contains the following keys:
                 - 'creation_date' (str): The creation date of the file.
                 - 'last_modified_date' (str): The last modified date of the file.
-                - 'authors' (list[tuple], optional): A list of tuples where each tuple contains author information (name, url, changes) if `add_authors` is enabled in the plugin config.
+                - 'authors' (list[tuple], optional): A list of tuples where each tuple contains author
+                    information (name, url, changes) if `add_authors` is enabled in the plugin config.
         """
-        file_path = Path(file_path).resolve()
+        file_path = str(Path(file_path).resolve())
 
         # Get the creation date
-        args = ["git", "log", "--reverse", "--pretty=format:%ai", str(file_path)]
+        args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
         git_info = {"creation_date": creation_date}
 
         # Get the last modification date
-        last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", str(file_path)]).decode("utf-8")
+        last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
         git_info["last_modified_date"] = last_modified_date
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
@@ -116,7 +117,8 @@ class MetaPlugin(BasePlugin):
         if md_typeset := soup.select_one(".md-content__inner"):
             md_typeset.append(content_to_insert)
 
-    def parse_faq(self, soup):
+    @staticmethod
+    def parse_faq(soup):
         """Parse the FAQ questions and answers from the page content."""
         faqs = []
         faq_section = soup.find("h2", string="FAQ")
