@@ -22,6 +22,24 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
 
     Returns:
         list: A list containing YouTube video IDs in string format extracted from the HTML content.
+
+    Examples:
+        ```
+        from bs4 import BeautifulSoup
+
+        # Sample HTML content with YouTube iframes
+        html_content = '''
+        <html>
+            <body>
+                <iframe src="https://www.youtube.com/embed/example_id1"></iframe>
+                <iframe src="https://www.youtube.com/embed/example_id2"></iframe>
+            </body>
+        </html>
+        '''
+        soup = BeautifulSoup(html_content, 'html.parser')
+        video_ids = get_youtube_video_ids(soup)
+        print(video_ids)  # Output: ['example_id1', 'example_id2']
+        ```
     """
     youtube_ids = []
     iframes = soup.find_all("iframe", src=True)
@@ -42,7 +60,12 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         verbose (bool, optional): Whether to print verbose output. Defaults to True.
 
     Returns:
-        (str or None): The GitHub username associated with the email address, or None if not found.
+        (str | None): The GitHub username associated with the email address, or None if not found.
+
+    Note:
+        If the email ends with "@users.noreply.github.com", the function will parse the username directly from the email address.
+        Uses the GitHub REST API to query the username if it's not found in the local cache. Ensure you comply with GitHub's rate
+        limits and authentication requirements when querying their API.
     """
 
     # First, check if the email exists in the local cache file
@@ -79,16 +102,21 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
 
 def get_github_usernames_from_file(file_path):
     """
-    Fetch GitHub usernames from Git Log and Git Blame for a given file.
+    Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
 
     Args:
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
 
     Returns:
-        (dict): A dictionary of the fetched GitHub usernames.
+        (dict): A dictionary where keys are GitHub usernames or emails (if username is not found) and values are dictionaries containing:
+            - 'email' (str): The email address of the author.
+            - 'url' (str): The GitHub profile URL of the author.
+            - 'changes' (int): The number of changes (commits) made by the author.
 
     Examples:
-        >>> print(get_github_usernames_from_file('mkdocs.yml'))
+        ```python
+        print(get_github_usernames_from_file('mkdocs.yml'))
+        ```
     """
     # Fetch author emails using 'git log'
     authors_emails_log = (

@@ -37,10 +37,20 @@ class MetaPlugin(BasePlugin):
 
         Returns:
             (dict): A dictionary containing git information. The dictionary contains the following keys:
-                - 'creation_date' (str): The creation date of the file.
-                - 'last_modified_date' (str): The last modified date of the file.
-                - 'authors' (list[tuple], optional): A list of tuples where each tuple contains author
-                    information (name, url, changes) if `add_authors` is enabled in the plugin config.
+                - creation_date (str): The creation date of the file.
+                - last_modified_date (str): The last modified date of the file.
+                - authors (list[tuple]): Optional. A list of tuples where each tuple contains author information
+                  (name (str), url (str), changes (int)) if `add_authors` is enabled in the plugin config.
+
+        Notes:
+            Ensure git is installed and the file is within a git repository to retrieve accurate information.
+
+        Examples:
+            ```python
+            plugin = MetaPlugin()
+            git_info = plugin.get_git_info('path/to/file.py')
+            print(git_info)
+            ```
         """
         file_path = str(Path(file_path).resolve())
 
@@ -62,7 +72,7 @@ class MetaPlugin(BasePlugin):
 
     def on_page_content(self, content, page, config, files):
         """
-        Processes page content with optional enhancements like images and keywords.
+        Processes page content with optional enhancements like images, descriptions, and keywords.
 
         Args:
             content (str): The content of the page in HTML format.
@@ -72,6 +82,13 @@ class MetaPlugin(BasePlugin):
 
         Returns:
             (str): The modified page content with additional meta tags as per plugin configuration.
+
+        Notes:
+            This method enhances the content of a MkDocs page by adding meta tags such as descriptions and images.
+            It checks and utilizes the first paragraph for a description, the first image or YouTube video for
+            a thumbnail, and applies the specified default image if necessary. The functionality is controlled by
+            the plugin's configuration settings. This is particularly useful for optimizing pages for SEO and
+            social media sharing.
         """
         if not self.config["enabled"]:
             return content
@@ -106,10 +123,29 @@ class MetaPlugin(BasePlugin):
 
         Args:
             soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
-            content_to_insert (Tag or NavigableString): The HTML content to be inserted.
+            content_to_insert (Tag | NavigableString): The HTML content to be inserted.
 
         Returns:
             None
+
+        Notes:
+            This function specifically searches for an HTML element with the id "__comments" and inserts the
+            content_to_insert before it. If the "__comments" element is not found, it defaults to appending
+            the content to the element with class "md-content__inner".
+
+        Example:
+            ```python
+            from bs4 import BeautifulSoup
+            from bs4.element import Tag, NavigableString
+
+            html_content = '<div class="md-content__inner"><h2 id="__comments">Comments</h2></div>'
+            soup = BeautifulSoup(html_content, 'html.parser')
+            new_content = soup.new_tag('div', id='new')
+            new_content.string = "This is new content"
+
+            MetaPlugin.insert_content(soup, new_content)
+            print(soup.prettify())
+            ```
         """
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
@@ -119,7 +155,30 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def parse_faq(soup):
-        """Parse the FAQ questions and answers from the page content."""
+        """
+        Parse the FAQ questions and answers from the HTML page content.
+
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the HTML page content.
+
+        Returns:
+            (list[dict]): A list of dictionaries, each containing a parsed FAQ entry with 'Question' and 'Answer' fields
+                          following the JSON-LD schema.
+
+        Example:
+            ```python
+            from bs4 import BeautifulSoup
+            from mymodule import MetaPlugin
+
+            html_content = '<h2>FAQ</h2><h3>Question 1?</h3><p>Answer to question 1.</p>'
+            soup = BeautifulSoup(html_content, 'html.parser')
+            faq_data = MetaPlugin.parse_faq(soup)
+            ```
+
+        Note:
+            This method identifies the FAQ section by looking for an `h2` tag with the text "FAQ". Each question is identified
+            by an `h3` tag, and its corresponding answer is captured from `p` tags until the next `h3` or `h2` tag.
+        """
         faqs = []
         faq_section = soup.find("h2", string="FAQ")
 
@@ -161,6 +220,14 @@ class MetaPlugin(BasePlugin):
 
         Returns:
             (str): The updated HTML content with additional metadata and enhancements.
+
+        Notes:
+            The output HTML is enhanced with meta tags for SEO, Open Graph, and Twitter. Additionally, git
+            information such as creation and modification dates, and authorship details can be included,
+            depending on the plugin configuration. Share buttons for Twitter and LinkedIn are optionally
+            added to facilitate content sharing. Structured data in JSON-LD format is also appended when
+            enabled, providing better integration with search engines. Ensure to configure 'site_url' in
+            your MkDocs configuration for full functionality.
         """
         if not config["site_url"]:
             print(
