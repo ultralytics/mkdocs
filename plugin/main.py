@@ -305,7 +305,7 @@ class MetaPlugin(BasePlugin):
                 "datePublished": git_info["creation_date"],
                 "dateModified": git_info["last_modified_date"],
                 "author": [{"@type": "Organization", "name": "Ultralytics", "url": "https://ultralytics.com/"}],
-                "abstract": page.meta.get("description", "")
+                "abstract": page.meta.get("description", ""),
             }
 
             faqs = self.parse_faq(soup)
