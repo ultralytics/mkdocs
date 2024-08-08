@@ -321,15 +321,15 @@ class MetaPlugin(BasePlugin):
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
         if (self.config["add_dates"] or self.config["add_authors"]) and git_info["creation_date"]:
-            div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;"><br>'
+            div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px; color: grey;"><br>'
 
             if self.config["add_dates"]:
-                div += f"Created {git_info['creation_date'][:10]}, Updated {git_info['last_modified_date'][:10]}"
+                div += f"🕒Created {git_info['creation_date'][:10]}, ✏️ Updated {git_info['last_modified_date'][:10]}"
 
             if self.config["add_authors"]:
                 if self.config["add_dates"]:
                     div += "<br>"
-                authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
+                authors_str = ", ".join([f"<a href='{a[1]}' style='color: grey;'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
                 div += f"Authors: {authors_str}"
 
             div += "</div>"
