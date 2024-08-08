@@ -353,19 +353,7 @@ class MetaPlugin(BasePlugin):
 
             div += "</div>"
 
-            if self.config["css_path"]:
-                full_css_path = (Path(config["docs_dir"]) / self.config["css_path"]).resolve()
-                print(full_css_path)
-                if not self.css_written:
-                    full_css_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(full_css_path, "w") as f:
-                        f.write(self.get_css())
-                    self.css_written = True
-
-                css_link = soup.new_tag("link", rel="stylesheet", href=self.config["css_path"])
-                soup.head.append(css_link)
-            else:
-                # Inline CSS
+            if self.config["add_css"]:
                 style_tag = soup.new_tag("style")
                 style_tag.string = self.get_css()
                 soup.head.append(style_tag)
