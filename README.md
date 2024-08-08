@@ -47,8 +47,7 @@ The plugin supports several configuration arguments to tailor its behavior to yo
 - `add_image`: Manages meta image tag generation. (default: `True`)
 - `add_keywords`: Allows meta keyword tag generation. (default: `True`)
 - `add_share_buttons`: Adds or removes social share buttons. (default: `True`)
-- `add_dates`: Appends git commit dates to your content footer. (default: `True`)
-- `add_authors`: Includes git author information in the content footer. (default: `True`)
+- `add_authors`: Includes author and updated date information in the content footer. (default: `True`)
 
 Include these arguments under the `ultralytics` plugin entry in your `mkdocs.yml`:
 
@@ -64,7 +63,6 @@ plugins:
       add_image: True
       add_keywords: True
       add_share_buttons: True
-      add_dates: True
       add_authors: True
 ```
 

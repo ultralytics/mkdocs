@@ -2,6 +2,7 @@
 
 
 import json
+from datetime import datetime
 from pathlib import Path
 from subprocess import check_output
 
@@ -10,7 +11,11 @@ from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
 # import get_github_usernames_from_file function from the previous script
-from .utils import get_github_usernames_from_file, get_youtube_video_ids
+from .utils import (
+    calculate_time_difference,
+    get_github_usernames_from_file,
+    get_youtube_video_ids,
+)
 
 
 class MetaPlugin(BasePlugin):
@@ -23,8 +28,7 @@ class MetaPlugin(BasePlugin):
         ("add_image", config_options.Type(bool, default=True)),
         ("add_keywords", config_options.Type(bool, default=True)),  # Add new argument for keywords
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
-        ("add_dates", config_options.Type(bool, default=True)),  # Add dates section
-        ("add_authors", config_options.Type(bool, default=False)),  # Add authors section
+        ("add_authors", config_options.Type(bool, default=False)),  # Add dates and authors section
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
     )
 
@@ -320,19 +324,103 @@ class MetaPlugin(BasePlugin):
 
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
-        if (self.config["add_dates"] or self.config["add_authors"]) and git_info["creation_date"]:
-            div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px;"><br>'
+        if (self.config["add_authors"]) and git_info["creation_date"]:
+            date_format = "%Y-%m-%d %H:%M:%S %z"
+            created_ago = calculate_time_difference(git_info["creation_date"])
+            updated_ago = calculate_time_difference(git_info["last_modified_date"])
+            created_date = datetime.strptime(git_info["creation_date"], date_format).strftime("%B %d, %Y")
+            updated_date = datetime.strptime(git_info["last_modified_date"], date_format).strftime("%B %d, %Y")
 
-            if self.config["add_dates"]:
-                div += f"Created {git_info['creation_date'][:10]}, Updated {git_info['last_modified_date'][:10]}"
+            div = '<div class="git-info">'
+
+            div += f"""
+            <span class="dates">
+                <span title="This page was first created on {created_date}">
+                    <span class="hover-item">📅</span> Created {created_ago} ago
+                </span>
+                &nbsp;
+                <span title="This page was last updated on {updated_date}">
+                    <span class="hover-item">✏️</span> Updated {updated_ago} ago
+                </span>
+                &nbsp;
+            </span>
+            """
 
             if self.config["add_authors"]:
-                if self.config["add_dates"]:
-                    div += "<br>"
-                authors_str = ", ".join([f"<a href='{a[1]}'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
-                div += f"Authors: {authors_str}"
+                for author in git_info["authors"]:
+                    div += f"""
+                    <a href="{author[1]}" class="author-link" title="{author[0]} ({author[2]} changes)">
+                        <img src="https://github.com/{author[0]}.png" alt="{author[0]}" class="hover-item">
+                    </a>
+                    """
 
             div += "</div>"
+
+            # Simplified CSS with unified hover effects, closer author circles, and larger share buttons
+            css = """
+            <style>
+                .git-info, .share-buttons {
+                    font-size: 0.8em;
+                    color: grey;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    margin-bottom: 10px;
+                }
+                .dates {
+                    display: flex;
+                    align-items: center;
+                }
+                .dates span, .author-link, .share-button {
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                }
+                .dates span {
+                    margin-right: 10px;
+                }
+                .hover-item {
+                    transition: all 0.2s ease;
+                    filter: grayscale(100%);
+                }
+                .dates .hover-item {
+                    font-size: 1.6em;
+                    margin-right: 5px;
+                }
+                .author-link .hover-item {
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    margin-right: 1px;
+                }
+                .hover-item:hover {
+                    transform: scale(1.2);
+                    filter: grayscale(0%);
+                }
+                .share-button {
+                    background-color: #1da1f2;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 5px;
+                    border: none;
+                    font-size: 0.95em;
+                    margin-left: 5px;
+                    transition: all 0.2s ease;
+                }
+                .share-button:hover {
+                    transform: scale(1.1);
+                    filter: brightness(1.2);
+                }
+                .share-button.linkedin {
+                    background-color: #0077b5;
+                }
+                .share-button i {
+                    margin-right: 5px;
+                    font-size: 1.1em;
+                }
+            </style>
+            """
+            div += css
             div = BeautifulSoup(div, "html.parser")
             self.insert_content(soup, div)
 
@@ -341,22 +429,14 @@ class MetaPlugin(BasePlugin):
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
+            # Updated HTML for share buttons
             share_buttons = f"""
-            <style>
-                .share-button:hover {{
-                    filter: brightness(1.2);
-                }}
-                .share-buttons {{
-                    display: flex;
-                    justify-content: flex-end;
-                }}
-            </style>
             <div class="share-buttons">
-                <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button" style="background-color: #1da1f2; color: white; padding: 5px 10px; border-radius: 5px; margin-right: 10px; cursor: pointer; display: flex; align-items: center;">
-                    <i class="fa-brands fa-twitter" style="margin-right: 5px;"></i> Tweet
+                <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
+                    <i class="fa-brands fa-twitter"></i> Tweet
                 </button>
-                <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button" style="background-color: #0077b5; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; display: flex; align-items: center;">
-                    <i class="fa-brands fa-linkedin" style="margin-right: 5px;"></i> Share
+                <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
+                    <i class="fa-brands fa-linkedin"></i> Share
                 </button>
             </div>
             """

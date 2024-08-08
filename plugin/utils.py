@@ -4,6 +4,7 @@ import contextlib
 import re
 import subprocess
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -11,6 +12,36 @@ import yaml  # install this with `pip install PyYAML` if not installed yet
 from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
+
+
+def calculate_time_difference(date_string):
+    """
+    Calculate the time difference between a given date and the current date in a human-readable format.
+
+    Args:
+        date_string (str): Date and time string in the format "%Y-%m-%d %H:%M:%S %z".
+
+    Returns:
+        str: Time difference in days, months, or years (e.g., "5 days", "2 months", "1 year").
+
+
+    Example:
+        >>> calculate_time_difference("2023-01-01 00:00:00 +0000")
+        "5 months"
+    """
+    date = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S %z")
+    now = datetime.now(date.tzinfo)
+    diff = now - date
+    days = diff.days
+
+    if days < 30:
+        return f"{days} day{'s' if days != 1 else ''}"
+    elif days < 365:
+        months = days // 30
+        return f"{months} month{'s' if months != 1 else ''}"
+    else:
+        years = days // 365
+        return f"{years} year{'s' if years != 1 else ''}"
 
 
 def get_youtube_video_ids(soup: BeautifulSoup) -> list:
