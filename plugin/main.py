@@ -28,8 +28,7 @@ class MetaPlugin(BasePlugin):
         ("add_image", config_options.Type(bool, default=True)),
         ("add_keywords", config_options.Type(bool, default=True)),  # Add new argument for keywords
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
-        ("add_dates", config_options.Type(bool, default=True)),  # Add dates section
-        ("add_authors", config_options.Type(bool, default=False)),  # Add authors section
+        ("add_authors", config_options.Type(bool, default=False)),  # Add dates and authors section
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
     )
 
@@ -325,7 +324,7 @@ class MetaPlugin(BasePlugin):
 
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
-        if (self.config["add_dates"] or self.config["add_authors"]) and git_info["creation_date"]:
+        if (self.config["add_authors"]) and git_info["creation_date"]:
             date_format = "%Y-%m-%d %H:%M:%S %z"
             created_ago = calculate_time_difference(git_info["creation_date"])
             updated_ago = calculate_time_difference(git_info["last_modified_date"])
