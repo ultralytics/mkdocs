@@ -22,26 +22,28 @@ def calculate_time_difference(date_string):
         date_string (str): Date and time string in the format "%Y-%m-%d %H:%M:%S %z".
 
     Returns:
-        str: Time difference in days, months, or years (e.g., "5 days", "2 months", "1 year").
-
+        (str): Time difference in days, months, or years (e.g., "5 days", "2 months", "1 year").
+        (str): Given date formatted as "Month Day, Year" (e.g., "January 01, 2023").
 
     Example:
         >>> calculate_time_difference("2023-01-01 00:00:00 +0000")
-        "5 months"
+        "5 months", "January 01, 2023"
     """
     date = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S %z")
+    pretty_date = date.strftime("%B %d, %Y")
     now = datetime.now(date.tzinfo)
     diff = now - date
     days = diff.days
 
     if days < 30:
-        return f"{days} day{'s' if days != 1 else ''}"
+        difference = f"{days} day{'s' if days != 1 else ''}"
     elif days < 365:
         months = days // 30
-        return f"{months} month{'s' if months != 1 else ''}"
+        difference = f"{months} month{'s' if months != 1 else ''}"
     else:
         years = days // 365
-        return f"{years} year{'s' if years != 1 else ''}"
+        difference = f"{years} year{'s' if years != 1 else ''}"
+    return difference, pretty_date
 
 
 def get_youtube_video_ids(soup: BeautifulSoup) -> list:
