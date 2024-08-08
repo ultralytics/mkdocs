@@ -29,7 +29,11 @@ class MetaPlugin(BasePlugin):
         ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
         ("add_authors", config_options.Type(bool, default=False)),  # Add dates and authors section
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
+        ("css_path", config_options.Type(str, default=None)),  # Add argument for CSS path
     )
+
+    def __init__(self):
+        self.css_written = False
 
     def get_git_info(self, file_path):
         """
@@ -352,80 +356,31 @@ class MetaPlugin(BasePlugin):
 
             div += "</div>"
 
-            # Simplified CSS with unified hover effects, closer author circles, and larger share buttons
-            css = """
-            <style>
-                .git-info, .share-buttons {
-                    font-size: 0.8em;
-                    color: grey;
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                    margin-bottom: 10px;
-                }
-                .dates {
-                    display: flex;
-                    align-items: center;
-                }
-                .dates span, .author-link, .share-button {
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                }
-                .dates span {
-                    margin-right: 10px;
-                }
-                .hover-item {
-                    transition: all 0.2s ease;
-                    filter: grayscale(100%);
-                }
-                .dates .hover-item {
-                    font-size: 1.6em;
-                    margin-right: 5px;
-                }
-                .author-link .hover-item {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    margin-right: 1px;
-                }
-                .hover-item:hover {
-                    transform: scale(1.2);
-                    filter: grayscale(0%);
-                }
-                .share-button {
-                    background-color: #1da1f2;
-                    color: white;
-                    padding: 6px 12px;
-                    border-radius: 5px;
-                    border: none;
-                    font-size: 0.95em;
-                    margin-left: 5px;
-                    transition: all 0.2s ease;
-                }
-                .share-button:hover {
-                    transform: scale(1.1);
-                    filter: brightness(1.2);
-                }
-                .share-button.linkedin {
-                    background-color: #0077b5;
-                }
-                .share-button i {
-                    margin-right: 5px;
-                    font-size: 1.1em;
-                }
-            </style>
-            """
-            div += css
+            if self.config["css_path"]:
+                full_css_path = (Path(config["docs_dir"]) / self.config["css_path"]).resolve()
+                print(full_css_path)
+                if not self.css_written:
+                    full_css_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(full_css_path, "w") as f:
+                        f.write(self.get_css())
+                    self.css_written = True
+
+                css_link = soup.new_tag("link", rel="stylesheet", href=self.config["css_path"])
+                soup.head.append(css_link)
+            else:
+                # Inline CSS
+                style_tag = soup.new_tag("style")
+                style_tag.string = self.get_css()
+                soup.head.append(style_tag)
+
             div = BeautifulSoup(div, "html.parser")
             self.insert_content(soup, div)
 
         # Add share buttons to the footer, if enabled
-        if self.config["add_share_buttons"]:  # Check if share buttons are enabled
+        if self.config["add_share_buttons"]:
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-            # Updated HTML for share buttons
             share_buttons = f"""
             <div class="share-buttons">
                 <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
@@ -462,3 +417,67 @@ class MetaPlugin(BasePlugin):
             soup.head.append(ld_json_script)
 
         return str(soup)
+
+    @staticmethod
+    def get_css():
+        """Simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
+        return """.git-info, .share-buttons {
+    font-size: 0.8em;
+    color: grey;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+.dates {
+    display: flex;
+    align-items: center;
+}
+.dates span, .author-link, .share-button {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.dates span {
+    margin-right: 10px;
+}
+.hover-item {
+    transition: all 0.2s ease;
+    filter: grayscale(100%);
+}
+.dates .hover-item {
+    font-size: 1.6em;
+    margin-right: 5px;
+}
+.author-link .hover-item {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 1px;
+}
+.hover-item:hover {
+    transform: scale(1.2);
+    filter: grayscale(0%);
+}
+.share-button {
+    background-color: #1da1f2;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: none;
+    font-size: 0.95em;
+    margin-left: 5px;
+    transition: all 0.2s ease;
+}
+.share-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+.share-button.linkedin {
+    background-color: #0077b5;
+}
+.share-button i {
+    margin-right: 5px;
+    font-size: 1.1em;
+}
+"""
