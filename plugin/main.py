@@ -380,7 +380,7 @@ class MetaPlugin(BasePlugin):
                 }
                 .dates .hover-item {
                     font-size: 1.4em;
-                    margin-right: 3px;
+                    margin-right: 2px;
                 }
                 .author-link .hover-item {
                     width: 50px;
