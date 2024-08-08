@@ -20,20 +20,17 @@ from .utils import (
 class MetaPlugin(BasePlugin):
     # Plugin arguments
     config_scheme = (
-        ("verbose", config_options.Type(bool, default=True)),
-        ("enabled", config_options.Type(bool, default=True)),
-        ("default_image", config_options.Type(str, default=None)),
-        ("add_desc", config_options.Type(bool, default=True)),
-        ("add_image", config_options.Type(bool, default=True)),
-        ("add_keywords", config_options.Type(bool, default=True)),  # Add new argument for keywords
-        ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
-        ("add_authors", config_options.Type(bool, default=False)),  # Add dates and authors section
+        ("verbose", config_options.Type(bool, default=True)),  # Enable verbose output for debugging
+        ("enabled", config_options.Type(bool, default=True)),  # Enable or disable the plugin
+        ("default_image", config_options.Type(str, default=None)),  # Default image URL if none found in content
+        ("add_desc", config_options.Type(bool, default=True)),  # Add meta description tags
+        ("add_image", config_options.Type(bool, default=True)),  # Add meta image tags
+        ("add_keywords", config_options.Type(bool, default=True)),  # Add meta keywords tags
+        ("add_share_buttons", config_options.Type(bool, default=True)),  # Add social share buttons
+        ("add_authors", config_options.Type(bool, default=False)),  # Add git author and date information
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
-        ("css_path", config_options.Type(str, default=None)),  # Add argument for CSS path
+        ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
     )
-
-    def __init__(self):
-        self.css_written = False
 
     def get_git_info(self, file_path):
         """
