@@ -324,7 +324,7 @@ class MetaPlugin(BasePlugin):
             div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px; color: grey;"><br>'
 
             if self.config["add_dates"]:
-                div += f"🕒Created {git_info['creation_date'][:10]}, ✏️ Updated {git_info['last_modified_date'][:10]}"
+                div += f"📅 Created {git_info['creation_date'][:10]}  -  ✏️ Updated {git_info['last_modified_date'][:10]}"
 
             if self.config["add_authors"]:
                 if self.config["add_dates"]:
