@@ -2,7 +2,6 @@
 
 
 import json
-from datetime import datetime
 from pathlib import Path
 from subprocess import check_output
 
@@ -325,14 +324,10 @@ class MetaPlugin(BasePlugin):
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
         if (self.config["add_authors"]) and git_info["creation_date"]:
-            date_format = "%Y-%m-%d %H:%M:%S %z"
-            created_ago = calculate_time_difference(git_info["creation_date"])
-            updated_ago = calculate_time_difference(git_info["last_modified_date"])
-            created_date = datetime.strptime(git_info["creation_date"], date_format).strftime("%B %d, %Y")
-            updated_date = datetime.strptime(git_info["last_modified_date"], date_format).strftime("%B %d, %Y")
+            created_ago, created_date = calculate_time_difference(git_info["creation_date"])
+            updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
             div = '<div class="git-info">'
-
             div += f"""
             <span class="dates">
                 <span title="This page was first created on {created_date}">
@@ -348,8 +343,9 @@ class MetaPlugin(BasePlugin):
 
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
+                    n = author[2]  # number of changes
                     div += f"""
-                    <a href="{author[1]}" class="author-link" title="{author[0]} ({author[2]} changes)">
+                    <a href="{author[1]}" class="author-link" title="{author[0]} ({n} change{'s' * (n > 1)})">
                         <img src="https://github.com/{author[0]}.png" alt="{author[0]}" class="hover-item">
                     </a>
                     """
