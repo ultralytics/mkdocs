@@ -353,7 +353,7 @@ class MetaPlugin(BasePlugin):
 
             div += "</div>"
 
-            # Simplified CSS with unified hover effects
+            # Simplified CSS with unified hover effects, closer author circles, and larger share buttons
             css = '''
             <style>
                 .git-info, .share-buttons {
@@ -369,23 +369,26 @@ class MetaPlugin(BasePlugin):
                     align-items: center;
                 }
                 .dates span, .author-link, .share-button {
-                    cursor: help;
-                    margin-right: 10px;
+                    cursor: pointer;
                     display: flex;
                     align-items: center;
+                }
+                .dates span {
+                    margin-right: 10px;
                 }
                 .hover-item {
                     transition: all 0.2s ease;
                     filter: grayscale(100%);
                 }
                 .dates .hover-item {
-                    font-size: 1.4em;
-                    margin-right: 2px;
+                    font-size: 1.6em;
+                    margin-right: 5px;
                 }
                 .author-link .hover-item {
                     width: 50px;
                     height: 50px;
                     border-radius: 50%;
+                    margin-right: 1px;
                 }
                 .hover-item:hover {
                     transform: scale(1.2);
@@ -394,20 +397,26 @@ class MetaPlugin(BasePlugin):
                 .share-button {
                     background-color: #1da1f2;
                     color: white;
-                    padding: 5px 10px;
+                    padding: 6px 12px;
                     border-radius: 5px;
                     border: none;
-                    cursor: pointer;
+                    font-size: 0.95em;
+                    margin-left: 5px;
+                    transition: all 0.2s ease;
+                }
+                .share-button:hover {
+                    transform: scale(1.1);
+                    filter: brightness(1.2);
                 }
                 .share-button.linkedin {
                     background-color: #0077b5;
                 }
                 .share-button i {
                     margin-right: 5px;
+                    font-size: 1.1em;
                 }
             </style>
             '''
-
             div += css
             div = BeautifulSoup(div, "html.parser")
             self.insert_content(soup, div)
