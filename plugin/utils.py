@@ -44,7 +44,6 @@ def calculate_time_difference(date_string):
         return f"{years} year{'s' if years != 1 else ''}"
 
 
-
 def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     """
     Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
