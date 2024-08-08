@@ -2,6 +2,7 @@
 
 
 import json
+from datetime import datetime
 from pathlib import Path
 from subprocess import check_output
 
@@ -10,7 +11,7 @@ from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
 # import get_github_usernames_from_file function from the previous script
-from .utils import get_github_usernames_from_file, get_youtube_video_ids
+from .utils import get_github_usernames_from_file, get_youtube_video_ids, calculate_time_difference
 
 
 class MetaPlugin(BasePlugin):
@@ -321,18 +322,73 @@ class MetaPlugin(BasePlugin):
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
         if (self.config["add_dates"] or self.config["add_authors"]) and git_info["creation_date"]:
-            div = '<div class="git-info" style="font-size: 0.8em; text-align: right; margin-bottom: 10px; color: grey;"><br>'
+            date_format="%Y-%m-%d %H:%M:%S %z"
+            created_ago = calculate_time_difference(git_info["creation_date"])
+            updated_ago = calculate_time_difference(git_info["last_modified_date"])
+            created_date = datetime.strptime(git_info["creation_date"], date_format).strftime("%B %d, %Y")
+            updated_date = datetime.strptime(git_info["last_modified_date"], date_format).strftime("%B %d, %Y")
 
-            if self.config["add_dates"]:
-                div += f"📅 Created {git_info['creation_date'][:10]}  -  ✏️ Updated {git_info['last_modified_date'][:10]}"
+            div = '<div class="git-info">'
+
+            div += f'''
+            <span class="dates">
+                <span title="This page was first created on {created_date}">
+                    <span class="hover-item">🕒</span> Created {created_ago} ago
+                </span>
+                &nbsp;
+                <span title="This page was last updated on {updated_date}">
+                    <span class="hover-item">✏️</span> Updated {updated_ago} ago
+                </span>
+                &nbsp;
+            </span>
+            '''
 
             if self.config["add_authors"]:
-                if self.config["add_dates"]:
-                    div += "<br>"
-                authors_str = ", ".join([f"<a href='{a[1]}' style='color: grey;'>{a[0]}</a> ({a[2]})" for a in git_info["authors"]])
-                div += f"Authors: {authors_str}"
+                for author in git_info["authors"]:
+                    div += f'''
+                    <a href="{author[1]}" class="author-link" title="{author[0]} ({author[2]} changes)">
+                        <img src="https://github.com/{author[0]}.png" alt="{author[0]}" class="hover-item">
+                    </a>
+                    '''
 
             div += "</div>"
+
+            # Simplified CSS with unified hover effects
+            css = '''
+            <style>
+                .git-info {
+                    font-size: 0.8em;
+                    color: grey;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    margin-bottom: 10px;
+                }
+                .dates span, .author-link {
+                    cursor: help;
+                    margin-right: 10px;
+                }
+                .hover-item {
+                    transition: all 0.3s ease;
+                    filter: grayscale(100%);
+                }
+                .dates .hover-item {
+                    font-size: 1.4em;
+                    margin-right: 4px;
+                }
+                .author-link .hover-item {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                }
+                .hover-item:hover {
+                    transform: scale(1.2);
+                    filter: grayscale(0%);
+                }
+            </style>
+            '''
+
+            div += css
             div = BeautifulSoup(div, "html.parser")
             self.insert_content(soup, div)
 
