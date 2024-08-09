@@ -344,12 +344,20 @@ class MetaPlugin(BasePlugin):
 
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
-                    n = author[2]  # number of changes
-                    div += f"""
-                    <a href="{author[1]}" class="author-link" title="{author[0]} ({n} change{'s' * (n > 1)})">
-                        <img src="https://github.com/{author[0]}.png" alt="{author[0]}" class="hover-item">
-                    </a>
-                    """
+                    name, url, changes = author
+                    n = changes  # number of changes
+                    if '@' in name:  # This is an email address
+                        div += f"""
+                        <span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+                            <img src="https://github.com/ultralyticsassistant.png" alt="Author" class="hover-item">
+                        </span>
+                        """
+                    else:  # This is a GitHub username
+                        div += f"""
+                        <a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+                            <img src="https://github.com/{name}.png" alt="{name}" class="hover-item">
+                        </a>
+                        """
 
             div += "</div>"
 
