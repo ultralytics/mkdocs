@@ -3,7 +3,7 @@
 
 # 🚀 MkDocs Ultralytics Plugin
 
-Welcome to the MkDocs Ultralytics Plugin documentation! 📄 This delightful plugin enhances your MkDocs-generated documentation with savvy SEO optimizations and interactive social elements. Through the autogeneration of meta tags and incorporation of social sharing features, it aims to elevate user engagement and broaden your Markdown project's footprint on the web.
+Welcome to the MkDocs Ultralytics Plugin documentation! 📄 This powerful plugin enhances your MkDocs-generated documentation with advanced SEO optimizations, interactive social elements, and structured data support. It automates the generation of meta tags, incorporates social sharing features, and adds JSON-LD structured data to elevate user engagement and improve your Markdown project's visibility on the web.
 
 [![PyPI version](https://badge.fury.io/py/mkdocs-ultralytics-plugin.svg)](https://badge.fury.io/py/mkdocs-ultralytics-plugin) [![Downloads](https://static.pepy.tech/badge/mkdocs-ultralytics-plugin)](https://pepy.tech/project/mkdocs-ultralytics-plugin) [![Ultralytics Actions](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml) <a href="https://ultralytics.com/discord"><img alt="Discord" src="https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue"></a> <a href="https://community.ultralytics.com"><img alt="Ultralytics Forums" src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue"></a>
 
@@ -16,6 +16,9 @@ This plugin seamlessly integrates a variety of features into your MkDocs site:
 - **Social Media Optimization**: Generates Open Graph and Twitter meta tags for improved sharing on social platforms.
 - **Sharing Made Simple**: Inserts convenient share buttons for Twitter and LinkedIn at the end of your content.
 - **Git Insights**: Gathers and displays git commit information, including dates and authors, within the page footer.
+- **JSON-LD Support**: Adds structured data in JSON-LD format for better search engine integration.
+- **FAQ Parsing**: Automatically parses FAQ sections and includes them in the structured data.
+- **Customizable Styling**: Includes inline CSS for consistent styling across your documentation.
 
 ## 🛠 Installation
 
@@ -47,7 +50,9 @@ The plugin supports several configuration arguments to tailor its behavior to yo
 - `add_image`: Manages meta image tag generation. (default: `True`)
 - `add_keywords`: Allows meta keyword tag generation. (default: `True`)
 - `add_share_buttons`: Adds or removes social share buttons. (default: `True`)
-- `add_authors`: Includes author and updated date information in the content footer. (default: `True`)
+- `add_authors`: Includes author and updated date information in the content footer. (default: `False`)
+- `add_json_ld`: Adds JSON-LD structured data to the page. (default: `False`)
+- `add_css`: Includes inline CSS for styling. (default: `True`)
 
 Include these arguments under the `ultralytics` plugin entry in your `mkdocs.yml`:
 
@@ -63,7 +68,9 @@ plugins:
       add_image: True
       add_keywords: True
       add_share_buttons: True
-      add_authors: True
+      add_authors: False
+      add_json_ld: False
+      add_css: True
 ```
 
 ## 🧩 How it works

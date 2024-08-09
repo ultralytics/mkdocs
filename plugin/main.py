@@ -20,15 +20,16 @@ from .utils import (
 class MetaPlugin(BasePlugin):
     # Plugin arguments
     config_scheme = (
-        ("verbose", config_options.Type(bool, default=True)),
-        ("enabled", config_options.Type(bool, default=True)),
-        ("default_image", config_options.Type(str, default=None)),
-        ("add_desc", config_options.Type(bool, default=True)),
-        ("add_image", config_options.Type(bool, default=True)),
-        ("add_keywords", config_options.Type(bool, default=True)),  # Add new argument for keywords
-        ("add_share_buttons", config_options.Type(bool, default=True)),  # Add new argument
-        ("add_authors", config_options.Type(bool, default=False)),  # Add dates and authors section
+        ("verbose", config_options.Type(bool, default=True)),  # Enable verbose output for debugging
+        ("enabled", config_options.Type(bool, default=True)),  # Enable or disable the plugin
+        ("default_image", config_options.Type(str, default=None)),  # Default image URL if none found in content
+        ("add_desc", config_options.Type(bool, default=True)),  # Add meta description tags
+        ("add_image", config_options.Type(bool, default=True)),  # Add meta image tags
+        ("add_keywords", config_options.Type(bool, default=True)),  # Add meta keywords tags
+        ("add_share_buttons", config_options.Type(bool, default=True)),  # Add social share buttons
+        ("add_authors", config_options.Type(bool, default=False)),  # Add git author and date information
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
+        ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
     )
 
     def get_git_info(self, file_path):
@@ -352,80 +353,19 @@ class MetaPlugin(BasePlugin):
 
             div += "</div>"
 
-            # Simplified CSS with unified hover effects, closer author circles, and larger share buttons
-            css = """
-            <style>
-                .git-info, .share-buttons {
-                    font-size: 0.8em;
-                    color: grey;
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                    margin-bottom: 10px;
-                }
-                .dates {
-                    display: flex;
-                    align-items: center;
-                }
-                .dates span, .author-link, .share-button {
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                }
-                .dates span {
-                    margin-right: 10px;
-                }
-                .hover-item {
-                    transition: all 0.2s ease;
-                    filter: grayscale(100%);
-                }
-                .dates .hover-item {
-                    font-size: 1.6em;
-                    margin-right: 5px;
-                }
-                .author-link .hover-item {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    margin-right: 1px;
-                }
-                .hover-item:hover {
-                    transform: scale(1.2);
-                    filter: grayscale(0%);
-                }
-                .share-button {
-                    background-color: #1da1f2;
-                    color: white;
-                    padding: 6px 12px;
-                    border-radius: 5px;
-                    border: none;
-                    font-size: 0.95em;
-                    margin-left: 5px;
-                    transition: all 0.2s ease;
-                }
-                .share-button:hover {
-                    transform: scale(1.1);
-                    filter: brightness(1.2);
-                }
-                .share-button.linkedin {
-                    background-color: #0077b5;
-                }
-                .share-button i {
-                    margin-right: 5px;
-                    font-size: 1.1em;
-                }
-            </style>
-            """
-            div += css
+            if self.config["add_css"]:
+                style_tag = soup.new_tag("style")
+                style_tag.string = self.get_css()
+                soup.head.append(style_tag)
+
             div = BeautifulSoup(div, "html.parser")
             self.insert_content(soup, div)
 
         # Add share buttons to the footer, if enabled
-        if self.config["add_share_buttons"]:  # Check if share buttons are enabled
+        if self.config["add_share_buttons"]:
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-            # Updated HTML for share buttons
             share_buttons = f"""
             <div class="share-buttons">
                 <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
@@ -462,3 +402,67 @@ class MetaPlugin(BasePlugin):
             soup.head.append(ld_json_script)
 
         return str(soup)
+
+    @staticmethod
+    def get_css():
+        """Simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
+        return """.git-info, .share-buttons {
+    font-size: 0.8em;
+    color: grey;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+.dates {
+    display: flex;
+    align-items: center;
+}
+.dates span, .author-link, .share-button {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.dates span {
+    margin-right: 10px;
+}
+.hover-item {
+    transition: all 0.2s ease;
+    filter: grayscale(100%);
+}
+.dates .hover-item {
+    font-size: 1.6em;
+    margin-right: 5px;
+}
+.author-link .hover-item {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 1px;
+}
+.hover-item:hover {
+    transform: scale(1.2);
+    filter: grayscale(0%);
+}
+.share-button {
+    background-color: #1da1f2;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: none;
+    font-size: 0.95em;
+    margin-left: 5px;
+    transition: all 0.2s ease;
+}
+.share-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+.share-button.linkedin {
+    background-color: #0077b5;
+}
+.share-button i {
+    margin-right: 5px;
+    font-size: 1.1em;
+}
+"""
