@@ -344,8 +344,7 @@ class MetaPlugin(BasePlugin):
 
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
-                    name, url, changes = author
-                    n = changes  # number of changes
+                    name, url, n = author  # n is number of changes
                     if '@' in name:  # This is an email address
                         div += f"""
                         <span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
