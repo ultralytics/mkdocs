@@ -442,10 +442,10 @@ class MetaPlugin(BasePlugin):
     margin-right: 5px;
 }
 .author-link .hover-item {
-    width: 45px
-    height: 45px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    margin-right: 2px;
+    margin-right: 3px;
 }
 .hover-item:hover {
     transform: scale(1.2);
