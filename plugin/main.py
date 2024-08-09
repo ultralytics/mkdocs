@@ -348,7 +348,7 @@ class MetaPlugin(BasePlugin):
                     if '@' in name:  # This is an email address
                         div += f"""
                         <span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-                            <img src="https://github.com/ultralyticsassistant.png" alt="Author" class="hover-item">
+                            <img src="https://github.com/github.png" alt="Author" class="hover-item">
                         </span>
                         """
                     else:  # This is a GitHub username
