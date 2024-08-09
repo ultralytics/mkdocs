@@ -328,37 +328,33 @@ class MetaPlugin(BasePlugin):
             created_ago, created_date = calculate_time_difference(git_info["creation_date"])
             updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
-            div = '<div class="git-info">'
-            div += f"""
-            <span class="dates">
-                <span title="This page was first created on {created_date}">
-                    <span class="hover-item">📅</span> Created {created_ago} ago
-                </span>
-                &nbsp;
-                <span title="This page was last updated on {updated_date}">
-                    <span class="hover-item">✏️</span> Updated {updated_ago} ago
-                </span>
-                &nbsp;
-            </span>
-            """
+            div = f"""<div class="git-info">
+<div class="dates-container">
+    <span class="date-item" title="This page was first created on {created_date}">
+        <span class="hover-item">📅</span> Created {created_ago} ago
+    </span>
+    <span class="date-item" title="This page was last updated on {updated_date}">
+        <span class="hover-item">✏️</span> Updated {updated_ago} ago
+    </span>
+</div>
+<div class="authors-container">
+"""
 
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
                     name, url, n = author  # n is number of changes
                     if "@" in name:  # This is an email address
-                        div += f"""
-                        <span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-                            <img src="https://github.com/github.png" alt="Author" class="hover-item">
-                        </span>
-                        """
+                        div += f"""<span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+    <img src="https://github.com/github.png" alt="Author" class="hover-item">
+</span>
+"""
                     else:  # This is a GitHub username
-                        div += f"""
-                        <a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-                            <img src="https://github.com/{name}.png" alt="{name}" class="hover-item">
-                        </a>
-                        """
+                        div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+    <img src="https://github.com/{name}.png" alt="{name}" class="hover-item">
+</a>
+"""
 
-            div += "</div>"
+            div += "</div></div>"
 
             if self.config["add_css"]:
                 style_tag = soup.new_tag("style")
@@ -373,16 +369,15 @@ class MetaPlugin(BasePlugin):
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-            share_buttons = f"""
-            <div class="share-buttons">
-                <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
-                    <i class="fa-brands fa-twitter"></i> Tweet
-                </button>
-                <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
-                    <i class="fa-brands fa-linkedin"></i> Share
-                </button>
-            </div>
-            """
+            share_buttons = f"""<div class="share-buttons">
+    <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
+        <i class="fa-brands fa-twitter"></i> Tweet
+    </button>
+    <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
+        <i class="fa-brands fa-linkedin"></i> Share
+    </button>
+</div>
+"""
             share_buttons = BeautifulSoup(share_buttons, "html.parser")
             self.insert_content(soup, share_buttons)
 
@@ -413,43 +408,54 @@ class MetaPlugin(BasePlugin):
     @staticmethod
     def get_css():
         """Simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
-        return """.git-info, .share-buttons {
+        return """
+.git-info {
     font-size: 0.8em;
     color: grey;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
     margin-bottom: 10px;
 }
-.dates {
+.dates-container, .authors-container {
     display: flex;
     align-items: center;
+    margin-bottom: 5px;
 }
-.dates span, .author-link, .share-button {
+.date-item {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+.author-link, .share-button {
     cursor: pointer;
     display: flex;
     align-items: center;
-}
-.dates span {
-    margin-right: 10px;
 }
 .hover-item {
     transition: all 0.2s ease;
     filter: grayscale(100%);
 }
-.dates .hover-item {
+.date-item .hover-item {
     font-size: 1.6em;
     margin-right: 5px;
 }
 .author-link .hover-item {
-    width: 50px;
-    height: 50px;
+    width: 45px
+    height: 45px;
     border-radius: 50%;
-    margin-right: 1px;
+    margin-right: 2px;
 }
 .hover-item:hover {
     transform: scale(1.2);
     filter: grayscale(0%);
+}
+.share-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: 10px;
 }
 .share-button {
     background-color: #1da1f2;
@@ -458,7 +464,7 @@ class MetaPlugin(BasePlugin):
     border-radius: 5px;
     border: none;
     font-size: 0.95em;
-    margin-left: 5px;
+    margin: 5px;
     transition: all 0.2s ease;
 }
 .share-button:hover {
@@ -471,5 +477,22 @@ class MetaPlugin(BasePlugin):
 .share-button i {
     margin-right: 5px;
     font-size: 1.1em;
+}
+
+@media (max-width: 768px) {
+    .git-info {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    .dates-container, .authors-container {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .authors-container {
+        flex-wrap: wrap;
+    }
+    .share-buttons {
+        justify-content: flex-end;
+    }
 }
 """
