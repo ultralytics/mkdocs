@@ -8,7 +8,11 @@ from bs4 import BeautifulSoup
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
-from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
+from plugin.utils import (
+    calculate_time_difference,
+    get_github_usernames_from_file,
+    get_youtube_video_ids,
+)
 
 
 class MetaPlugin(BasePlugin):
