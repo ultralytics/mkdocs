@@ -369,9 +369,9 @@ class MetaPlugin(BasePlugin):
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-            share_buttons = f"""<div class="share-buttons">
+        share_buttons = f"""<div class="share-buttons">
     <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
-        <i class="fa-brands fa-twitter"></i> Tweet
+        <i class="fa-brands fa-x-twitter"></i> Tweet
     </button>
     <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
         <i class="fa-brands fa-linkedin"></i> Share
