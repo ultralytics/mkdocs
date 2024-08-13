@@ -11,16 +11,16 @@ from mkdocs.plugins import BasePlugin
 from .utils import (
     calculate_time_difference,
     get_github_usernames_from_file,
-    get_youtube_video_ids
+    get_youtube_video_ids,
 )
 
 
 class MetaPlugin(BasePlugin):
     """
     MetaPlugin class for enhancing MkDocs documentation with metadata, social sharing, and structured data.
-    
-    This class extends the BasePlugin class from MkDocs to add various meta tags, social sharing buttons, and 
-    structured data to the generated HTML pages. It also retrieves git information for each file to include 
+
+    This class extends the BasePlugin class from MkDocs to add various meta tags, social sharing buttons, and
+    structured data to the generated HTML pages. It also retrieves git information for each file to include
     authorship and modification details.
 
     Methods:
@@ -31,6 +31,7 @@ class MetaPlugin(BasePlugin):
         on_post_page: Enhances the HTML output of a page with metadata tags, git information, and share buttons.
         get_css: Provides simplified CSS for styling the added elements.
     """
+
     config_scheme = (
         ("verbose", config_options.Type(bool, default=True)),  # Enable verbose output for debugging
         ("enabled", config_options.Type(bool, default=True)),  # Enable or disable the plugin
