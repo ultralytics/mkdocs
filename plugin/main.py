@@ -1,6 +1,5 @@
 # Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
 
-
 import json
 from pathlib import Path
 from subprocess import check_output
