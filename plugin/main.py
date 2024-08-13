@@ -387,7 +387,7 @@ class MetaPlugin(BasePlugin):
         <i class="fa-brands fa-x-twitter"></i> Tweet
     </button>
     <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
-        <i class="fa-brands fa-linkedin"></i> Share
+        <i class="fa-brands fa-linkedin-in"></i> Share
     </button>
 </div>
 """
