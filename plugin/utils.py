@@ -100,7 +100,6 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         Uses the GitHub REST API to query the username if it's not found in the local cache. Ensure you comply with GitHub's rate
         limits and authentication requirements when querying their API.
     """
-
     # First, check if the email exists in the local cache file
     if email in local_cache:
         return local_cache[email]
