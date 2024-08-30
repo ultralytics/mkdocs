@@ -1,5 +1,3 @@
-# Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
-
 import contextlib
 import re
 import subprocess
@@ -8,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
-import yaml  # install this with `pip install PyYAML` if not installed yet
+import yaml  # YAML is used for its readability and consistency with MkDocs ecosystem
 from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
@@ -144,6 +142,7 @@ def get_github_usernames_from_file(file_path):
             - 'email' (str): The email address of the author.
             - 'url' (str): The GitHub profile URL of the author.
             - 'changes' (int): The number of changes (commits) made by the author.
+            - 'avatar_url' (str): The URL of the author's GitHub avatar.
 
     Examples:
         ```python
@@ -195,7 +194,12 @@ def get_github_usernames_from_file(file_path):
         username = get_github_username_from_email(k, local_cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
-        info[username or k] = {"email": k, "url": user_url, "changes": v}
+        info[username or k] = {
+            "email": k,
+            "url": user_url,
+            "changes": v,
+            "avatar_url": "https://github.com/ultralytics.png",
+        }
 
     # Save the local cache of GitHub usernames
     with local_cache_file.open("w") as f:
