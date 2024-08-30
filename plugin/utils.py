@@ -10,6 +10,7 @@ import yaml  # YAML is used for its readability and consistency with MkDocs ecos
 from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
+DEFAULT_AVATAR = requests.head("https://github.com/ultralytics.png", allow_redirects=True).url
 
 
 def calculate_time_difference(date_string):
@@ -200,7 +201,7 @@ def get_github_usernames_from_file(file_path):
             "email": k,
             "url": user_url,
             "changes": v,
-            "avatar": avatar or "https://github.com/ultralytics.png",
+            "avatar": avatar or DEFAULT_AVATAR,
         }
 
     # Save the local cache of GitHub usernames and avatar URLs
