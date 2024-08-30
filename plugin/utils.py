@@ -198,7 +198,7 @@ def get_github_usernames_from_file(file_path):
             "email": k,
             "url": user_url,
             "changes": v,
-            "avatar_url": "https://github.com/ultralytics.png",
+            "avatar": "https://github.com/ultralytics.png",
         }
 
     # Save the local cache of GitHub usernames

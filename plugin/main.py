@@ -83,7 +83,7 @@ class MetaPlugin(BasePlugin):
         # Get the authors and their contributions count using get_github_usernames_from_file function
         if self.config["add_authors"]:
             authors_info = get_github_usernames_from_file(file_path)
-            git_info["authors"] = [(author, info["url"], info["changes"]) for author, info in authors_info.items()]
+            git_info["authors"] = [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()]
 
         return git_info
 
