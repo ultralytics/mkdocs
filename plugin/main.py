@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from subprocess import check_output
 
+import requests
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
@@ -356,14 +357,12 @@ class MetaPlugin(BasePlugin):
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
                     name, url, n = author  # n is number of changes
-                    if "@" in name:  # This is an email address
-                        div += f"""<span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-    <img src="https://github.com/github.png" alt="Author" class="hover-item">
-</span>
-"""
-                    else:  # This is a GitHub username
-                        div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-    <img src="https://github.com/{name}.png" alt="{name}" class="hover-item">
+                    if "@" in name:  # This is an email address, no GitHub username found
+                        name, url = "ultralytics", "https://github.com/ultralytics"
+
+                    avatar_url = requests.head(f"https://github.com/{name}.png", allow_redirects=True).url
+                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+    <img src="{avatar_url}?s=96" alt="{name}" class="hover-item">
 </a>
 """
 
