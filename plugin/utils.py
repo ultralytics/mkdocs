@@ -80,13 +80,13 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     return youtube_ids
 
 
-def get_github_username_from_email(email, local_cache, file_path="", verbose=True):
+def get_github_username_from_email(email, cache, file_path="", verbose=True):
     """
     Retrieves the GitHub username associated with the given email address.
 
     Args:
         email (str): The email address to retrieve the GitHub username for.
-        local_cache (dict): A dictionary containing cached email-GitHub username mappings.
+        cache (dict): A dictionary containing cached email-GitHub username mappings.
         file_path (str, optional): Name of the file the user authored. Defaults to ''.
         verbose (bool, optional): Whether to print verbose output. Defaults to True.
 
@@ -99,8 +99,8 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         limits and authentication requirements when querying their API.
     """
     # First, check if the email exists in the local cache file
-    if email in local_cache:
-        return local_cache[email]
+    if email in cache:
+        return cache[email]
     elif not email.strip():
         if verbose:
             print(f"{WARNING} No author found for {file_path}")
@@ -109,7 +109,7 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
     # If the email ends with "@users.noreply.github.com", parse the username directly
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
-        local_cache[email] = username  # save the username in the local cache for future use
+        cache[email] = username  # save the username in the local cache for future use
         return username
 
     # If the email is not found in the cache, query GitHub REST API
@@ -121,12 +121,12 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         data = response.json()
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
-            local_cache[email] = username  # save the username in the local cache for future use
+            cache[email] = username  # save the username in the local cache for future use
             return username
 
     if verbose:
         print(f"{WARNING} No username found for {email}")
-    local_cache[email] = None  # save the username in the local cache for future use
+    cache[email] = None  # save the username in the local cache for future use
     return None  # couldn't find username
 
 
