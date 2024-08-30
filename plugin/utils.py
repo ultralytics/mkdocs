@@ -122,7 +122,7 @@ def get_github_username_from_email(email, cache, file_path="", verbose=True):
         data = response.json()
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
-            avatar = data["items"][0]["avatar"]
+            avatar = data["items"][0]["avatar_url"]  # avatar_url key is correct here
             cache[email] = {'username': username, 'avatar': requests.head(avatar, allow_redirects=True).url}
             return username, avatar
 
