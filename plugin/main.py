@@ -46,6 +46,9 @@ class MetaPlugin(BasePlugin):
         ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
     )
 
+    def __init__(self):
+        self.cache = {}  # Add this line to create a cache for avatar URLs
+
     def get_git_info(self, file_path):
         """
         Retrieves git information of a specified file including hash, date, and branch.
@@ -359,10 +362,11 @@ class MetaPlugin(BasePlugin):
                     name, url, n = author  # n is number of changes
                     if "@" in name:  # This is an email address, no GitHub username found
                         name, url = "ultralytics", "https://github.com/ultralytics"
+                    if name not in self.cache:
+                        self.cache[name] = requests.head(f"https://github.com/{name}.png", allow_redirects=True).url
 
-                    avatar_url = requests.head(f"https://github.com/{name}.png", allow_redirects=True).url
                     div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-    <img src="{avatar_url}?s=96" alt="{name}" class="hover-item">
+    <img src="{self.cache[name]}&s=96" alt="{name}" class="hover-item">
 </a>
 """
 
