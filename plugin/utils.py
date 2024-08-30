@@ -82,7 +82,7 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
 
 def get_github_username_from_email(email, cache, file_path="", verbose=True):
     """
-    Retrieves the GitHub username associated with the given email address.
+    Retrieves the GitHub username and avatar URL associated with the given email address.
 
     Args:
         email (str): The email address to retrieve the GitHub username for.
@@ -91,7 +91,7 @@ def get_github_username_from_email(email, cache, file_path="", verbose=True):
         verbose (bool, optional): Whether to print verbose output. Defaults to True.
 
     Returns:
-        (str | None): The GitHub username associated with the email address, or None if not found.
+        tuple: (username, avatar_url) where both are strings or None if not found.
 
     Note:
         If the email ends with "@users.noreply.github.com", the function will parse the username directly from the email address.
@@ -100,17 +100,18 @@ def get_github_username_from_email(email, cache, file_path="", verbose=True):
     """
     # First, check if the email exists in the local cache file
     if email in cache:
-        return cache[email]
+        return cache[email].get('username'), cache[email].get('avatar_url')
     elif not email.strip():
         if verbose:
             print(f"{WARNING} No author found for {file_path}")
-        return None
+        return None, None
 
     # If the email ends with "@users.noreply.github.com", parse the username directly
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
-        cache[email] = username  # save the username in the local cache for future use
-        return username
+        avatar_url = f"https://github.com/{username}.png"
+        cache[email] = {'username': username, 'avatar_url': avatar_url}
+        return username, avatar_url
 
     # If the email is not found in the cache, query GitHub REST API
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
@@ -121,13 +122,14 @@ def get_github_username_from_email(email, cache, file_path="", verbose=True):
         data = response.json()
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
-            cache[email] = username  # save the username in the local cache for future use
-            return username
+            avatar_url = data["items"][0]["avatar_url"]
+            cache[email] = {'username': username, 'avatar_url': avatar_url}
+            return username, avatar_url
 
     if verbose:
         print(f"{WARNING} No username found for {email}")
-    cache[email] = None  # save the username in the local cache for future use
-    return None  # couldn't find username
+    cache[email] = {'username': None, 'avatar_url': None}
+    return None, None
 
 
 def get_github_usernames_from_file(file_path):
@@ -191,17 +193,17 @@ def get_github_usernames_from_file(file_path):
 
     info = {}
     for k, v in emails.items():
-        username = get_github_username_from_email(k, cache, file_path)
+        username, avatar_url = get_github_username_from_email(k, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
         info[username or k] = {
             "email": k,
             "url": user_url,
             "changes": v,
-            "avatar": "https://github.com/ultralytics.png",
+            "avatar": avatar_url or "https://github.com/ultralytics.png",
         }
 
-    # Save the local cache of GitHub usernames
+    # Save the local cache of GitHub usernames and avatar URLs
     with local_cache_file.open("w") as f:
         yaml.safe_dump(cache, f)
 
