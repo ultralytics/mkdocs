@@ -1,5 +1,3 @@
-# Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
-
 import contextlib
 import re
 import subprocess
@@ -8,10 +6,11 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
-import yaml  # install this with `pip install PyYAML` if not installed yet
+import yaml  # YAML is used for its readability and consistency with MkDocs ecosystem
 from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
+DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
 
 
 def calculate_time_difference(date_string):
@@ -82,18 +81,18 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     return youtube_ids
 
 
-def get_github_username_from_email(email, local_cache, file_path="", verbose=True):
+def get_github_username_from_email(email, cache, file_path="", verbose=True):
     """
-    Retrieves the GitHub username associated with the given email address.
+    Retrieves the GitHub username and avatar URL associated with the given email address.
 
     Args:
         email (str): The email address to retrieve the GitHub username for.
-        local_cache (dict): A dictionary containing cached email-GitHub username mappings.
+        cache (dict): A dictionary containing cached email-GitHub username mappings.
         file_path (str, optional): Name of the file the user authored. Defaults to ''.
         verbose (bool, optional): Whether to print verbose output. Defaults to True.
 
     Returns:
-        (str | None): The GitHub username associated with the email address, or None if not found.
+        tuple: (username, avatar) where both are strings or None if not found.
 
     Note:
         If the email ends with "@users.noreply.github.com", the function will parse the username directly from the email address.
@@ -101,18 +100,19 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         limits and authentication requirements when querying their API.
     """
     # First, check if the email exists in the local cache file
-    if email in local_cache:
-        return local_cache[email]
+    if email in cache:
+        return cache[email].get("username"), cache[email].get("avatar")
     elif not email.strip():
         if verbose:
             print(f"{WARNING} No author found for {file_path}")
-        return None
+        return None, None
 
     # If the email ends with "@users.noreply.github.com", parse the username directly
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
-        local_cache[email] = username  # save the username in the local cache for future use
-        return username
+        avatar = f"https://github.com/{username}.png"
+        cache[email] = {"username": username, "avatar": requests.head(avatar, allow_redirects=True).url}
+        return username, avatar
 
     # If the email is not found in the cache, query GitHub REST API
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
@@ -123,13 +123,14 @@ def get_github_username_from_email(email, local_cache, file_path="", verbose=Tru
         data = response.json()
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
-            local_cache[email] = username  # save the username in the local cache for future use
-            return username
+            avatar = data["items"][0]["avatar_url"]  # avatar_url key is correct here
+            cache[email] = {"username": username, "avatar": requests.head(avatar, allow_redirects=True).url}
+            return username, avatar
 
     if verbose:
         print(f"{WARNING} No username found for {email}")
-    local_cache[email] = None  # save the username in the local cache for future use
-    return None  # couldn't find username
+    cache[email] = {"username": None, "avatar": None}
+    return None, None
 
 
 def get_github_usernames_from_file(file_path):
@@ -144,6 +145,7 @@ def get_github_usernames_from_file(file_path):
             - 'email' (str): The email address of the author.
             - 'url' (str): The GitHub profile URL of the author.
             - 'changes' (int): The number of changes (commits) made by the author.
+            - 'avatar' (str): The URL of the author's GitHub avatar.
 
     Examples:
         ```python
@@ -180,9 +182,9 @@ def get_github_usernames_from_file(file_path):
     local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
     if local_cache_file.is_file():
         with local_cache_file.open("r") as f:
-            local_cache = yaml.safe_load(f) or {}
+            cache = yaml.safe_load(f) or {}
     else:
-        local_cache = {}
+        cache = {}
 
     github_repo_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
     if github_repo_url.endswith(".git"):
@@ -191,14 +193,19 @@ def get_github_usernames_from_file(file_path):
         github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
 
     info = {}
-    for k, v in emails.items():
-        username = get_github_username_from_email(k, local_cache, file_path)
+    for email, changes in emails.items():
+        username, avatar = get_github_username_from_email(email, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
-        info[username or k] = {"email": k, "url": user_url, "changes": v}
+        info[username or email] = {
+            "email": email,
+            "url": user_url,
+            "changes": changes,
+            "avatar": avatar or DEFAULT_AVATAR,
+        }
 
-    # Save the local cache of GitHub usernames
+    # Save the local cache of GitHub usernames and avatar URLs
     with local_cache_file.open("w") as f:
-        yaml.safe_dump(local_cache, f)
+        yaml.safe_dump(cache, f)
 
     return info

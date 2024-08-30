@@ -83,7 +83,9 @@ class MetaPlugin(BasePlugin):
         # Get the authors and their contributions count using get_github_usernames_from_file function
         if self.config["add_authors"]:
             authors_info = get_github_usernames_from_file(file_path)
-            git_info["authors"] = [(author, info["url"], info["changes"]) for author, info in authors_info.items()]
+            git_info["authors"] = [
+                (author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()
+            ]
 
         return git_info
 
@@ -355,15 +357,9 @@ class MetaPlugin(BasePlugin):
 
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
-                    name, url, n = author  # n is number of changes
-                    if "@" in name:  # This is an email address
-                        div += f"""<span class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-    <img src="https://github.com/github.png" alt="Author" class="hover-item">
-</span>
-"""
-                    else:  # This is a GitHub username
-                        div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-    <img src="https://github.com/{name}.png" alt="{name}" class="hover-item">
+                    name, url, n, avatar = author  # n is number of changes
+                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+    <img src="{avatar}&s=96" alt="{name}" class="hover-item">
 </a>
 """
 
