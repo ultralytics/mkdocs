@@ -10,7 +10,7 @@ import yaml  # YAML is used for its readability and consistency with MkDocs ecos
 from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
-DEFAULT_AVATAR = requests.head("https://github.com/ultralytics.png", allow_redirects=True).url
+DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
 
 
 def calculate_time_difference(date_string):
