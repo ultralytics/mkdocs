@@ -179,9 +179,9 @@ def get_github_usernames_from_file(file_path):
     local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
     if local_cache_file.is_file():
         with local_cache_file.open("r") as f:
-            local_cache = yaml.safe_load(f) or {}
+            cache = yaml.safe_load(f) or {}
     else:
-        local_cache = {}
+        cache = {}
 
     github_repo_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
     if github_repo_url.endswith(".git"):
@@ -191,7 +191,7 @@ def get_github_usernames_from_file(file_path):
 
     info = {}
     for k, v in emails.items():
-        username = get_github_username_from_email(k, local_cache, file_path)
+        username = get_github_username_from_email(k, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
         info[username or k] = {
@@ -203,6 +203,6 @@ def get_github_usernames_from_file(file_path):
 
     # Save the local cache of GitHub usernames
     with local_cache_file.open("w") as f:
-        yaml.safe_dump(local_cache, f)
+        yaml.safe_dump(cache, f)
 
     return info
