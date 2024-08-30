@@ -193,14 +193,14 @@ def get_github_usernames_from_file(file_path):
         github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
 
     info = {}
-    for k, v in emails.items():
-        username, avatar = get_github_username_from_email(k, cache, file_path)
+    for email, changes in emails.items():
+        username, avatar = get_github_username_from_email(email, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
-        info[username or k] = {
-            "email": k,
+        info[username or email] = {
+            "email": email,
             "url": user_url,
-            "changes": v,
+            "changes": changes,
             "avatar": avatar or DEFAULT_AVATAR,
         }
 
