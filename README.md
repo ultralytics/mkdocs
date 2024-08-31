@@ -139,7 +139,7 @@ Ultralytics projects come with two licensing flavors:
 
 ## ✉️ Connect with Us
 
-Have you stumbled upon a glitch, or do you have a splendid feature idea? Pop over to [GitHub Issues](https://github.com/ultralytics/mkdocs/issues) to drop us a line! Also, join our [Discord](https://ultralytics.com/discord) for buzzing discussions, insights, and tips around our shared ML journeys.
+Have you stumbled upon a glitch, or do you have a splendid feature idea? Pop over to [GitHub Issues](https://github.com/ultralytics/mkdocs/issues) to drop us a line! Also, join our [Discord](https://ultralytics.com/discord) and [Reddit](https://reddit.com/r/ultralytics) for buzzing discussions, insights, and tips around our shared ML journeys.
 
 <br>
 <div align="center">
