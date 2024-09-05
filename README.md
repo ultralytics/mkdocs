@@ -123,7 +123,7 @@ class MetaPlugin(BasePlugin):
 
 ## 🤝 Contribute
 
-Join in on the collaboration! 🤗 The success of Ultralytics' open-source initiatives springs from the vibrant contributions of our community. Whether you're fixing bugs, adding features, warming up our discussions, or sharing your Ultralytics project tale, [check out](https://docs.ultralytics.com/help/contributing) how you can be part of the journey. Filling out our [survey](https://ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey) is another great way to share your feedback. We are deeply thankful 🙇‍♂️ for each contributor's time and efforts!
+Join in on the collaboration! 🤗 The success of Ultralytics' open-source initiatives springs from the vibrant contributions of our community. Whether you're fixing bugs, adding features, warming up our discussions, or sharing your Ultralytics project tale, [check out](https://docs.ultralytics.com/help/contributing) how you can be part of the journey. Filling out our [survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey) is another great way to share your feedback. We are deeply thankful 🙇‍♂️ for each contributor's time and efforts!
 
 <!-- A visual tribute to our contributors! -->
 
@@ -135,11 +135,11 @@ Join in on the collaboration! 🤗 The success of Ultralytics' open-source initi
 Ultralytics projects come with two licensing flavors:
 
 - **AGPL-3.0 License**: This license fosters open collaboration and knowledge sharing, making it a perfect match for students and hobbyists. For specifics, check the [LICENSE](https://github.com/ultralytics/ultralytics/blob/main/LICENSE) file.
-- **Enterprise License**: When it comes to commercial endeavors, this license gets things rolling by allowing Ultralytics software and AI models to be woven into your business offerings without the AGPL-3.0's open-source constraints. For commercial integrations, please explore our [Ultralytics Licensing](https://ultralytics.com/license) options.
+- **Enterprise License**: When it comes to commercial endeavors, this license gets things rolling by allowing Ultralytics software and AI models to be woven into your business offerings without the AGPL-3.0's open-source constraints. For commercial integrations, please explore our [Ultralytics Licensing](https://www.ultralytics.com/license) options.
 
 ## ✉️ Connect with Us
 
-Have you stumbled upon a glitch, or do you have a splendid feature idea? Pop over to [GitHub Issues](https://github.com/ultralytics/mkdocs/issues) to drop us a line! Also, join our [Discord](https://ultralytics.com/discord) and [Reddit](https://reddit.com/r/ultralytics) for buzzing discussions, insights, and tips around our shared ML journeys.
+Have you stumbled upon a glitch, or do you have a splendid feature idea? Pop over to [GitHub Issues](https://github.com/ultralytics/mkdocs/issues) to drop us a line! Also, join our [Discord](https://discord.com/invite/ultralytics) and [Reddit](https://www.reddit.com/r/ultralytics/) for buzzing discussions, insights, and tips around our shared ML journeys.
 
 <br>
 <div align="center">
