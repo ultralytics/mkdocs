@@ -24,17 +24,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs-ultralytics-plugin"
-version = "0.1.9"
+version = "0.1.10"
 description = "An MkDocs plugin that provides Ultralytics Docs customizations at https://docs.ultralytics.com."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { "text" = "AGPL-3.0" }
 keywords = ["Ultralytics", "Docs", "MkDocs", "Plugin"]  # Optional
 authors = [
-    { name = "Glenn Jocher", website = "https://github.com/glenn-jocher" }
+    { name = "Glenn Jocher", email = "hello@ultralytics.com" }
 ]
 maintainers = [
-    { name = "Ultralytics", website = "https://www.ultralytics.com/" }
+    { name = "Ultralytics", email = "hello@ultralytics.com" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
