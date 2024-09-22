@@ -31,7 +31,7 @@ requires-python = ">=3.8"
 license = { "text" = "AGPL-3.0" }
 keywords = ["Ultralytics", "Docs", "MkDocs", "Plugin"]  # Optional
 authors = [
-    { name = "Glenn Jocher", website = "https://www.ultralytics.com/" }
+    { name = "Glenn Jocher", website = "https://github.com/glenn-jocher" }
 ]
 maintainers = [
     { name = "Ultralytics", website = "https://www.ultralytics.com/" }
