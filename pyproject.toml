@@ -31,10 +31,10 @@ requires-python = ">=3.8"
 license = { file = "LICENSE" }
 keywords = ["Ultralytics", "Docs", "MkDocs", "Plugin"]  # Optional
 authors = [
-    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" }  # Optional
+    { name = "Glenn Jocher", website = "https://www.ultralytics.com/" }
 ]
 maintainers = [
-    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" }  # Optional
+    { name = "Glenn Jocher", website = "https://www.ultralytics.com/" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
