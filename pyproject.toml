@@ -34,7 +34,7 @@ authors = [
     { name = "Glenn Jocher", website = "https://www.ultralytics.com/" }
 ]
 maintainers = [
-    { name = "Glenn Jocher", website = "https://www.ultralytics.com/" }
+    { name = "Ultralytics", website = "https://www.ultralytics.com/" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
