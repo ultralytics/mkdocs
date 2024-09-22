@@ -28,7 +28,7 @@ version = "0.1.9"
 description = "An MkDocs plugin that provides Ultralytics Docs customizations at https://docs.ultralytics.com."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { file = "LICENSE" }
+license = { "text" = "AGPL-3.0" }
 keywords = ["Ultralytics", "Docs", "MkDocs", "Plugin"]  # Optional
 authors = [
     { name = "Glenn Jocher", website = "https://www.ultralytics.com/" }
