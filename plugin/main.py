@@ -460,6 +460,13 @@ class MetaPlugin(BasePlugin):
     height: 50px;
     border-radius: 50%;
     margin-right: 3px;
+    background-color: #f0f0f0;  /* Placeholder color */
+    opacity: 0;  /* Start fully transparent */
+    transition: opacity 0.3s ease-in-out;
+}
+
+.author-link .hover-item[src] {
+    opacity: 1;  /* Fade in when src is set (image loaded) */
 }
 
 .hover-item:hover {
