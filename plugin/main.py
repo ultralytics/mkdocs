@@ -359,7 +359,7 @@ class MetaPlugin(BasePlugin):
                 for author in git_info["authors"]:
                     name, url, n, avatar = author  # n is number of changes
                     div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
-    <img src="{avatar}&s=96" alt="{name}" class="hover-item">
+    <img src="{avatar}&s=96" alt="{name}" class="hover-item" loading="lazy">
 </a>
 """
 
@@ -460,6 +460,13 @@ class MetaPlugin(BasePlugin):
     height: 50px;
     border-radius: 50%;
     margin-right: 3px;
+    background-color: #f0f0f0;  /* Placeholder color */
+    opacity: 0;  /* Start fully transparent */
+    transition: opacity 0.3s ease-in-out;
+}
+
+.author-link .hover-item[src] {
+    opacity: 1;  /* Fade in when src is set (image loaded) */
 }
 
 .hover-item:hover {
