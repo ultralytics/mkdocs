@@ -365,8 +365,6 @@ class MetaPlugin(BasePlugin):
 
             div += "</div></div>"
 
-            div += "</div></div>"
-
             if self.config["add_css"]:
                 style_tag = soup.new_tag("style")
                 style_tag.string = self.get_css()
