@@ -1,5 +1,5 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
-# Publish pip package to PyPI https://pypi.org/project/mkdocs-ultralytics-plugin
+# Publish pip package to PyPI https://pypi.org/project/mkdocs-ultralytics-plugin/
 
 name: Publish to PyPI
 
