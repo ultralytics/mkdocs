@@ -53,10 +53,11 @@ jobs:
           git tag -a "$CURRENT_TAG" -m "$(git log -1 --pretty=%B)"
           git push origin "$CURRENT_TAG"
           ultralytics-actions-summarize-release
+          uv cache prune --ci
 
   build:
     needs: check
-    if: false # needs.check.outputs.increment == 'True'
+    if: needs.check.outputs.increment == 'True'
     runs-on: ubuntu-latest
     permissions:
       contents: read
