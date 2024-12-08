@@ -43,7 +43,7 @@ jobs:
       - name: Tag and Release
         if: steps.check_pypi.outputs.increment == 'True'
         env:
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURRENT_TAG: ${{ steps.check_pypi.outputs.current_tag }}
           PREVIOUS_TAG: ${{ steps.check_pypi.outputs.previous_tag }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
