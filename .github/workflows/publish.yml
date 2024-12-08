@@ -77,7 +77,7 @@ jobs:
 
   publish:
     needs: [check, build]
-    if: false # needs.check.outputs.increment == 'True'
+    if: needs.check.outputs.increment == 'True'
     runs-on: ubuntu-latest
     environment: # for GitHub Deployments tab
       name: Release - PyPI
@@ -93,7 +93,7 @@ jobs:
 
   notify:
     needs: [check, publish]
-    if: false # always() && needs.check.outputs.increment == 'True'
+    if: always() && needs.check.outputs.increment == 'True'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
