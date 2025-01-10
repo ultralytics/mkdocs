@@ -285,7 +285,7 @@ class MetaPlugin(BasePlugin):
         if meta_description := soup.find("meta", attrs={"name": "description"}):
             if self.config["add_desc"] and "description" in page.meta and (10 < len(page.meta["description"]) < 500):
                 if self.config["verbose"]:
-                    print(f'File: {page.file.src_path}, Description: {page.meta["description"]}')
+                    print(f"File: {page.file.src_path}, Description: {page.meta['description']}")
                 meta_description["content"] = page.meta["description"]
 
         # Open Graph / Facebook
@@ -356,7 +356,7 @@ class MetaPlugin(BasePlugin):
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
                     name, url, n, avatar = author  # n is number of changes
-                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{"s" * (n > 1)})">
     <img src="{avatar}&s=96" alt="{name}" class="hover-item" loading="lazy">
 </a>
 """
