@@ -199,9 +199,7 @@ class MetaPlugin(BasePlugin):
             by an `h3` tag, and its corresponding answer is captured from `p` tags until the next `h3` or `h2` tag.
         """
         faqs = []
-        faq_section = soup.find("h2", string="FAQ")
-
-        if faq_section:
+        if faq_section := soup.find("h2", string="FAQ"):
             current_section = faq_section.find_next_sibling()
 
             while current_section and current_section.name != "h2":
@@ -404,8 +402,7 @@ class MetaPlugin(BasePlugin):
                 "abstract": page.meta.get("description", ""),
             }
 
-            faqs = self.parse_faq(soup)
-            if faqs:
+            if faqs := self.parse_faq(soup):
                 ld_json_content["@type"] = ["Article", "FAQPage"]
                 ld_json_content["mainEntity"] = faqs
 
