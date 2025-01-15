@@ -1,4 +1,4 @@
-# Ultralytics MkDocs plugin 🚀, AGPL-3.0 license
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 from .main import MetaPlugin
 
