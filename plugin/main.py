@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from subprocess import check_output
+import datetime
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
@@ -13,6 +14,8 @@ from plugin.utils import (
     get_github_usernames_from_file,
     get_youtube_video_ids,
 )
+
+TODAY = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S +0000')
 
 
 class MetaPlugin(BasePlugin):
@@ -36,6 +39,7 @@ class MetaPlugin(BasePlugin):
         ("verbose", config_options.Type(bool, default=True)),  # Enable verbose output for debugging
         ("enabled", config_options.Type(bool, default=True)),  # Enable or disable the plugin
         ("default_image", config_options.Type(str, default=None)),  # Default image URL if none found in content
+        ("default_author", config_options.Type(str, default=None)),  # Default GitHub author email if none found
         ("add_desc", config_options.Type(bool, default=True)),  # Add meta description tags
         ("add_image", config_options.Type(bool, default=True)),  # Add meta image tags
         ("add_keywords", config_options.Type(bool, default=True)),  # Add meta keywords tags
@@ -71,18 +75,19 @@ class MetaPlugin(BasePlugin):
         """
         file_path = str(Path(file_path).resolve())
 
-        # Get the creation date
+        # Get the creation and last modified dates
         args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
-        git_info = {"creation_date": creation_date}
-
-        # Get the last modification date
         last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
-        git_info["last_modified_date"] = last_modified_date
+        git_info = {
+            "creation_date": creation_date or TODAY,
+            "last_modified_date": last_modified_date or TODAY
+        }
+        print(git_info)
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
         if self.config["add_authors"]:
-            authors_info = get_github_usernames_from_file(file_path)
+            authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
             git_info["authors"] = [
                 (author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()
             ]
