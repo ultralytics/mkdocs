@@ -17,7 +17,7 @@ from plugin.utils import (
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
-DEFAULT_MODIFIED_DATE = (today - timedelta(days=45)).strftime("%Y-%m-%d %H:%M:%S +0000")
+DEFAULT_MODIFIED_DATE = (today - timedelta(days=40)).strftime("%Y-%m-%d %H:%M:%S +0000")
 
 
 class MetaPlugin(BasePlugin):
