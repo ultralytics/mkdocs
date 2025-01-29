@@ -17,7 +17,7 @@ from plugin.utils import (
 
 today = datetime.now()
 TODAY = today.strftime("%Y-%m-%d %H:%M:%S +0000")
-LAST_YEAR = today.replace(month=today.year - 1).strftime("%Y-%m-%d %H:%M:%S +0000")
+LAST_YEAR = today.replace(year=today.year - 1).strftime("%Y-%m-%d %H:%M:%S +0000")
 
 
 class MetaPlugin(BasePlugin):
