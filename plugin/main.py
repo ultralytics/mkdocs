@@ -1,7 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
 
@@ -16,8 +16,8 @@ from plugin.utils import (
 )
 
 today = datetime.now()
-DEFAULT_CREATION_DATE = today.strftime("%Y-%m-%d %H:%M:%S +0000")
-DEFAULT_MODIFIED_DATE = today.replace(year=today.year - 1).strftime("%Y-%m-%d %H:%M:%S +0000")
+DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
+DEFAULT_MODIFIED_DATE = (today - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S +0000")
 
 
 class MetaPlugin(BasePlugin):
