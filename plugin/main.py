@@ -17,7 +17,7 @@ from plugin.utils import (
 
 today = datetime.now()
 TODAY = today.strftime("%Y-%m-%d %H:%M:%S +0000")
-LAST_MONTH = today.replace(month=today.month - 1 if today.month > 1 else 12).strftime("%Y-%m-%d %H:%M:%S +0000")
+LAST_YEAR = today.replace(month=today.year - 1).strftime("%Y-%m-%d %H:%M:%S +0000")
 
 
 class MetaPlugin(BasePlugin):
@@ -81,7 +81,10 @@ class MetaPlugin(BasePlugin):
         args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
         last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
-        git_info = {"creation_date": creation_date or LAST_MONTH, "last_modified_date": last_modified_date or TODAY}
+        git_info = {
+            "creation_date": creation_date or LAST_YEAR,
+            "last_modified_date": last_modified_date or TODAY,
+        }
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
         if self.config["add_authors"]:
