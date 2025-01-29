@@ -45,6 +45,7 @@ The plugin supports several configuration arguments to tailor its behavior to yo
 - `verbose`: Toggles verbose output. Useful for debugging. (default: `True`)
 - `enabled`: Toggles plugin activation. (default: `True`)
 - `default_image`: Provides a fallback image URL if none is found in your content. (default: `None`)
+- `default_author`: GitHub author email to use if no author is found for pages. (default: `None`)
 - `add_desc`: Controls the generation of meta description tags. (default: `True`)
 - `add_image`: Manages meta image tag generation. (default: `True`)
 - `add_keywords`: Allows meta keyword tag generation. (default: `True`)
@@ -63,6 +64,7 @@ plugins:
       verbose: True
       enabled: True
       default_image: "https://example.com/default-image.png"
+      default_author: "you@company.com"
       add_desc: True
       add_image: True
       add_keywords: True

@@ -135,12 +135,13 @@ def get_github_username_from_email(email, cache, file_path="", verbose=True):
     return None, None
 
 
-def get_github_usernames_from_file(file_path):
+def get_github_usernames_from_file(file_path, default_user=None):
     """
     Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
 
     Args:
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
+        default_user (str, optional): Default GitHub user email to use if no authors found. Defaults to None.
 
     Returns:
         (dict): A dictionary where keys are GitHub usernames or emails (if username is not found) and values are dictionaries containing:
@@ -196,6 +197,8 @@ def get_github_usernames_from_file(file_path):
 
     info = {}
     for email, changes in emails.items():
+        if not email and default_user:
+            email = default_user
         username, avatar = get_github_username_from_email(email, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
