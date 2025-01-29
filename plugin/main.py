@@ -1,9 +1,9 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+import datetime
 import json
 from pathlib import Path
 from subprocess import check_output
-import datetime
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
@@ -15,7 +15,7 @@ from plugin.utils import (
     get_youtube_video_ids,
 )
 
-TODAY = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S +0000')
+TODAY = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S +0000")
 
 
 class MetaPlugin(BasePlugin):
@@ -79,10 +79,7 @@ class MetaPlugin(BasePlugin):
         args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
         last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
-        git_info = {
-            "creation_date": creation_date or TODAY,
-            "last_modified_date": last_modified_date or TODAY
-        }
+        git_info = {"creation_date": creation_date or TODAY, "last_modified_date": last_modified_date or TODAY}
         print(git_info)
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
