@@ -86,7 +86,6 @@ class MetaPlugin(BasePlugin):
             "creation_date": creation_date or LAST_MONTH,
             "last_modified_date": last_modified_date or TODAY
         }
-        print(git_info)
 
         # Get the authors and their contributions count using get_github_usernames_from_file function
         if self.config["add_authors"]:
