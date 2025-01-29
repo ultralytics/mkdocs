@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 from subprocess import check_output
-import datetime
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
@@ -15,7 +15,10 @@ from plugin.utils import (
     get_youtube_video_ids,
 )
 
-TODAY = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S +0000')
+
+today = datetime.now()
+TODAY = today.strftime('%Y-%m-%d %H:%M:%S +0000')
+LAST_MONTH = today.replace(month=today.month-1 if today.month > 1 else 12).strftime('%Y-%m-%d %H:%M:%S +0000')
 
 
 class MetaPlugin(BasePlugin):
@@ -80,7 +83,7 @@ class MetaPlugin(BasePlugin):
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
         last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
         git_info = {
-            "creation_date": creation_date or TODAY,
+            "creation_date": creation_date or LAST_MONTH,
             "last_modified_date": last_modified_date or TODAY
         }
         print(git_info)
