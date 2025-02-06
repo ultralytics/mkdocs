@@ -24,7 +24,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mkdocs-ultralytics-plugin"
-version = "0.1.16"
+version = "0.1.17"
 description = "An MkDocs plugin that provides Ultralytics Docs customizations at https://docs.ultralytics.com."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -58,7 +58,7 @@ classifiers = [
 ]  # Optional, for a list of valid classifiers, see https://pypi.org/classifiers/
 dependencies = [
     "mkdocs>=1.0",
-    "beautifulsoup4>=4.9.3",
+    "beautifulsoup4>=4.9.3,<=4.12.3",
     "pyyaml",
     "requests>=2.31.0",
 ]
