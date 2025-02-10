@@ -58,7 +58,7 @@ classifiers = [
 ]  # Optional, for a list of valid classifiers, see https://pypi.org/classifiers/
 dependencies = [
     "mkdocs>=1.0",
-    "beautifulsoup4>=4.9.3,<=4.12.3",
+    "beautifulsoup4>=4.9.3,<=4.13.3",
     "pyyaml",
     "requests>=2.31.0",
 ]
