@@ -15,14 +15,14 @@ Welcome to the documentation for the MkDocs Ultralytics Plugin! 📄 This powerf
 
 This plugin seamlessly integrates a variety of valuable features into your MkDocs site:
 
--   **Meta Tag Generation**: Automatically creates meta description and image tags using the first paragraph and image found on each page, crucial for SEO and social previews.
--   **Keyword Customization**: Allows you to define specific meta keywords directly within your Markdown front matter for targeted SEO.
--   **Social Media Optimization**: Generates [Open Graph](https://ogp.me/) and [Twitter Card](https://developer.x.com/en/docs/x-for-websites/cards/overview/summary-card-with-large-image) meta tags to ensure your content looks great when shared on social platforms.
--   **Simple Sharing**: Inserts convenient share buttons for Twitter and LinkedIn at the end of your content, encouraging readers to share.
--   **Git Insights**: Gathers and displays [Git](https://git-scm.com/) commit information, including update dates and authors, directly within the page footer for transparency.
--   **JSON-LD Support**: Adds structured data in JSON-LD format, helping search engines understand your content better and potentially enabling rich results.
--   **FAQ Parsing**: Automatically parses FAQ sections (if present) and includes them in the structured data for enhanced search visibility.
--   **Customizable Styling**: Includes optional inline CSS to maintain consistent styling for plugin elements across your documentation, aligning with themes like [MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
+- **Meta Tag Generation**: Automatically creates meta description and image tags using the first paragraph and image found on each page, crucial for SEO and social previews.
+- **Keyword Customization**: Allows you to define specific meta keywords directly within your Markdown front matter for targeted SEO.
+- **Social Media Optimization**: Generates [Open Graph](https://ogp.me/) and [Twitter Card](https://developer.x.com/en/docs/x-for-websites/cards/overview/summary-card-with-large-image) meta tags to ensure your content looks great when shared on social platforms.
+- **Simple Sharing**: Inserts convenient share buttons for Twitter and LinkedIn at the end of your content, encouraging readers to share.
+- **Git Insights**: Gathers and displays [Git](https://git-scm.com/) commit information, including update dates and authors, directly within the page footer for transparency.
+- **JSON-LD Support**: Adds structured data in JSON-LD format, helping search engines understand your content better and potentially enabling rich results.
+- **FAQ Parsing**: Automatically parses FAQ sections (if present) and includes them in the structured data for enhanced search visibility.
+- **Customizable Styling**: Includes optional inline CSS to maintain consistent styling for plugin elements across your documentation, aligning with themes like [MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
 
 ## 🛠️ Installation
 
@@ -39,25 +39,25 @@ To activate the plugin within your MkDocs project, add it to the `plugins` secti
 ```yaml
 plugins:
   - mkdocstrings # Example of another plugin
-  - search       # Example of another plugin
-  - ultralytics  # Add the Ultralytics plugin here
+  - search # Example of another plugin
+  - ultralytics # Add the Ultralytics plugin here
 ```
 
 ## ⚙️ Configuration Arguments
 
 The plugin offers several configuration arguments to customize its behavior according to your project's requirements:
 
--   `verbose` (bool): Enables or disables detailed console output during the build process. Useful for debugging. Default: `True`.
--   `enabled` (bool): Globally enables or disables the plugin. Default: `True`.
--   `default_image` (str | None): Specifies a fallback image URL to use for meta tags if no image is found within the page content. Default: `None`.
--   `default_author` (str | None): Sets a default GitHub author email to use if Git author information cannot be retrieved for a page. Default: `None`.
--   `add_desc` (bool): Controls whether meta description tags are automatically generated. Default: `True`.
--   `add_image` (bool): Controls whether meta image tags (Open Graph, Twitter) are automatically generated. Default: `True`.
--   `add_keywords` (bool): Controls whether meta keyword tags are generated based on front matter. Default: `True`.
--   `add_share_buttons` (bool): Determines if social media share buttons (Twitter, LinkedIn) are added to the page content. Default: `True`.
--   `add_authors` (bool): Controls the display of author and last updated date information in the content footer based on Git history. Default: `False`.
--   `add_json_ld` (bool): Enables the generation and injection of JSON-LD structured data into the page's head. Default: `False`.
--   `add_css` (bool): Determines if the plugin's inline CSS styles are included for elements like share buttons. Default: `True`.
+- `verbose` (bool): Enables or disables detailed console output during the build process. Useful for debugging. Default: `True`.
+- `enabled` (bool): Globally enables or disables the plugin. Default: `True`.
+- `default_image` (str | None): Specifies a fallback image URL to use for meta tags if no image is found within the page content. Default: `None`.
+- `default_author` (str | None): Sets a default GitHub author email to use if Git author information cannot be retrieved for a page. Default: `None`.
+- `add_desc` (bool): Controls whether meta description tags are automatically generated. Default: `True`.
+- `add_image` (bool): Controls whether meta image tags (Open Graph, Twitter) are automatically generated. Default: `True`.
+- `add_keywords` (bool): Controls whether meta keyword tags are generated based on front matter. Default: `True`.
+- `add_share_buttons` (bool): Determines if social media share buttons (Twitter, LinkedIn) are added to the page content. Default: `True`.
+- `add_authors` (bool): Controls the display of author and last updated date information in the content footer based on Git history. Default: `False`.
+- `add_json_ld` (bool): Enables the generation and injection of JSON-LD structured data into the page's head. Default: `False`.
+- `add_css` (bool): Determines if the plugin's inline CSS styles are included for elements like share buttons. Default: `True`.
 
 You can include these arguments under the `ultralytics` entry in your `mkdocs.yml` file like this:
 
@@ -111,9 +111,9 @@ The core logic resides within the `MetaPlugin` class in `plugin.py`. This class 
 # Import the base class for MkDocs plugins
 from mkdocs.plugins import BasePlugin
 
+
 # Define the MetaPlugin class inheriting from BasePlugin
 class MetaPlugin(BasePlugin):
-
     # This method runs after the Markdown is converted to HTML,
     # but before the template is rendered.
     # It's used here primarily to extract information like the first paragraph or image.
@@ -122,7 +122,7 @@ class MetaPlugin(BasePlugin):
         # Logic to find the first image for meta image tags
         # ... (details omitted for brevity)
         # The modified or extracted data is often stored for later use.
-        return content # Return the original content, as modifications happen later
+        return content  # Return the original content, as modifications happen later
 
     # This method runs after the page template has been rendered.
     # It allows modification of the final HTML output.
@@ -133,7 +133,7 @@ class MetaPlugin(BasePlugin):
         # Logic to add JSON-LD script tag to <head>
         # Logic to add inline CSS if enabled
         # ... (details omitted for brevity)
-        return output # Return the modified HTML output
+        return output  # Return the modified HTML output
 ```
 
 This structure allows the plugin to analyze content and then inject the necessary HTML elements and metadata into the final output effectively. Check the source code for the full implementation details.
@@ -150,8 +150,8 @@ Please see our [Contributing Guide](https://docs.ultralytics.com/help/contributi
 
 Ultralytics provides two licensing options to accommodate different use cases:
 
--   **AGPL-3.0 License**: Ideal for students, researchers, and enthusiasts, this [OSI-approved](https://opensource.org/license/agpl-v3) license promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/mkdocs/blob/main/LICENSE) file for details.
--   **Enterprise License**: Designed for commercial applications, this license allows seamless integration of Ultralytics software and AI models into commercial products and services, bypassing the open-source requirements of AGPL-3.0. If your project requires an Enterprise License, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).
+- **AGPL-3.0 License**: Ideal for students, researchers, and enthusiasts, this [OSI-approved](https://opensource.org/license/agpl-v3) license promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/mkdocs/blob/main/LICENSE) file for details.
+- **Enterprise License**: Designed for commercial applications, this license allows seamless integration of Ultralytics software and AI models into commercial products and services, bypassing the open-source requirements of AGPL-3.0. If your project requires an Enterprise License, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).
 
 ## ✉️ Connect with Us
 
