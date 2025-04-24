@@ -347,7 +347,8 @@ class MetaPlugin(BasePlugin):
             created_ago, created_date = calculate_time_difference(git_info["creation_date"])
             updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
-            div = f"""<div class="git-info">
+            div = f"""<br><br>
+<div class="git-info">
 <div class="dates-container">
     <span class="date-item" title="This page was first created on {created_date}">
         <span class="hover-item">📅</span> Created {created_ago} ago
@@ -390,6 +391,7 @@ class MetaPlugin(BasePlugin):
         <i class="fa-brands fa-linkedin-in"></i> Share
     </button>
 </div>
+<br>
 """
             share_buttons = BeautifulSoup(share_buttons, "html.parser")
             self.insert_content(soup, share_buttons)
