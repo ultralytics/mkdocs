@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
+from typing import Any, Dict, List
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
@@ -28,13 +29,17 @@ class MetaPlugin(BasePlugin):
     structured data to the generated HTML pages. It also retrieves git information for each file to include
     authorship and modification details.
 
+    Attributes:
+        config_scheme (tuple): Configuration options for the plugin including verbose output, default images,
+            authors, and various feature toggles for descriptions, images, keywords, share buttons, and JSON-LD.
+
     Methods:
-        get_git_info: Retrieves git information of a specified file including hash, date, and branch.
-        on_page_content: Processes page content with optional enhancements like images, descriptions, and keywords.
-        insert_content: Inserts additional content into a BeautifulSoup object at a specified location.
-        parse_faq: Parses the FAQ questions and answers from the HTML page content.
-        on_post_page: Enhances the HTML output of a page with metadata tags, git information, and share buttons.
-        get_css: Provides simplified CSS for styling the added elements.
+        get_git_info: Retrieve git information of a specified file including hash, date, and branch.
+        on_page_content: Process page content with optional enhancements like images, descriptions, and keywords.
+        insert_content: Insert additional content into a BeautifulSoup object at a specified location.
+        parse_faq: Parse the FAQ questions and answers from the HTML page content.
+        on_post_page: Enhance the HTML output of a page with metadata tags, git information, and share buttons.
+        get_css: Provide simplified CSS for styling the added elements.
     """
 
     config_scheme = (
@@ -51,29 +56,28 @@ class MetaPlugin(BasePlugin):
         ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
     )
 
-    def get_git_info(self, file_path):
+    def get_git_info(self, file_path: str) -> Dict[str, Any]:
         """
-        Retrieves git information of a specified file including hash, date, and branch.
+        Retrieve git information of a specified file including hash, date, and branch.
 
         Args:
             file_path (str): The path to the file for which git information is to be retrieved.
 
         Returns:
-            (dict): A dictionary containing git information. The dictionary contains the following keys:
+            git_info (Dict[str, Any]): A dictionary containing git information with keys:
                 - creation_date (str): The creation date of the file.
                 - last_modified_date (str): The last modified date of the file.
-                - authors (list[tuple]): Optional. A list of tuples where each tuple contains author information
-                  (name (str), url (str), changes (int)) if `add_authors` is enabled in the plugin config.
+                - authors (List[Tuple[str, str, int, str]], optional): List of tuples containing author information
+                  (name, url, changes, avatar) if add_authors is enabled in the plugin config.
 
         Notes:
             Ensure git is installed and the file is within a git repository to retrieve accurate information.
 
         Examples:
-            ```python
-            plugin = MetaPlugin()
-            git_info = plugin.get_git_info('path/to/file.py')
-            print(git_info)
-            ```
+            Retrieve git information for a file
+            >>> plugin = MetaPlugin()
+            >>> git_info = plugin.get_git_info('path/to/file.py')
+            >>> print(git_info['creation_date'])
         """
         file_path = str(Path(file_path).resolve())
 
@@ -95,9 +99,9 @@ class MetaPlugin(BasePlugin):
 
         return git_info
 
-    def on_page_content(self, content, page, config, files):
+    def on_page_content(self, content: str, page, config, files) -> str:
         """
-        Processes page content with optional enhancements like images, descriptions, and keywords.
+        Process page content with optional enhancements like images, descriptions, and keywords.
 
         Args:
             content (str): The content of the page in HTML format.
@@ -106,7 +110,7 @@ class MetaPlugin(BasePlugin):
             files (mkdocs.structure.files.Files): A collection of files in the documentation directory.
 
         Returns:
-            (str): The modified page content with additional meta tags as per plugin configuration.
+            content (str): The modified page content with additional meta tags as per plugin configuration.
 
         Notes:
             This method enhances the content of a MkDocs page by adding meta tags such as descriptions and images.
@@ -142,35 +146,27 @@ class MetaPlugin(BasePlugin):
         return content
 
     @staticmethod
-    def insert_content(soup, content_to_insert):
+    def insert_content(soup: BeautifulSoup, content_to_insert) -> None:
         """
-        Inserts additional content into a BeautifulSoup object at a specified location.
+        Insert additional content into a BeautifulSoup object at a specified location.
 
         Args:
             soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
             content_to_insert (Tag | NavigableString): The HTML content to be inserted.
-
-        Returns:
-            None
 
         Notes:
             This function specifically searches for an HTML element with the id "__comments" and inserts the
             content_to_insert before it. If the "__comments" element is not found, it defaults to appending
             the content to the element with class "md-content__inner".
 
-        Example:
-            ```python
-            from bs4 import BeautifulSoup
-            from bs4.element import Tag, NavigableString
-
-            html_content = '<div class="md-content__inner"><h2 id="__comments">Comments</h2></div>'
-            soup = BeautifulSoup(html_content, 'html.parser')
-            new_content = soup.new_tag('div', id='new')
-            new_content.string = "This is new content"
-
-            MetaPlugin.insert_content(soup, new_content)
-            print(soup.prettify())
-            ```
+        Examples:
+            Insert content into a BeautifulSoup object
+            >>> from bs4 import BeautifulSoup
+            >>> html_content = '<div class="md-content__inner"><h2 id="__comments">Comments</h2></div>'
+            >>> soup = BeautifulSoup(html_content, 'html.parser')
+            >>> new_content = soup.new_tag('div', id='new')
+            >>> new_content.string = "This is new content"
+            >>> MetaPlugin.insert_content(soup, new_content)
         """
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
@@ -179,7 +175,7 @@ class MetaPlugin(BasePlugin):
             md_typeset.append(content_to_insert)
 
     @staticmethod
-    def parse_faq(soup):
+    def parse_faq(soup: BeautifulSoup) -> List[Dict[str, Any]]:
         """
         Parse the FAQ questions and answers from the HTML page content.
 
@@ -187,22 +183,20 @@ class MetaPlugin(BasePlugin):
             soup (BeautifulSoup): The BeautifulSoup object representing the HTML page content.
 
         Returns:
-            (list[dict]): A list of dictionaries, each containing a parsed FAQ entry with 'Question' and 'Answer' fields
-                          following the JSON-LD schema.
+            faqs (List[Dict[str, Any]]): A list of dictionaries, each containing a parsed FAQ entry with 'Question'
+                and 'Answer' fields following the JSON-LD schema.
 
-        Example:
-            ```python
-            from bs4 import BeautifulSoup
-            from mymodule import MetaPlugin
+        Notes:
+            This method identifies the FAQ section by looking for an `h2` tag with the text "FAQ". Each question is
+            identified by an `h3` tag, and its corresponding answer is captured from `p` tags until the next `h3` or
+            `h2` tag.
 
-            html_content = '<h2>FAQ</h2><h3>Question 1?</h3><p>Answer to question 1.</p>'
-            soup = BeautifulSoup(html_content, 'html.parser')
-            faq_data = MetaPlugin.parse_faq(soup)
-            ```
-
-        Note:
-            This method identifies the FAQ section by looking for an `h2` tag with the text "FAQ". Each question is identified
-            by an `h3` tag, and its corresponding answer is captured from `p` tags until the next `h3` or `h2` tag.
+        Examples:
+            Parse FAQ content from HTML
+            >>> from bs4 import BeautifulSoup
+            >>> html_content = '<h2>FAQ</h2><h3>Question 1?</h3><p>Answer to question 1.</p>'
+            >>> soup = BeautifulSoup(html_content, 'html.parser')
+            >>> faq_data = MetaPlugin.parse_faq(soup)
         """
         faqs = []
         if faq_section := soup.find("h2", string="FAQ"):
@@ -232,9 +226,9 @@ class MetaPlugin(BasePlugin):
 
         return faqs
 
-    def on_post_page(self, output, page, config):
+    def on_post_page(self, output: str, page, config) -> str:
         """
-        Enhances the HTML output of a page with metadata tags, git information, and share buttons.
+        Enhance the HTML output of a page with metadata tags, git information, and share buttons.
 
         Args:
             output (str): The HTML content of the rendered page.
@@ -242,7 +236,7 @@ class MetaPlugin(BasePlugin):
             config (Config): The MkDocs configuration object.
 
         Returns:
-            (str): The updated HTML content with additional metadata and enhancements.
+            output (str): The updated HTML content with additional metadata and enhancements.
 
         Notes:
             The output HTML is enhanced with meta tags for SEO, Open Graph, and Twitter. Additionally, git
@@ -420,8 +414,8 @@ class MetaPlugin(BasePlugin):
         return str(soup)
 
     @staticmethod
-    def get_css():
-        """Simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
+    def get_css() -> str:
+        """Provide simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
         return """
 .git-info, .dates-container, .authors-container, .share-buttons {
     display: flex;

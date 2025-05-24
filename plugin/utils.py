@@ -6,6 +6,7 @@ import subprocess
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import requests
 import yaml  # YAML is used for its readability and consistency with MkDocs ecosystem
@@ -15,7 +16,7 @@ WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
 
 
-def calculate_time_difference(date_string):
+def calculate_time_difference(date_string: str) -> Tuple[str, str]:
     """
     Calculate the time difference between a given date and the current date in a human-readable format.
 
@@ -23,12 +24,12 @@ def calculate_time_difference(date_string):
         date_string (str): Date and time string in the format "%Y-%m-%d %H:%M:%S %z".
 
     Returns:
-        (str): Time difference in days, months, or years (e.g., "5 days", "2 months", "1 year").
-        (str): Given date formatted as "Month Day, Year" (e.g., "January 01, 2023").
+        difference (str): Time difference in days, months, or years (e.g., "5 days", "2 months", "1 year").
+        pretty_date (str): Given date formatted as "Month Day, Year" (e.g., "January 01, 2023").
 
-    Example:
+    Examples:
         >>> calculate_time_difference("2023-01-01 00:00:00 +0000")
-        "5 months", "January 01, 2023"
+        ("5 months", "January 01, 2023")
     """
     date = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S %z")
     pretty_date = date.strftime("%B %d, %Y")
@@ -47,33 +48,31 @@ def calculate_time_difference(date_string):
     return difference, pretty_date
 
 
-def get_youtube_video_ids(soup: BeautifulSoup) -> list:
+def get_youtube_video_ids(soup: BeautifulSoup) -> List[str]:
     """
     Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
 
     Args:
-        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need to be extracted.
+        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need
+            to be extracted.
 
     Returns:
-        list: A list containing YouTube video IDs in string format extracted from the HTML content.
+        (List[str]): A list containing YouTube video IDs extracted from the HTML content.
 
     Examples:
-        ```
-        from bs4 import BeautifulSoup
-
-        # Sample HTML content with YouTube iframes
-        html_content = '''
-        <html>
-            <body>
-                <iframe src="https://www.youtube.com/embed/example_id1"></iframe>
-                <iframe src="https://www.youtube.com/embed/example_id2"></iframe>
-            </body>
-        </html>
-        '''
-        soup = BeautifulSoup(html_content, 'html.parser')
-        video_ids = get_youtube_video_ids(soup)
-        print(video_ids)  # Output: ['example_id1', 'example_id2']
-        ```
+        >>> from bs4 import BeautifulSoup
+        >>> html_content = '''
+        ... <html>
+        ...     <body>
+        ...         <iframe src="https://www.youtube.com/embed/example_id1"></iframe>
+        ...         <iframe src="https://www.youtube.com/embed/example_id2"></iframe>
+        ...     </body>
+        ... </html>
+        ... '''
+        >>> soup = BeautifulSoup(html_content, 'html.parser')
+        >>> video_ids = get_youtube_video_ids(soup)
+        >>> print(video_ids)
+        ['example_id1', 'example_id2']
     """
     youtube_ids = []
     iframes = soup.find_all("iframe", src=True)
@@ -83,23 +82,26 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list:
     return youtube_ids
 
 
-def get_github_username_from_email(email, cache, file_path="", verbose=True):
+def get_github_username_from_email(
+    email: str, cache: Dict, file_path: str = "", verbose: bool = True
+) -> Tuple[Optional[str], Optional[str]]:
     """
-    Retrieves the GitHub username and avatar URL associated with the given email address.
+    Retrieve the GitHub username and avatar URL associated with the given email address.
 
     Args:
         email (str): The email address to retrieve the GitHub username for.
-        cache (dict): A dictionary containing cached email-GitHub username mappings.
-        file_path (str, optional): Name of the file the user authored. Defaults to ''.
-        verbose (bool, optional): Whether to print verbose output. Defaults to True.
+        cache (Dict): A dictionary containing cached email-GitHub username mappings.
+        file_path (str, optional): Name of the file the user authored.
+        verbose (bool, optional): Whether to print verbose output.
 
     Returns:
-        tuple: (username, avatar) where both are strings or None if not found.
+        username (str | None): GitHub username if found, None otherwise.
+        avatar (str | None): Avatar URL if found, None otherwise.
 
-    Note:
-        If the email ends with "@users.noreply.github.com", the function will parse the username directly from the email address.
-        Uses the GitHub REST API to query the username if it's not found in the local cache. Ensure you comply with GitHub's rate
-        limits and authentication requirements when querying their API.
+    Notes:
+        If the email ends with "@users.noreply.github.com", the function will parse the username directly from the
+        email address. Uses the GitHub REST API to query the username if it's not found in the local cache. Ensure
+        you comply with GitHub's rate limits and authentication requirements when querying their API.
     """
     # First, check if the email exists in the local cache file
     if email in cache:
@@ -135,25 +137,25 @@ def get_github_username_from_email(email, cache, file_path="", verbose=True):
     return None, None
 
 
-def get_github_usernames_from_file(file_path, default_user=None):
+def get_github_usernames_from_file(file_path: str, default_user: Optional[str] = None) -> Dict[str, Dict[str, any]]:
     """
     Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
 
     Args:
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
-        default_user (str, optional): Default GitHub user email to use if no authors found. Defaults to None.
+        default_user (str, optional): Default GitHub user email to use if no authors found.
 
     Returns:
-        (dict): A dictionary where keys are GitHub usernames or emails (if username is not found) and values are dictionaries containing:
+        (Dict[str, Dict[str, any]]): A dictionary where keys are GitHub usernames or emails (if username is not
+            found) and values are dictionaries containing:
             - 'email' (str): The email address of the author.
             - 'url' (str): The GitHub profile URL of the author.
             - 'changes' (int): The number of changes (commits) made by the author.
             - 'avatar' (str): The URL of the author's GitHub avatar.
 
     Examples:
-        ```python
-        print(get_github_usernames_from_file('mkdocs.yml'))
-        ```
+        >>> print(get_github_usernames_from_file('mkdocs.yml'))
+        {'username1': {'email': 'user@example.com', 'url': 'https://github.com/username1', 'changes': 5, 'avatar': '...'}}
     """
     # Fetch author emails using 'git log'
     authors_emails_log = (
