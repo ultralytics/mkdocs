@@ -53,7 +53,7 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> List[str]:
     Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
 
     Args:
-        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need 
+        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need
             to be extracted.
 
     Returns:
@@ -82,7 +82,9 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> List[str]:
     return youtube_ids
 
 
-def get_github_username_from_email(email: str, cache: Dict, file_path: str = "", verbose: bool = True) -> Tuple[Optional[str], Optional[str]]:
+def get_github_username_from_email(
+    email: str, cache: Dict, file_path: str = "", verbose: bool = True
+) -> Tuple[Optional[str], Optional[str]]:
     """
     Retrieve the GitHub username and avatar URL associated with the given email address.
 
@@ -97,8 +99,8 @@ def get_github_username_from_email(email: str, cache: Dict, file_path: str = "",
         avatar (str | None): Avatar URL if found, None otherwise.
 
     Notes:
-        If the email ends with "@users.noreply.github.com", the function will parse the username directly from the 
-        email address. Uses the GitHub REST API to query the username if it's not found in the local cache. Ensure 
+        If the email ends with "@users.noreply.github.com", the function will parse the username directly from the
+        email address. Uses the GitHub REST API to query the username if it's not found in the local cache. Ensure
         you comply with GitHub's rate limits and authentication requirements when querying their API.
     """
     # First, check if the email exists in the local cache file
@@ -144,7 +146,7 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
         default_user (str, optional): Default GitHub user email to use if no authors found.
 
     Returns:
-        (Dict[str, Dict[str, any]]): A dictionary where keys are GitHub usernames or emails (if username is not 
+        (Dict[str, Dict[str, any]]): A dictionary where keys are GitHub usernames or emails (if username is not
             found) and values are dictionaries containing:
             - 'email' (str): The email address of the author.
             - 'url' (str): The GitHub profile URL of the author.
