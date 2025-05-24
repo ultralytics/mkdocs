@@ -76,7 +76,7 @@ class MetaPlugin(BasePlugin):
             ```
         """
         file_path = str(Path(file_path).resolve())
-    
+
         # Get the creation and last modified dates
         args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         creation_date = check_output(args).decode("utf-8").split("\n")[0]
@@ -85,16 +85,17 @@ class MetaPlugin(BasePlugin):
             "creation_date": creation_date or DEFAULT_CREATION_DATE,
             "last_modified_date": last_modified_date or DEFAULT_MODIFIED_DATE,
         }
-    
+
         # Get the authors and their contributions count using get_github_usernames_from_file function
         if self.config["add_authors"]:
             authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
             # Sort authors by contributions (changes) in descending order
             git_info["authors"] = sorted(
                 [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
-                key=lambda x: x[2], reverse=True
+                key=lambda x: x[2],
+                reverse=True,
             )
-    
+
         return git_info
 
     def on_page_content(self, content, page, config, files):
