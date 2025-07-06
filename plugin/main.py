@@ -2,11 +2,11 @@
 
 import html
 import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
 from typing import Any, Dict, List
-import re
 
 from bs4 import BeautifulSoup, Tag
 from mkdocs.config import config_options
@@ -286,8 +286,8 @@ class MetaPlugin(BasePlugin):
             attrs={
                 "data-content": escaped_content,
                 "class": "md-content__button md-icon",
-                "title": "Copy page as Markdown for LLMs"
-            }
+                "title": "Copy page as Markdown for LLMs",
+            },
         )
 
         # Add the SVG icon
