@@ -263,14 +263,21 @@ class MetaPlugin(BasePlugin):
         function copyForLLM(button) {
             const content = button.dataset.content;
             navigator.clipboard.writeText(content).then(() => {
+                const originalTitle = button.getAttribute('title');
                 const originalHTML = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                setTimeout(() => { button.innerHTML = originalHTML; }, 2000);
+
+                // Update button to show success
+                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg> Copied!';
+                button.setAttribute('title', 'Copied to clipboard!');
+
+                // Reset after 2 seconds
+                setTimeout(() => { 
+                    button.innerHTML = originalHTML;
+                    button.setAttribute('title', originalTitle);
+                }, 2000);
             }).catch(err => {
                 console.error('Copy failed:', err);
-                const originalHTML = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-times"></i> Failed';
-                setTimeout(() => { button.innerHTML = originalHTML; }, 2000);
+                alert('Failed to copy. Please try selecting and copying manually.');
             });
         }
         </script>
@@ -385,6 +392,38 @@ class MetaPlugin(BasePlugin):
             twitter_image_tag.attrs.update({"property": "twitter:image", "content": page.meta["image"]})
             soup.head.append(twitter_image_tag)
 
+        # Add Copy for LLM button near Edit button at the top
+        if self.config["add_copy_llm"] and page.meta.get("llm_content"):
+            # Find the edit button container
+            edit_button_container = soup.select_one(".md-content__button")
+
+            if edit_button_container:
+                # Create the copy button
+                escaped_content = html.escape(page.meta["llm_content"])
+
+                copy_button_html = f"""
+                <a href="javascript:void(0)" onclick="copyForLLM(this); return false;" 
+                data-content="{escaped_content}" 
+                class="md-content__button md-icon"
+                title="Copy page as Markdown for LLMs">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/>
+                    </svg>
+                </a>
+                """
+
+                # Insert the button after the edit button
+                copy_button = BeautifulSoup(copy_button_html, "html.parser")
+                edit_button = edit_button_container.find("a")
+                if edit_button:
+                    edit_button.insert_after(copy_button.a)
+                else:
+                    edit_button_container.append(copy_button.a)
+
+                # Add the script to the page if not already added
+                if not soup.find("script", string=lambda text: text and "copyForLLM" in text):
+                    soup.body.append(BeautifulSoup(self.get_copy_llm_script(), "html.parser"))
+
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
         if (self.config["add_authors"]) and git_info["creation_date"]:
@@ -423,39 +462,22 @@ class MetaPlugin(BasePlugin):
             self.insert_content(soup, div)
 
         # Add share buttons to the footer, if enabled
-        if self.config["add_share_buttons"] or self.config["add_copy_llm"]:
-            buttons = []
+        if self.config["add_share_buttons"]:
+            twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
+            linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-            if self.config["add_share_buttons"]:
-                twitter_link = f"https://twitter.com/intent/tweet?url={page_url}"
-                linkedin_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
-
-                buttons.extend(
-                    [
-                        f"<button onclick=\"window.open('{twitter_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;\" class=\"share-button hover-item\">",
-                        '    <i class="fa-brands fa-x-twitter"></i> Tweet',
-                        "</button>",
-                        f"<button onclick=\"window.open('{linkedin_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;\" class=\"share-button hover-item linkedin\">",
-                        '    <i class="fa-brands fa-linkedin-in"></i> Share',
-                        "</button>",
-                    ]
-                )
-
-            if self.config["add_copy_llm"] and page.meta.get("llm_content"):
-                escaped_content = html.escape(page.meta["llm_content"])
-                buttons.extend(
-                    [
-                        f'<button onclick="copyForLLM(this)" data-content="{escaped_content}" class="share-button hover-item copy-llm" title="Copy page as Markdown for LLMs">',
-                        '    <i class="fas fa-robot"></i> Copy page for LLM',
-                        "</button>",
-                    ]
-                )
-                # Add the script to the page
-                soup.body.append(BeautifulSoup(self.get_copy_llm_script(), "html.parser"))
-
-            if buttons:
-                share_html = '<div class="share-buttons">\n' + "\n".join(buttons) + "\n</div>\n<br>\n"
-                self.insert_content(soup, BeautifulSoup(share_html, "html.parser"))
+            share_buttons = f"""<div class="share-buttons">
+    <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
+        <i class="fa-brands fa-x-twitter"></i> Tweet
+    </button>
+    <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
+        <i class="fa-brands fa-linkedin-in"></i> Share
+    </button>
+</div>
+<br>
+"""
+            share_buttons = BeautifulSoup(share_buttons, "html.parser")
+            self.insert_content(soup, share_buttons)
 
         # Check if LD+JSON is enabled and add structured data to the <head>
         if self.config["add_json_ld"]:
@@ -484,6 +506,23 @@ class MetaPlugin(BasePlugin):
     def get_css() -> str:
         """Provide simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
         return """
+/* Style for Copy for LLM button at top */
+.md-content__button[onclick*="copyForLLM"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.md-content__button[onclick*="copyForLLM"] svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: currentColor;
+}
+
+.md-content__button[onclick*="copyForLLM"]:hover {
+    color: var(--md-accent-fg-color);
+}
+
 .git-info, .dates-container, .authors-container, .share-buttons {
     display: flex;
     align-items: center;
