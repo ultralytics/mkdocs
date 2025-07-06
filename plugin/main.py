@@ -111,13 +111,13 @@ class MetaPlugin(BasePlugin):
             llm_content = clean_for_llm(soup)
             page_title = page.title or "Untitled"
             page_url = (config.get("site_url", "") + page.url).rstrip("/")
-            
+
             # Format content with metadata
             llm_formatted = f"# {page_title}\n\n"
             if page.meta.get("description"):
                 llm_formatted += f"> {page.meta['description']}\n\n"
             llm_formatted += f"Source: {page_url}\n\n---\n\n{llm_content}"
-            
+
             page.meta["llm_content"] = llm_formatted
         except Exception as e:
             if self.config["verbose"]:
@@ -407,7 +407,7 @@ class MetaPlugin(BasePlugin):
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
                     name, url, n, avatar = author  # n is number of changes
-                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
+                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{"s" * (n > 1)})">
     <img src="{avatar}&s=96" alt="{name}" class="hover-item" loading="lazy">
 </a>
 """
@@ -425,32 +425,36 @@ class MetaPlugin(BasePlugin):
         # Add share buttons to the footer, if enabled
         if self.config["add_share_buttons"] or self.config["add_copy_llm"]:
             buttons = []
-            
+
             if self.config["add_share_buttons"]:
                 twitter_link = f"https://twitter.com/intent/tweet?url={page_url}"
                 linkedin_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
-                
-                buttons.extend([
-                    f'<button onclick="window.open(\'{twitter_link}\', \'TwitterShare\', \'width=550,height=680,menubar=no,toolbar=no\'); return false;" class="share-button hover-item">',
-                    '    <i class="fa-brands fa-x-twitter"></i> Tweet',
-                    '</button>',
-                    f'<button onclick="window.open(\'{linkedin_link}\', \'LinkedinShare\', \'width=550,height=730,menubar=no,toolbar=no\'); return false;" class="share-button hover-item linkedin">',
-                    '    <i class="fa-brands fa-linkedin-in"></i> Share',
-                    '</button>'
-                ])
-            
+
+                buttons.extend(
+                    [
+                        f"<button onclick=\"window.open('{twitter_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;\" class=\"share-button hover-item\">",
+                        '    <i class="fa-brands fa-x-twitter"></i> Tweet',
+                        "</button>",
+                        f"<button onclick=\"window.open('{linkedin_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;\" class=\"share-button hover-item linkedin\">",
+                        '    <i class="fa-brands fa-linkedin-in"></i> Share',
+                        "</button>",
+                    ]
+                )
+
             if self.config["add_copy_llm"] and page.meta.get("llm_content"):
                 escaped_content = html.escape(page.meta["llm_content"])
-                buttons.extend([
-                    f'<button onclick="copyForLLM(this)" data-content="{escaped_content}" class="share-button hover-item copy-llm" title="Copy page as Markdown for LLMs">',
-                    '    <i class="fas fa-robot"></i> Copy page for LLM',
-                    '</button>'
-                ])
+                buttons.extend(
+                    [
+                        f'<button onclick="copyForLLM(this)" data-content="{escaped_content}" class="share-button hover-item copy-llm" title="Copy page as Markdown for LLMs">',
+                        '    <i class="fas fa-robot"></i> Copy page for LLM',
+                        "</button>",
+                    ]
+                )
                 # Add the script to the page
                 soup.body.append(BeautifulSoup(self.get_copy_llm_script(), "html.parser"))
-            
+
             if buttons:
-                share_html = '<div class="share-buttons">\n' + '\n'.join(buttons) + '\n</div>\n<br>\n'
+                share_html = '<div class="share-buttons">\n' + "\n".join(buttons) + "\n</div>\n<br>\n"
                 self.insert_content(soup, BeautifulSoup(share_html, "html.parser"))
 
         # Check if LD+JSON is enabled and add structured data to the <head>
