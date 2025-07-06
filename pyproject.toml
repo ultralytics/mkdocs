@@ -61,7 +61,6 @@ dependencies = [
     "beautifulsoup4>=4.9.3,<=4.12.3",
     "pyyaml",
     "requests>=2.31.0",
-    "markdownify>=0.11.6",
 ]
 
 [project.urls]
