@@ -1,6 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-import html
 import json
 import re
 from datetime import datetime, timedelta
@@ -14,7 +13,6 @@ from mkdocs.plugins import BasePlugin
 
 from plugin.utils import (
     calculate_time_difference,
-    clean_for_llm,
     get_github_usernames_from_file,
     get_youtube_video_ids,
 )
@@ -109,24 +107,6 @@ class MetaPlugin(BasePlugin):
 
         return git_info
 
-    def process_llm_content(self, page, config, soup) -> None:
-        """Process page content for LLM consumption."""
-        try:
-            llm_content = clean_for_llm(soup)
-            page_url = f"{config.get('site_url', '')}{page.url}".rstrip("/")
-
-            # Format with metadata
-            parts = [f"# {page.title or 'Untitled'}"]
-            if desc := page.meta.get("description"):
-                parts.append(f"> {desc}")
-            parts.extend([f"Source: {page_url}", "---", llm_content])
-
-            page.meta["llm_content"] = "\n\n".join(parts)
-        except Exception as e:
-            if self.config["verbose"]:
-                print(f"Warning: Failed to process content for LLM: {e}")
-            page.meta["llm_content"] = ""
-
     def on_page_content(self, content: str, page, config, files) -> str:
         """
         Process page content with optional enhancements like images, descriptions, and keywords.
@@ -170,10 +150,6 @@ class MetaPlugin(BasePlugin):
                 page.meta["image"] = youtube_thumbnail_url
             elif self.config["default_image"]:
                 page.meta["image"] = self.config["default_image"]
-
-        # Process content for LLM if enabled
-        if self.config["add_copy_llm"]:
-            self.process_llm_content(page, config, soup)
 
         return content
 
@@ -259,40 +235,138 @@ class MetaPlugin(BasePlugin):
         return faqs
 
     def get_copy_llm_script(self) -> str:
-        """Return JavaScript for copy functionality."""
+        """Return JavaScript for lazy-loading Turndown and copy functionality."""
         return f"""
         <script>
-        function copyForLLM(button) {{
-            const content = button.dataset.content;
-            navigator.clipboard.writeText(content).then(() => {{
-                const originalHTML = button.innerHTML;
-                button.innerHTML = '{self.CHECK_ICON} Copied!';
-                setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
-            }}).catch(err => {{
-                alert('Failed to copy. Please try selecting and copying manually.');
+        let turndownService = null;
+        let isLoading = false;
+
+        async function loadTurndown() {{
+            if (turndownService) return turndownService;
+
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js';
+            document.head.appendChild(script);
+
+            return new Promise((resolve) => {{
+                script.onload = () => {{
+                    turndownService = new TurndownService({{
+                        headingStyle: 'atx',
+                        bulletListMarker: '-',
+                        codeBlockStyle: 'fenced',
+                        fence: '```',
+                        emDelimiter: '*',
+                        strongDelimiter: '**',
+                        linkStyle: 'inlined',
+                        preformattedCode: false
+                    }});
+
+                    // Custom rules for better conversion
+                    turndownService.addRule('strikethrough', {{
+                        filter: ['del', 's'],
+                        replacement: (content) => '~~' + content + '~~'
+                    }});
+
+                    resolve(turndownService);
+                }};
             }});
         }}
+
+        async function copyForLLM(button) {{
+            if (isLoading) return;
+
+            const originalHTML = button.innerHTML;
+            const checkIcon = '{self.CHECK_ICON}';
+
+            try {{
+                isLoading = true;
+                button.innerHTML = '<svg class="rotating" style="width:1.2rem;height:1.2rem;animation:spin 1s linear infinite" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364-6.364l-2.828 2.828M9.464 14.536l-2.828 2.828m12.728 0l-2.828-2.828M9.464 9.464 6.636 6.636" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Loading...';
+
+                // Load Turndown if needed
+                const td = await loadTurndown();
+
+                // Get the main content
+                const content = document.querySelector('article.md-content__inner') || 
+                               document.querySelector('article') || 
+                               document.querySelector('.md-content');
+
+                if (!content) {{
+                    throw new Error('Could not find main content');
+                }}
+
+                // Clone and clean content
+                const cleanContent = content.cloneNode(true);
+
+                // Remove unwanted elements
+                const selectorsToRemove = [
+                    '.md-source', '.headerlink', '.md-content__button',
+                    '.share-buttons', '.git-info', '.authors-container', 
+                    '.dates-container', '#__comments', '.giscus',
+                    'script', 'style', 'nav', 'aside'
+                ];
+
+                selectorsToRemove.forEach(selector => {{
+                    cleanContent.querySelectorAll(selector).forEach(el => el.remove());
+                }});
+
+                // Convert to markdown
+                let markdown = td.turndown(cleanContent.innerHTML);
+
+                // Add page metadata
+                const pageTitle = document.querySelector('h1')?.textContent || document.title;
+                const pageUrl = window.location.href;
+                const description = document.querySelector('meta[name="description"]')?.content || '';
+
+                let finalContent = `# ${{pageTitle}}\\n\\n`;
+                if (description) {{
+                    finalContent += `> ${{description}}\\n\\n`;
+                }}
+                finalContent += `Source: ${{pageUrl}}\\n\\n---\\n\\n${{markdown}}`;
+
+                // Copy to clipboard
+                await navigator.clipboard.writeText(finalContent);
+
+                // Show success
+                button.innerHTML = checkIcon + ' Copied!';
+                setTimeout(() => {{
+                    button.innerHTML = originalHTML;
+                }}, 2000);
+
+            }} catch (err) {{
+                console.error('Copy failed:', err);
+                button.innerHTML = '❌ Failed';
+                setTimeout(() => {{
+                    button.innerHTML = originalHTML;
+                }}, 2000);
+
+                // Fallback: show content in alert
+                if (err.name === 'NotAllowedError') {{
+                    alert('Clipboard access denied. Please try again or use Ctrl+C to copy.');
+                }}
+            }} finally {{
+                isLoading = false;
+            }}
+        }}
+        
+        // CSS for rotating icon
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}';
+        document.head.appendChild(style);
         </script>
         """
 
-    def create_copy_button_element(self, content: str, soup: BeautifulSoup) -> Tag:
+    def create_copy_button_element(self, soup: BeautifulSoup) -> Tag:
         """Create a copy button element."""
-        escaped_content = html.escape(content)
-
         button = soup.new_tag(
             "a",
             href="javascript:void(0)",
             onclick="copyForLLM(this); return false;",
             attrs={
-                "data-content": escaped_content,
-                "class": "md-content__button md-icon",
+                "class": "md-content__button md-icon copy-llm-button",
                 "title": "Copy page as Markdown for LLMs",
             },
         )
-
-        # Add the SVG icon
         button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
-
         return button
 
     def on_post_page(self, output: str, page, config) -> str:
@@ -405,10 +479,10 @@ class MetaPlugin(BasePlugin):
             soup.head.append(twitter_image_tag)
 
         # Add Copy for LLM button near Edit button at the top
-        if self.config["add_copy_llm"] and page.meta.get("llm_content"):
+        if self.config["add_copy_llm"]:
             edit_container = soup.select_one(".md-content__button")
             if edit_container:
-                copy_button = self.create_copy_button_element(page.meta["llm_content"], soup)
+                copy_button = self.create_copy_button_element(soup)
 
                 if edit_btn := edit_container.find("a"):
                     edit_btn.insert_after(copy_button)
@@ -501,25 +575,20 @@ class MetaPlugin(BasePlugin):
     def get_css() -> str:
         """Provide simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
         return """
-.md-content__button[onclick*="copyForLLM"] {
+.copy-llm-button {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
 }
 
-.md-content__button[onclick*="copyForLLM"] svg {
+.copy-llm-button svg {
     width: 1.2rem;
     height: 1.2rem;
     fill: currentColor;
 }
 
-/* Hover effects */
-.md-content__button[onclick*="copyForLLM"]:hover,
-.share-button:hover,
-.hover-item:hover {
+.copy-llm-button:hover{
     color: var(--md-accent-fg-color);
-    transform: scale(1.1);
-    filter: brightness(1.2) grayscale(0%);
 }
 
 .git-info, .dates-container, .authors-container, .share-buttons {
@@ -573,6 +642,11 @@ class MetaPlugin(BasePlugin):
     opacity: 1;  /* Fade in when src is set (image loaded) */
 }
 
+.hover-item:hover {
+    transform: scale(1.2);
+    filter: grayscale(0%);
+}
+
 .share-buttons {
     margin-top: 10px;
 }
@@ -588,12 +662,13 @@ class MetaPlugin(BasePlugin):
     transition: all 0.2s ease;
 }
 
-.share-button.linkedin {
-    background-color: #0077b5;
+.share-button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
 }
 
-.share-button.copy-llm {
-    background-color: #5865F2;
+.share-button.linkedin {
+    background-color: #0077b5;
 }
 
 .share-button i {
