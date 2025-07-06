@@ -1,5 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+import html
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -104,6 +105,25 @@ class MetaPlugin(BasePlugin):
 
         return git_info
 
+    def process_llm_content(self, page, config, soup) -> None:
+        """Process page content for LLM consumption."""
+        try:
+            llm_content = clean_for_llm(soup)
+            page_title = page.title or "Untitled"
+            page_url = (config.get("site_url", "") + page.url).rstrip("/")
+            
+            # Format content with metadata
+            llm_formatted = f"# {page_title}\n\n"
+            if page.meta.get("description"):
+                llm_formatted += f"> {page.meta['description']}\n\n"
+            llm_formatted += f"Source: {page_url}\n\n---\n\n{llm_content}"
+            
+            page.meta["llm_content"] = llm_formatted
+        except Exception as e:
+            if self.config["verbose"]:
+                print(f"Warning: Failed to process content for LLM: {e}")
+            page.meta["llm_content"] = ""
+
     def on_page_content(self, content: str, page, config, files) -> str:
         """
         Process page content with optional enhancements like images, descriptions, and keywords.
@@ -150,26 +170,7 @@ class MetaPlugin(BasePlugin):
 
         # Process content for LLM if enabled
         if self.config["add_copy_llm"]:
-            try:
-                llm_content = clean_for_llm(soup)
-                # Add page title and URL as context
-                page_title = page.title or "Untitled"
-                config.get("site_name", "Documentation")
-                page_url = (config.get("site_url", "") + page.url).rstrip("/")
-
-                # Format the content with metadata
-                llm_formatted = f"# {page_title}\n\n"
-                if page.meta.get("description"):
-                    llm_formatted += f"> {page.meta['description']}\n\n"
-                llm_formatted += f"Source: {page_url}\n\n"
-                llm_formatted += "---\n\n"
-                llm_formatted += llm_content
-
-                page.meta["llm_content"] = llm_formatted
-            except Exception as e:
-                if self.config["verbose"]:
-                    print(f"Warning: Failed to process content for LLM: {e}")
-                page.meta["llm_content"] = ""
+            self.process_llm_content(page, config, soup)
 
         return content
 
@@ -253,6 +254,27 @@ class MetaPlugin(BasePlugin):
                 current_section = current_section.find_next_sibling()
 
         return faqs
+
+    @staticmethod
+    def get_copy_llm_script() -> str:
+        """Return JavaScript for copy functionality."""
+        return """
+        <script>
+        function copyForLLM(button) {
+            const content = button.dataset.content;
+            navigator.clipboard.writeText(content).then(() => {
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => { button.innerHTML = originalHTML; }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-times"></i> Failed';
+                setTimeout(() => { button.innerHTML = originalHTML; }, 2000);
+            });
+        }
+        </script>
+        """
 
     def on_post_page(self, output: str, page, config) -> str:
         """
@@ -385,7 +407,7 @@ class MetaPlugin(BasePlugin):
             if self.config["add_authors"]:
                 for author in git_info["authors"]:
                     name, url, n, avatar = author  # n is number of changes
-                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{"s" * (n > 1)})">
+                    div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{'s' * (n > 1)})">
     <img src="{avatar}&s=96" alt="{name}" class="hover-item" loading="lazy">
 </a>
 """
@@ -402,40 +424,34 @@ class MetaPlugin(BasePlugin):
 
         # Add share buttons to the footer, if enabled
         if self.config["add_share_buttons"] or self.config["add_copy_llm"]:
-            twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
-            linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
-
-            share_buttons = '<div class="share-buttons">'
-
+            buttons = []
+            
             if self.config["add_share_buttons"]:
-                share_buttons += f"""
-    <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
-        <i class="fa-brands fa-x-twitter"></i> Tweet
-    </button>
-    <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
-        <i class="fa-brands fa-linkedin-in"></i> Share
-    </button>"""
-
+                twitter_link = f"https://twitter.com/intent/tweet?url={page_url}"
+                linkedin_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
+                
+                buttons.extend([
+                    f'<button onclick="window.open(\'{twitter_link}\', \'TwitterShare\', \'width=550,height=680,menubar=no,toolbar=no\'); return false;" class="share-button hover-item">',
+                    '    <i class="fa-brands fa-x-twitter"></i> Tweet',
+                    '</button>',
+                    f'<button onclick="window.open(\'{linkedin_link}\', \'LinkedinShare\', \'width=550,height=730,menubar=no,toolbar=no\'); return false;" class="share-button hover-item linkedin">',
+                    '    <i class="fa-brands fa-linkedin-in"></i> Share',
+                    '</button>'
+                ])
+            
             if self.config["add_copy_llm"] and page.meta.get("llm_content"):
-                # Escape content for HTML attribute
-                import html
-
                 escaped_content = html.escape(page.meta["llm_content"])
-
-                share_buttons += f"""
-    <button onclick="navigator.clipboard.writeText(this.dataset.content).then(() => {{ this.innerHTML = '<i class=\\'fas fa-check\\'></i> Copied!'; setTimeout(() => {{ this.innerHTML = '<i class=\\'fas fa-robot\\'></i> Copy page for LLM'; }}, 2000); }}).catch(err => {{ console.error('Copy failed:', err); this.innerHTML = '<i class=\\'fas fa-times\\'></i> Failed'; setTimeout(() => {{ this.innerHTML = '<i class=\\'fas fa-robot\\'></i> Copy for LLM'; }}, 2000); }});" 
-            data-content="{escaped_content}"
-            class="share-button hover-item copy-llm"
-            title="Copy page as Markdown for LLMs">
-        <i class="fas fa-robot"></i> Copy page for LLM
-    </button>"""
-
-            share_buttons += """
-</div>
-<br>
-"""
-            share_buttons = BeautifulSoup(share_buttons, "html.parser")
-            self.insert_content(soup, share_buttons)
+                buttons.extend([
+                    f'<button onclick="copyForLLM(this)" data-content="{escaped_content}" class="share-button hover-item copy-llm" title="Copy page as Markdown for LLMs">',
+                    '    <i class="fas fa-robot"></i> Copy page for LLM',
+                    '</button>'
+                ])
+                # Add the script to the page
+                soup.body.append(BeautifulSoup(self.get_copy_llm_script(), "html.parser"))
+            
+            if buttons:
+                share_html = '<div class="share-buttons">\n' + '\n'.join(buttons) + '\n</div>\n<br>\n'
+                self.insert_content(soup, BeautifulSoup(share_html, "html.parser"))
 
         # Check if LD+JSON is enabled and add structured data to the <head>
         if self.config["add_json_ld"]:
