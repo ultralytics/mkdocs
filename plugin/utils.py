@@ -11,7 +11,6 @@ from typing import Dict, List, Optional, Tuple
 import requests
 import yaml  # YAML is used for its readability and consistency with MkDocs ecosystem
 from bs4 import BeautifulSoup
-from markdownify import MarkdownConverter
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
@@ -81,78 +80,6 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> List[str]:
         if match := re.search(r"youtube\.com/embed/([a-zA-Z0-9_-]+)", iframe["src"]):
             youtube_ids.append(match[1])
     return youtube_ids
-
-
-def clean_for_llm(soup: BeautifulSoup) -> str:
-    """
-    Clean HTML content and convert to LLM-friendly markdown.
-
-    Args:
-        soup (BeautifulSoup): The BeautifulSoup object containing HTML content.
-
-    Returns:
-        (str): Clean markdown text suitable for LLM consumption.
-    """
-    # Clone soup to avoid modifying the original
-    soup = BeautifulSoup(str(soup), "html.parser")
-
-    # Find main content area
-    content = (
-        soup.select_one("article.md-content__inner")
-        or soup.select_one("main article")
-        or soup.select_one("article")
-        or soup.select_one(".md-content")
-        or soup.find("main")
-        or soup.body
-        or soup
-    )
-
-    # Consolidated selectors for elements to remove
-    noise_selectors = [
-        # Main structural elements
-        "header, footer, nav, aside, script, style",
-        # MkDocs-specific elements
-        ".md-sidebar, .md-header, .md-footer, .md-tabs, .md-search, .md-nav, .md-toc",
-        # UI elements
-        ".headerlink, .md-source, .md-logo, a[title='Edit this page']",
-        # Dynamic content
-        "#__comments, .giscus, .giscus-frame",
-        # Plugin-added elements
-        ".share-buttons, .git-info, .authors-container, .dates-container",
-        # Generic noise patterns
-        "[class*='cookie'], [class*='banner']",
-        # Admonition titles (keep content)
-        ".admonition-title",
-    ]
-
-    # Remove noise elements
-    for selector in noise_selectors:
-        for element in content.select(selector):
-            element.decompose()
-
-    # Convert relative links to plain text
-    for a in content.find_all("a", href=True):
-        if not a["href"].startswith(("http://", "https://", "mailto:")):
-            a.replace_with(a.get_text())
-
-    # Create markdown converter with clean settings
-    converter = MarkdownConverter(
-        heading_style="ATX",
-        bullets="-",
-        strip=["img", "iframe", "form", "input", "button", "svg"],
-        escape_asterisks=False,
-        escape_underscores=False,
-        escape_misc=False,
-    )
-
-    # Convert to markdown and clean up
-    markdown = converter.convert_soup(content)
-
-    # Clean up formatting
-    markdown = re.sub(r"\n{3,}", "\n\n", markdown)  # Excessive newlines
-    markdown = re.sub(r"<!--.*?-->", "", markdown, flags=re.DOTALL)  # HTML comments
-
-    return markdown.strip()
 
 
 def get_github_username_from_email(
