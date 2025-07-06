@@ -12,6 +12,7 @@ from mkdocs.plugins import BasePlugin
 
 from plugin.utils import (
     calculate_time_difference,
+    clean_for_llm,
     get_github_usernames_from_file,
     get_youtube_video_ids,
 )
@@ -54,6 +55,7 @@ class MetaPlugin(BasePlugin):
         ("add_authors", config_options.Type(bool, default=False)),  # Add git author and date information
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
         ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
+        ("add_copy_llm", config_options.Type(bool, default=True)),  # Add copy for LLM button
     )
 
     def get_git_info(self, file_path: str) -> Dict[str, Any]:
@@ -145,6 +147,29 @@ class MetaPlugin(BasePlugin):
                 page.meta["image"] = youtube_thumbnail_url
             elif self.config["default_image"]:
                 page.meta["image"] = self.config["default_image"]
+
+        # Process content for LLM if enabled
+        if self.config["add_copy_llm"]:
+            try:
+                llm_content = clean_for_llm(soup)
+                # Add page title and URL as context
+                page_title = page.title or "Untitled"
+                site_name = config.get("site_name", "Documentation")
+                page_url = (config.get("site_url", "") + page.url).rstrip("/")
+
+                # Format the content with metadata
+                llm_formatted = f"# {page_title}\n\n"
+                if page.meta.get("description"):
+                    llm_formatted += f"> {page.meta['description']}\n\n"
+                llm_formatted += f"Source: {page_url}\n\n"
+                llm_formatted += "---\n\n"
+                llm_formatted += llm_content
+
+                page.meta["llm_content"] = llm_formatted
+            except Exception as e:
+                if self.config["verbose"]:
+                    print(f"Warning: Failed to process content for LLM: {e}")
+                page.meta["llm_content"] = ""
 
         return content
 
@@ -376,17 +401,35 @@ class MetaPlugin(BasePlugin):
             self.insert_content(soup, div)
 
         # Add share buttons to the footer, if enabled
-        if self.config["add_share_buttons"]:
+        if self.config["add_share_buttons"] or self.config["add_copy_llm"]:
             twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
             linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
 
-            share_buttons = f"""<div class="share-buttons">
+            share_buttons = '<div class="share-buttons">'
+
+            if self.config["add_share_buttons"]:
+                share_buttons += f"""
     <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">
         <i class="fa-brands fa-x-twitter"></i> Tweet
     </button>
     <button onclick="window.open('{linkedin_share_link}', 'LinkedinShare', 'width=550,height=730,menubar=no,toolbar=no'); return false;" class="share-button hover-item linkedin">
         <i class="fa-brands fa-linkedin-in"></i> Share
-    </button>
+    </button>"""
+
+            if self.config["add_copy_llm"] and page.meta.get("llm_content"):
+                # Escape content for HTML attribute
+                import html
+                escaped_content = html.escape(page.meta["llm_content"])
+
+                share_buttons += f"""
+    <button onclick="navigator.clipboard.writeText(this.dataset.content).then(() => {{ this.innerHTML = '<i class=\\'fas fa-check\\'></i> Copied!'; setTimeout(() => {{ this.innerHTML = '<i class=\\'fas fa-robot\\'></i> Copy page for LLM'; }}, 2000); }}).catch(err => {{ console.error('Copy failed:', err); this.innerHTML = '<i class=\\'fas fa-times\\'></i> Failed'; setTimeout(() => {{ this.innerHTML = '<i class=\\'fas fa-robot\\'></i> Copy for LLM'; }}, 2000); }});" 
+            data-content="{escaped_content}"
+            class="share-button hover-item copy-llm"
+            title="Copy page as Markdown for LLMs">
+        <i class="fas fa-robot"></i> Copy page for LLM
+    </button>"""
+
+            share_buttons += """
 </div>
 <br>
 """
@@ -498,6 +541,10 @@ class MetaPlugin(BasePlugin):
 
 .share-button.linkedin {
     background-color: #0077b5;
+}
+
+.share-button.copy-llm {
+    background-color: #5865F2;
 }
 
 .share-button i {
