@@ -154,7 +154,7 @@ class MetaPlugin(BasePlugin):
                 llm_content = clean_for_llm(soup)
                 # Add page title and URL as context
                 page_title = page.title or "Untitled"
-                site_name = config.get("site_name", "Documentation")
+                config.get("site_name", "Documentation")
                 page_url = (config.get("site_url", "") + page.url).rstrip("/")
 
                 # Format the content with metadata
@@ -419,6 +419,7 @@ class MetaPlugin(BasePlugin):
             if self.config["add_copy_llm"] and page.meta.get("llm_content"):
                 # Escape content for HTML attribute
                 import html
+
                 escaped_content = html.escape(page.meta["llm_content"])
 
                 share_buttons += f"""

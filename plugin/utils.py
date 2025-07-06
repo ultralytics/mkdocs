@@ -98,28 +98,50 @@ def clean_for_llm(soup: BeautifulSoup) -> str:
         then converts the remaining content to clean markdown format.
     """
     # Clone soup to avoid modifying the original
-    soup = BeautifulSoup(str(soup), 'html.parser')
+    soup = BeautifulSoup(str(soup), "html.parser")
 
     # Find main content area
     content = (
-        soup.select_one("article.md-content__inner") or 
-        soup.select_one("main article") or 
-        soup.select_one("article") or 
-        soup.select_one(".md-content") or 
-        soup.find("main") or 
-        soup.body or 
-        soup
+        soup.select_one("article.md-content__inner")
+        or soup.select_one("main article")
+        or soup.select_one("article")
+        or soup.select_one(".md-content")
+        or soup.find("main")
+        or soup.body
+        or soup
     )
 
     # List of selectors for elements to remove
     noise_selectors = [
-        "header", "footer", "nav", "aside", "script", "style",
-        ".md-sidebar", ".md-header", ".md-footer", ".md-tabs", ".md-search",
-        ".md-nav", ".md-toc", ".headerlink", ".md-source", ".md-logo",
-        "[class*='nav']", "[class*='footer']", "[class*='sidebar']",
-        "[class*='cookie']", "[class*='banner']", ".admonition-title",
-        "#__comments", ".giscus", ".giscus-frame",
-        ".share-buttons", ".git-info", ".authors-container", ".dates-container"
+        "header",
+        "footer",
+        "nav",
+        "aside",
+        "script",
+        "style",
+        ".md-sidebar",
+        ".md-header",
+        ".md-footer",
+        ".md-tabs",
+        ".md-search",
+        ".md-nav",
+        ".md-toc",
+        ".headerlink",
+        ".md-source",
+        ".md-logo",
+        "[class*='nav']",
+        "[class*='footer']",
+        "[class*='sidebar']",
+        "[class*='cookie']",
+        "[class*='banner']",
+        ".admonition-title",
+        "#__comments",
+        ".giscus",
+        ".giscus-frame",
+        ".share-buttons",
+        ".git-info",
+        ".authors-container",
+        ".dates-container",
     ]
 
     # Remove noise elements
@@ -150,10 +172,10 @@ def clean_for_llm(soup: BeautifulSoup) -> str:
     markdown = converter.convert_soup(content)
 
     # Clean up excessive newlines
-    markdown = re.sub(r'\n{3,}', '\n\n', markdown)
+    markdown = re.sub(r"\n{3,}", "\n\n", markdown)
 
     # Remove any remaining HTML comments
-    markdown = re.sub(r'<!--.*?-->', '', markdown, flags=re.DOTALL)
+    markdown = re.sub(r"<!--.*?-->", "", markdown, flags=re.DOTALL)
 
     return markdown.strip()
 
