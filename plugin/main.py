@@ -6,8 +6,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
 from typing import Any, Dict, List
+import re
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
@@ -59,6 +60,9 @@ class MetaPlugin(BasePlugin):
         ("add_copy_llm", config_options.Type(bool, default=True)),  # Add copy for LLM button
     )
 
+    COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>'
+    CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
+
     def get_git_info(self, file_path: str) -> Dict[str, Any]:
         """
         Retrieve git information of a specified file including hash, date, and branch.
@@ -109,16 +113,15 @@ class MetaPlugin(BasePlugin):
         """Process page content for LLM consumption."""
         try:
             llm_content = clean_for_llm(soup)
-            page_title = page.title or "Untitled"
-            page_url = (config.get("site_url", "") + page.url).rstrip("/")
+            page_url = f"{config.get('site_url', '')}{page.url}".rstrip("/")
 
-            # Format content with metadata
-            llm_formatted = f"# {page_title}\n\n"
-            if page.meta.get("description"):
-                llm_formatted += f"> {page.meta['description']}\n\n"
-            llm_formatted += f"Source: {page_url}\n\n---\n\n{llm_content}"
+            # Format with metadata
+            parts = [f"# {page.title or 'Untitled'}"]
+            if desc := page.meta.get("description"):
+                parts.append(f"> {desc}")
+            parts.extend([f"Source: {page_url}", "---", llm_content])
 
-            page.meta["llm_content"] = llm_formatted
+            page.meta["llm_content"] = "\n\n".join(parts)
         except Exception as e:
             if self.config["verbose"]:
                 print(f"Warning: Failed to process content for LLM: {e}")
@@ -255,33 +258,42 @@ class MetaPlugin(BasePlugin):
 
         return faqs
 
-    @staticmethod
-    def get_copy_llm_script() -> str:
+    def get_copy_llm_script(self) -> str:
         """Return JavaScript for copy functionality."""
-        return """
+        return f"""
         <script>
-        function copyForLLM(button) {
+        function copyForLLM(button) {{
             const content = button.dataset.content;
-            navigator.clipboard.writeText(content).then(() => {
-                const originalTitle = button.getAttribute('title');
+            navigator.clipboard.writeText(content).then(() => {{
                 const originalHTML = button.innerHTML;
-
-                // Update button to show success
-                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg> Copied!';
-                button.setAttribute('title', 'Copied to clipboard!');
-
-                // Reset after 2 seconds
-                setTimeout(() => { 
-                    button.innerHTML = originalHTML;
-                    button.setAttribute('title', originalTitle);
-                }, 2000);
-            }).catch(err => {
-                console.error('Copy failed:', err);
+                button.innerHTML = '{self.CHECK_ICON} Copied!';
+                setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+            }}).catch(err => {{
                 alert('Failed to copy. Please try selecting and copying manually.');
-            });
-        }
+            }});
+        }}
         </script>
         """
+
+    def create_copy_button_element(self, content: str, soup: BeautifulSoup) -> Tag:
+        """Create a copy button element."""
+        escaped_content = html.escape(content)
+
+        button = soup.new_tag(
+            "a",
+            href="javascript:void(0)",
+            onclick="copyForLLM(this); return false;",
+            attrs={
+                "data-content": escaped_content,
+                "class": "md-content__button md-icon",
+                "title": "Copy page as Markdown for LLMs"
+            }
+        )
+
+        # Add the SVG icon
+        button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
+
+        return button
 
     def on_post_page(self, output: str, page, config) -> str:
         """
@@ -394,34 +406,17 @@ class MetaPlugin(BasePlugin):
 
         # Add Copy for LLM button near Edit button at the top
         if self.config["add_copy_llm"] and page.meta.get("llm_content"):
-            # Find the edit button container
-            edit_button_container = soup.select_one(".md-content__button")
+            edit_container = soup.select_one(".md-content__button")
+            if edit_container:
+                copy_button = self.create_copy_button_element(page.meta["llm_content"], soup)
 
-            if edit_button_container:
-                # Create the copy button
-                escaped_content = html.escape(page.meta["llm_content"])
-
-                copy_button_html = f"""
-                <a href="javascript:void(0)" onclick="copyForLLM(this); return false;" 
-                data-content="{escaped_content}" 
-                class="md-content__button md-icon"
-                title="Copy page as Markdown for LLMs">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/>
-                    </svg>
-                </a>
-                """
-
-                # Insert the button after the edit button
-                copy_button = BeautifulSoup(copy_button_html, "html.parser")
-                edit_button = edit_button_container.find("a")
-                if edit_button:
-                    edit_button.insert_after(copy_button.a)
+                if edit_btn := edit_container.find("a"):
+                    edit_btn.insert_after(copy_button)
                 else:
-                    edit_button_container.append(copy_button.a)
+                    edit_container.append(copy_button)
 
-                # Add the script to the page if not already added
-                if not soup.find("script", string=lambda text: text and "copyForLLM" in text):
+                # Add script if not present
+                if not soup.find("script", string=re.compile(r"copyForLLM")):
                     soup.body.append(BeautifulSoup(self.get_copy_llm_script(), "html.parser"))
 
         # Add git information (dates and authors) to the footer, if enabled
@@ -506,7 +501,6 @@ class MetaPlugin(BasePlugin):
     def get_css() -> str:
         """Provide simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
         return """
-/* Style for Copy for LLM button at top */
 .md-content__button[onclick*="copyForLLM"] {
     display: inline-flex;
     align-items: center;
@@ -519,8 +513,13 @@ class MetaPlugin(BasePlugin):
     fill: currentColor;
 }
 
-.md-content__button[onclick*="copyForLLM"]:hover {
+/* Hover effects */
+.md-content__button[onclick*="copyForLLM"]:hover,
+.share-button:hover,
+.hover-item:hover {
     color: var(--md-accent-fg-color);
+    transform: scale(1.1);
+    filter: brightness(1.2) grayscale(0%);
 }
 
 .git-info, .dates-container, .authors-container, .share-buttons {
@@ -574,11 +573,6 @@ class MetaPlugin(BasePlugin):
     opacity: 1;  /* Fade in when src is set (image loaded) */
 }
 
-.hover-item:hover {
-    transform: scale(1.2);
-    filter: grayscale(0%);
-}
-
 .share-buttons {
     margin-top: 10px;
 }
@@ -592,11 +586,6 @@ class MetaPlugin(BasePlugin):
     font-size: 0.95em;
     margin: 5px;
     transition: all 0.2s ease;
-}
-
-.share-button:hover {
-    transform: scale(1.1);
-    filter: brightness(1.2);
 }
 
 .share-button.linkedin {
