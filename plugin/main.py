@@ -245,7 +245,7 @@ class MetaPlugin(BasePlugin):
             if (turndownService) return turndownService;
 
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js';
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.2.0/turndown.min.js';
             document.head.appendChild(script);
 
             return new Promise((resolve) => {{
