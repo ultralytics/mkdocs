@@ -240,105 +240,261 @@ class MetaPlugin(BasePlugin):
         <script>
         let turndownService = null;
         let isLoading = false;
-
+        
         async function loadTurndown() {{
             if (turndownService) return turndownService;
-
+            
+            // Load Turndown
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.2.0/turndown.min.js';
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js';
             document.head.appendChild(script);
-
+            
+            // Load Turndown plugin for tables
+            const tableScript = document.createElement('script');
+            tableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown-plugin-gfm/1.0.2/turndown-plugin-gfm.min.js';
+            document.head.appendChild(tableScript);
+            
             return new Promise((resolve) => {{
-                script.onload = () => {{
-                    turndownService = new TurndownService({{
-                        headingStyle: 'atx',
-                        bulletListMarker: '-',
-                        codeBlockStyle: 'fenced',
-                        fence: '```',
-                        emDelimiter: '*',
-                        strongDelimiter: '**',
-                        linkStyle: 'inlined',
-                        preformattedCode: false
-                    }});
-
-                    // Custom rules for better conversion
-                    turndownService.addRule('strikethrough', {{
-                        filter: ['del', 's'],
-                        replacement: (content) => '~~' + content + '~~'
-                    }});
-
-                    resolve(turndownService);
+                let scriptsLoaded = 0;
+                const checkLoaded = () => {{
+                    scriptsLoaded++;
+                    if (scriptsLoaded === 2) {{
+                        // Initialize Turndown with better settings
+                        turndownService = new TurndownService({{
+                            headingStyle: 'atx',
+                            bulletListMarker: '-',
+                            codeBlockStyle: 'fenced',
+                            fence: '```',
+                            emDelimiter: '*',
+                            strongDelimiter: '**',
+                            linkStyle: 'inlined',
+                            preformattedCode: false,
+                            hr: '---'
+                        }});
+                        
+                        // Use GFM plugin for tables
+                        turndownService.use(turndownPluginGfm.tables);
+                        
+                        // Custom rule for code blocks to preserve formatting
+                        turndownService.addRule('fencedCodeBlock', {{
+                            filter: function (node, options) {{
+                                return (
+                                    options.codeBlockStyle === 'fenced' &&
+                                    node.nodeName === 'PRE' &&
+                                    node.firstChild &&
+                                    node.firstChild.nodeName === 'CODE'
+                                );
+                            }},
+                            replacement: function (content, node, options) {{
+                                const className = node.firstChild.className || '';
+                                const language = className.match(/language-(\\S+)/);
+                                const langString = language ? language[1] : '';
+                                
+                                // Ensure proper spacing around code blocks
+                                return (
+                                    '\\n\\n' + options.fence + langString + '\\n' +
+                                    node.firstChild.textContent +
+                                    '\\n' + options.fence + '\\n\\n'
+                                );
+                            }}
+                        }});
+                        
+                        // Custom rule for inline code
+                        turndownService.addRule('inlineCode', {{
+                            filter: function (node) {{
+                                const hasSiblings = node.previousSibling || node.nextSibling;
+                                const isCodeBlock = node.parentNode.nodeName === 'PRE';
+                                return node.nodeName === 'CODE' && !isCodeBlock;
+                            }},
+                            replacement: function (content) {{
+                                if (!content) return '';
+                                // Escape backticks in inline code
+                                content = content.replace(/`/g, '\\\\`');
+                                return '`' + content + '`';
+                            }}
+                        }});
+                        
+                        // Custom rule for line numbers in code blocks (remove them)
+                        turndownService.addRule('removeLineNumbers', {{
+                            filter: function (node) {{
+                                return node.className && node.className.includes('__codelineno');
+                            }},
+                            replacement: function () {{
+                                return '';
+                            }}
+                        }});
+                        
+                        // Custom rule for preserving line breaks in certain contexts
+                        turndownService.addRule('preserveLineBreaks', {{
+                            filter: 'br',
+                            replacement: function (content, node, options) {{
+                                // Preserve line breaks in table cells
+                                if (node.closest('td') || node.closest('th')) {{
+                                    return '\\n';
+                                }}
+                                return options.br + '\\n';
+                            }}
+                        }});
+                        
+                        // Better handling of divs with classes
+                        turndownService.addRule('divs', {{
+                            filter: function (node) {{
+                                return node.nodeName === 'DIV' && node.className;
+                            }},
+                            replacement: function (content, node) {{
+                                // Handle admonitions and special blocks
+                                if (node.className.includes('admonition') || 
+                                    node.className.includes('note') || 
+                                    node.className.includes('warning')) {{
+                                    const title = node.querySelector('.admonition-title');
+                                    if (title) {{
+                                        return '\\n\\n> **' + title.textContent + '**\\n> ' + 
+                                            content.trim().replace(/\\n/g, '\\n> ') + '\\n\\n';
+                                    }}
+                                }}
+                                return content;
+                            }}
+                        }});
+                        
+                        // Custom rule for definition lists
+                        turndownService.addRule('definitionList', {{
+                            filter: ['dl'],
+                            replacement: function (content) {{
+                                return '\\n\\n' + content + '\\n\\n';
+                            }}
+                        }});
+                        
+                        turndownService.addRule('definitionTerm', {{
+                            filter: ['dt'],
+                            replacement: function (content) {{
+                                return '\\n**' + content + '**\\n';
+                            }}
+                        }});
+                        
+                        turndownService.addRule('definitionDescription', {{
+                            filter: ['dd'],
+                            replacement: function (content) {{
+                                return ': ' + content + '\\n';
+                            }}
+                        }});
+                        
+                        // Better strikethrough handling
+                        turndownService.addRule('strikethrough', {{
+                            filter: ['del', 's', 'strike'],
+                            replacement: function (content) {{
+                                return '~~' + content + '~~';
+                            }}
+                        }});
+                        
+                        resolve(turndownService);
+                    }}
                 }};
+                
+                script.onload = checkLoaded;
+                tableScript.onload = checkLoaded;
             }});
         }}
-
+        
         async function copyForLLM(button) {{
             if (isLoading) return;
-
+            
             const originalHTML = button.innerHTML;
             const checkIcon = '{self.CHECK_ICON}';
-
+            
             try {{
                 isLoading = true;
                 button.innerHTML = '<svg class="rotating" style="width:1.2rem;height:1.2rem;animation:spin 1s linear infinite" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364-6.364l-2.828 2.828M9.464 14.536l-2.828 2.828m12.728 0l-2.828-2.828M9.464 9.464 6.636 6.636" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Loading...';
-
+                
                 // Load Turndown if needed
                 const td = await loadTurndown();
-
+                
                 // Get the main content
                 const content = document.querySelector('article.md-content__inner') || 
-                               document.querySelector('article') || 
-                               document.querySelector('.md-content');
-
+                            document.querySelector('article') || 
+                            document.querySelector('.md-content');
+                
                 if (!content) {{
                     throw new Error('Could not find main content');
                 }}
-
+                
                 // Clone and clean content
                 const cleanContent = content.cloneNode(true);
-
+                
+                // Pre-process: clean up code blocks with line numbers
+                cleanContent.querySelectorAll('table.highlighttable').forEach(table => {{
+                    // Extract code from tables used for line numbering
+                    const codeElement = table.querySelector('pre code');
+                    if (codeElement) {{
+                        const pre = document.createElement('pre');
+                        const code = document.createElement('code');
+                        code.className = codeElement.className;
+                        code.textContent = codeElement.textContent;
+                        pre.appendChild(code);
+                        table.replaceWith(pre);
+                    }}
+                }});
+                
                 // Remove unwanted elements
                 const selectorsToRemove = [
                     '.md-source', '.headerlink', '.md-content__button',
                     '.share-buttons', '.git-info', '.authors-container', 
                     '.dates-container', '#__comments', '.giscus',
-                    'script', 'style', 'nav', 'aside'
+                    'script', 'style', 'nav', 'aside', '.tabbed-labels',
+                    'span[class*="__codelineno"]', '.linenodiv'
                 ];
-
+                
                 selectorsToRemove.forEach(selector => {{
                     cleanContent.querySelectorAll(selector).forEach(el => el.remove());
                 }});
-
+                
+                // Process tabbed content (like Python/CLI examples)
+                cleanContent.querySelectorAll('.tabbed-content').forEach(tabbedContent => {{
+                    const tabs = tabbedContent.querySelectorAll('.tabbed-block');
+                    if (tabs.length > 0) {{
+                        // Keep only the first tab's content by default
+                        tabs.forEach((tab, index) => {{
+                            if (index > 0) tab.remove();
+                        }});
+                    }}
+                }});
+                
                 // Convert to markdown
                 let markdown = td.turndown(cleanContent.innerHTML);
-
+                
+                // Post-process: clean up extra whitespace
+                markdown = markdown
+                    .replace(/\\n{{3,}}/g, '\\n\\n')  // Multiple newlines to double
+                    .replace(/^\\s+$/gm, '')  // Empty lines with whitespace
+                    .replace(/\\[\\s*\\]/g, '')  // Empty links
+                    .trim();
+                
                 // Add page metadata
                 const pageTitle = document.querySelector('h1')?.textContent || document.title;
                 const pageUrl = window.location.href;
                 const description = document.querySelector('meta[name="description"]')?.content || '';
-
+                
                 let finalContent = `# ${{pageTitle}}\\n\\n`;
                 if (description) {{
                     finalContent += `> ${{description}}\\n\\n`;
                 }}
                 finalContent += `Source: ${{pageUrl}}\\n\\n---\\n\\n${{markdown}}`;
-
+                
                 // Copy to clipboard
                 await navigator.clipboard.writeText(finalContent);
-
+                
                 // Show success
                 button.innerHTML = checkIcon + ' Copied!';
                 setTimeout(() => {{
                     button.innerHTML = originalHTML;
                 }}, 2000);
-
+                
             }} catch (err) {{
                 console.error('Copy failed:', err);
                 button.innerHTML = '❌ Failed';
                 setTimeout(() => {{
                     button.innerHTML = originalHTML;
                 }}, 2000);
-
+                
                 // Fallback: show content in alert
                 if (err.name === 'NotAllowedError') {{
                     alert('Clipboard access denied. Please try again or use Ctrl+C to copy.');
