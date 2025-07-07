@@ -344,7 +344,7 @@ class MetaPlugin(BasePlugin):
             soup.head.append(twitter_image_tag)
 
         # Add Copy for LLM button near Edit button at the top (but NOT on reference pages)
-        if self.config["add_copy_llm"]:
+        if self.config["add_copy_llm"] and "/reference/" not in page.url:
             # Find the edit button first
             edit_btn = soup.find("a", {"title": "Edit this page"})
             if edit_btn:
