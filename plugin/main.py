@@ -373,13 +373,25 @@ class MetaPlugin(BasePlugin):
 
                         const originalHTML = button.innerHTML;
                         const checkIcon = '{self.CHECK_ICON}';
+
                         // Handle both /blob/ and /tree/ in GitHub URLs
                         let rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com');
+
+                        // Remove /blob/ or /tree/ from the URL
                         rawUrl = rawUrl.replace('/blob/', '/').replace('/tree/', '/');
 
                         try {{
                             const response = await fetch(rawUrl);
-                            const markdown = await response.text();
+                            let markdown = await response.text();
+
+                            // Remove YAML front matter if present
+                            if (markdown.startsWith('---')) {{
+                                const frontMatterEnd = markdown.indexOf('\\n---\\n', 3);
+                                if (frontMatterEnd !== -1) {{
+                                    markdown = markdown.substring(frontMatterEnd + 5).trim();
+                                }}
+                            }}
+
                             const title = document.querySelector('h1')?.textContent || document.title;
                             const content = `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
 
