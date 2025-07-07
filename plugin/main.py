@@ -1,13 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import json
-import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
 from typing import Any, Dict, List
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
@@ -234,254 +233,6 @@ class MetaPlugin(BasePlugin):
 
         return faqs
 
-    def get_copy_llm_script(self) -> str:
-        """Return JavaScript for lazy-loading Turndown and copy functionality."""
-        return f"""
-        <script>
-        let turndownService = null;
-        let isLoading = false;
-        
-        async function loadTurndown() {{
-            if (turndownService) return turndownService;
-            
-            return new Promise((resolve, reject) => {{
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.2.0/turndown.min.js';
-                
-                script.onload = () => {{
-                    // Initialize Turndown with basic settings
-                    turndownService = new TurndownService({{
-                        headingStyle: 'atx',
-                        bulletListMarker: '-',
-                        codeBlockStyle: 'fenced',
-                        fence: '```',
-                        emDelimiter: '*',
-                        strongDelimiter: '**',
-                        linkStyle: 'inlined'
-                    }});
-                    
-                    // Add custom rules for better code handling
-                    turndownService.addRule('fencedCodeBlock', {{
-                        filter: function (node, options) {{
-                            return (
-                                options.codeBlockStyle === 'fenced' &&
-                                node.nodeName === 'PRE' &&
-                                node.firstChild &&
-                                node.firstChild.nodeName === 'CODE'
-                            );
-                        }},
-                        replacement: function (content, node, options) {{
-                            const className = node.firstChild.className || '';
-                            const language = className.match(/language-(\\S+)/);
-                            const langString = language ? language[1] : '';
-                            
-                            // Get the actual text content to avoid HTML entities
-                            const codeContent = node.firstChild.textContent;
-                            
-                            return (
-                                '\\n\\n' + options.fence + langString + '\\n' +
-                                codeContent + '\\n' + options.fence + '\\n\\n'
-                            );
-                        }}
-                    }});
-                    
-                    // Handle tables better
-                    turndownService.addRule('table', {{
-                        filter: 'table',
-                        replacement: function (content, node) {{
-                            // Simple table conversion
-                            const rows = Array.from(node.querySelectorAll('tr'));
-                            if (rows.length === 0) return '';
-                            
-                            let result = '\\n\\n';
-                            let isFirstRow = true;
-                            
-                            rows.forEach(row => {{
-                                const cells = Array.from(row.querySelectorAll('td, th'));
-                                const rowContent = cells.map(cell => cell.textContent.trim()).join(' | ');
-                                result += '| ' + rowContent + ' |\\n';
-                                
-                                // Add separator after header row
-                                if (isFirstRow && row.querySelector('th')) {{
-                                    result += '|' + cells.map(() => '---').join('|') + '|\\n';
-                                    isFirstRow = false;
-                                }}
-                            }});
-                            
-                            return result + '\\n';
-                        }}
-                    }});
-                    
-                    resolve(turndownService);
-                }};
-                
-                script.onerror = () => {{
-                    reject(new Error('Failed to load Turndown'));
-                }};
-                
-                document.head.appendChild(script);
-            }});
-        }}
-        
-        async function copyForLLM(button) {{
-            if (isLoading) return;
-            
-            const originalHTML = button.innerHTML;
-            const checkIcon = '{self.CHECK_ICON}';
-            
-            try {{
-                isLoading = true;
-                button.innerHTML = '<svg class="rotating" style="width:1.2rem;height:1.2rem;animation:spin 1s linear infinite" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364-6.364l-2.828 2.828M9.464 14.536l-2.828 2.828m12.728 0l-2.828-2.828M9.464 9.464 6.636 6.636" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Loading...';
-                
-                // Load Turndown
-                const td = await loadTurndown();
-                
-                // Get the main content
-                const content = document.querySelector('article.md-content__inner') || 
-                            document.querySelector('article') || 
-                            document.querySelector('.md-content');
-                
-                if (!content) {{
-                    throw new Error('Could not find main content');
-                }}
-                
-                // Clone and clean content
-                const cleanContent = content.cloneNode(true);
-                
-                // Pre-process: Clean up code blocks with line numbers
-                cleanContent.querySelectorAll('.highlight').forEach(highlight => {{
-                    // First, handle tables with line numbers
-                    const table = highlight.querySelector('table.highlighttable');
-                    if (table) {{
-                        // Find the code cell (usually the second td)
-                        const codeCell = table.querySelector('td:last-child');
-                        if (codeCell) {{
-                            const codeElement = codeCell.querySelector('pre code');
-                            if (codeElement) {{
-                                // Create new pre/code elements with clean content
-                                const pre = document.createElement('pre');
-                                const code = document.createElement('code');
-                                code.className = codeElement.className;
-                                
-                                // Extract text content from each line, skipping anchor elements
-                                let cleanText = '';
-                                codeElement.childNodes.forEach(node => {{
-                                    if (node.nodeType === Node.TEXT_NODE) {{
-                                        cleanText += node.textContent;
-                                    }} else if (node.nodeName !== 'A') {{
-                                        cleanText += node.textContent || '';
-                                    }}
-                                }});
-                                
-                                code.textContent = cleanText;
-                                pre.appendChild(code);
-                                highlight.replaceWith(pre);
-                                return;
-                            }}
-                        }}
-                    }}
-                    
-                    // Handle non-table code blocks
-                    const codeElement = highlight.querySelector('pre code');
-                    if (codeElement) {{
-                        // Remove line number elements
-                        highlight.querySelectorAll('.linenos, .linenodiv, [class*="__codelineno"]').forEach(el => el.remove());
-                        
-                        // Remove anchor tags but preserve code content
-                        const anchors = codeElement.querySelectorAll('a');
-                        anchors.forEach(anchor => {{
-                            // Remove empty anchors (line number markers)
-                            if (!anchor.textContent || anchor.textContent.trim() === '') {{
-                                anchor.remove();
-                            }} else {{
-                                // Replace non-empty anchors with their text content
-                                const textNode = document.createTextNode(anchor.textContent);
-                                anchor.replaceWith(textNode);
-                            }}
-                        }});
-                    }}
-                }});
-                
-                // Remove unwanted elements
-                const selectorsToRemove = [
-                    '.md-source', '.headerlink', '.md-content__button',
-                    '.share-buttons', '.git-info', '.authors-container', 
-                    '.dates-container', '#__comments', '.giscus',
-                    'script', 'style', 'nav', 'aside'
-                ];
-                
-                selectorsToRemove.forEach(selector => {{
-                    cleanContent.querySelectorAll(selector).forEach(el => el.remove());
-                }});
-                
-                // Convert to markdown
-                let markdown = td.turndown(cleanContent.innerHTML);
-                
-                // Clean up the markdown
-                markdown = markdown
-                    .replace(/\\n{{3,}}/g, '\\n\\n')  // Multiple newlines
-                    .replace(/^[\\t ]+$/gm, '')  // Empty lines with whitespace
-                    .trim();
-                
-                // Add page metadata
-                const pageTitle = document.querySelector('h1')?.textContent || document.title;
-                const pageUrl = window.location.href;
-                const description = document.querySelector('meta[name="description"]')?.content || '';
-                
-                let finalContent = `# ${{pageTitle}}\\n\\n`;
-                if (description) {{
-                    finalContent += `> ${{description}}\\n\\n`;
-                }}
-                finalContent += `Source: ${{pageUrl}}\\n\\n---\\n\\n${{markdown}}`;
-                
-                // Copy to clipboard
-                await navigator.clipboard.writeText(finalContent);
-                
-                // Show success
-                button.innerHTML = checkIcon + ' Copied!';
-                setTimeout(() => {{
-                    button.innerHTML = originalHTML;
-                }}, 2000);
-                
-            }} catch (err) {{
-                console.error('Copy failed:', err);
-                button.innerHTML = '❌ Failed';
-                setTimeout(() => {{
-                    button.innerHTML = originalHTML;
-                }}, 2000);
-                
-                if (err.name === 'NotAllowedError') {{
-                    alert('Clipboard access denied. Please try again or use Ctrl+C to copy.');
-                }}
-            }} finally {{
-                isLoading = false;
-            }}
-        }}
-        
-        // CSS for rotating icon
-        if (!document.getElementById('copy-llm-styles')) {{
-            const style = document.createElement('style');
-            style.id = 'copy-llm-styles';
-            style.textContent = '@keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}';
-            document.head.appendChild(style);
-        }}
-        </script>
-        """
-
-    def create_copy_button_element(self, soup: BeautifulSoup) -> Tag:
-        """Create a copy button element."""
-        button = soup.new_tag(
-            "a",
-            href="javascript:void(0)",
-            onclick="copyForLLM(this); return false;",
-            attrs={
-                "class": "md-content__button md-icon copy-llm-button",
-                "title": "Copy page as Markdown for LLMs",
-            },
-        )
-        button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
-        return button
-
     def on_post_page(self, output: str, page, config) -> str:
         """
         Enhance the HTML output of a page with metadata tags, git information, and share buttons.
@@ -591,20 +342,51 @@ class MetaPlugin(BasePlugin):
             twitter_image_tag.attrs.update({"property": "twitter:image", "content": page.meta["image"]})
             soup.head.append(twitter_image_tag)
 
-        # Add Copy for LLM button near Edit button at the top
-        if self.config["add_copy_llm"]:
+        # Add Copy for LLM button near Edit button at the top (but NOT on reference pages)
+        if self.config["add_copy_llm"] and "/reference/" not in page.url:
             edit_container = soup.select_one(".md-content__button")
             if edit_container:
-                copy_button = self.create_copy_button_element(soup)
+                copy_button = soup.new_tag(
+                    "a",
+                    href="javascript:void(0)",
+                    onclick="copyMarkdownForLLM(this)",
+                    attrs={
+                        "class": "md-content__button md-icon",
+                        "title": "Copy page as Markdown for LLMs",
+                    },
+                )
+                copy_button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
 
                 if edit_btn := edit_container.find("a"):
                     edit_btn.insert_after(copy_button)
-                else:
-                    edit_container.append(copy_button)
 
-                # Add script if not present
-                if not soup.find("script", string=re.compile(r"copyForLLM")):
-                    soup.body.append(BeautifulSoup(self.get_copy_llm_script(), "html.parser"))
+                # Add inline script
+                script = soup.new_tag("script")
+                script.string = f"""
+                async function copyMarkdownForLLM(button) {{
+                    const editBtn = document.querySelector('a[title="Edit this page"]');
+                    if (!editBtn) return;
+
+                    const originalHTML = button.innerHTML;
+                    const checkIcon = '{self.CHECK_ICON}';
+                    const rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+
+                    try {{
+                        const response = await fetch(rawUrl);
+                        const markdown = await response.text();
+                        const title = document.querySelector('h1')?.textContent || document.title;
+                        const content = `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
+
+                        await navigator.clipboard.writeText(content);
+                        button.innerHTML = checkIcon + ' Copied!';
+                        setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                    }} catch (err) {{
+                        button.innerHTML = '❌ Failed';
+                        setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                    }}
+                }}
+                """
+                soup.body.append(script)
 
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
@@ -688,20 +470,10 @@ class MetaPlugin(BasePlugin):
     def get_css() -> str:
         """Provide simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
         return """
-.copy-llm-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-}
-
-.copy-llm-button svg {
+.md-content__button[onclick*="copyMarkdownForLLM"] svg {
     width: 1.2rem;
     height: 1.2rem;
     fill: currentColor;
-}
-
-.copy-llm-button:hover{
-    color: var(--md-accent-fg-color);
 }
 
 .git-info, .dates-container, .authors-container, .share-buttons {
@@ -755,11 +527,6 @@ class MetaPlugin(BasePlugin):
     opacity: 1;  /* Fade in when src is set (image loaded) */
 }
 
-.hover-item:hover {
-    transform: scale(1.2);
-    filter: grayscale(0%);
-}
-
 .share-buttons {
     margin-top: 10px;
 }
@@ -775,11 +542,6 @@ class MetaPlugin(BasePlugin):
     transition: all 0.2s ease;
 }
 
-.share-button:hover {
-    transform: scale(1.1);
-    filter: brightness(1.2);
-}
-
 .share-button.linkedin {
     background-color: #0077b5;
 }
@@ -787,6 +549,14 @@ class MetaPlugin(BasePlugin):
 .share-button i {
     margin-right: 5px;
     font-size: 1.1em;
+}
+
+/* Hover effects */
+.share-button:hover,
+.hover-item:hover {
+    color: var(--md-accent-fg-color);
+    transform: scale(1.1);
+    filter: brightness(1.2) grayscale(0%);
 }
 
 @media (max-width: 1024px) {
