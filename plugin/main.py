@@ -244,154 +244,82 @@ class MetaPlugin(BasePlugin):
         async function loadTurndown() {{
             if (turndownService) return turndownService;
             
-            // Load Turndown
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js';
-            document.head.appendChild(script);
-            
-            // Load Turndown plugin for tables
-            const tableScript = document.createElement('script');
-            tableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown-plugin-gfm/1.0.2/turndown-plugin-gfm.min.js';
-            document.head.appendChild(tableScript);
-            
-            return new Promise((resolve) => {{
-                let scriptsLoaded = 0;
-                const checkLoaded = () => {{
-                    scriptsLoaded++;
-                    if (scriptsLoaded === 2) {{
-                        // Initialize Turndown with better settings
-                        turndownService = new TurndownService({{
-                            headingStyle: 'atx',
-                            bulletListMarker: '-',
-                            codeBlockStyle: 'fenced',
-                            fence: '```',
-                            emDelimiter: '*',
-                            strongDelimiter: '**',
-                            linkStyle: 'inlined',
-                            preformattedCode: false,
-                            hr: '---'
-                        }});
-                        
-                        // Use GFM plugin for tables
-                        turndownService.use(turndownPluginGfm.tables);
-                        
-                        // Custom rule for code blocks to preserve formatting
-                        turndownService.addRule('fencedCodeBlock', {{
-                            filter: function (node, options) {{
-                                return (
-                                    options.codeBlockStyle === 'fenced' &&
-                                    node.nodeName === 'PRE' &&
-                                    node.firstChild &&
-                                    node.firstChild.nodeName === 'CODE'
-                                );
-                            }},
-                            replacement: function (content, node, options) {{
-                                const className = node.firstChild.className || '';
-                                const language = className.match(/language-(\\S+)/);
-                                const langString = language ? language[1] : '';
+            return new Promise((resolve, reject) => {{
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/turndown/7.2.0/turndown.min.js';
+                
+                script.onload = () => {{
+                    // Initialize Turndown with basic settings
+                    turndownService = new TurndownService({{
+                        headingStyle: 'atx',
+                        bulletListMarker: '-',
+                        codeBlockStyle: 'fenced',
+                        fence: '```',
+                        emDelimiter: '*',
+                        strongDelimiter: '**',
+                        linkStyle: 'inlined'
+                    }});
+                    
+                    // Add custom rules for better code handling
+                    turndownService.addRule('fencedCodeBlock', {{
+                        filter: function (node, options) {{
+                            return (
+                                options.codeBlockStyle === 'fenced' &&
+                                node.nodeName === 'PRE' &&
+                                node.firstChild &&
+                                node.firstChild.nodeName === 'CODE'
+                            );
+                        }},
+                        replacement: function (content, node, options) {{
+                            const className = node.firstChild.className || '';
+                            const language = className.match(/language-(\\S+)/);
+                            const langString = language ? language[1] : '';
+                            
+                            // Get the actual text content to avoid HTML entities
+                            const codeContent = node.firstChild.textContent;
+                            
+                            return (
+                                '\\n\\n' + options.fence + langString + '\\n' +
+                                codeContent + '\\n' + options.fence + '\\n\\n'
+                            );
+                        }}
+                    }});
+                    
+                    // Handle tables better
+                    turndownService.addRule('table', {{
+                        filter: 'table',
+                        replacement: function (content, node) {{
+                            // Simple table conversion
+                            const rows = Array.from(node.querySelectorAll('tr'));
+                            if (rows.length === 0) return '';
+                            
+                            let result = '\\n\\n';
+                            let isFirstRow = true;
+                            
+                            rows.forEach(row => {{
+                                const cells = Array.from(row.querySelectorAll('td, th'));
+                                const rowContent = cells.map(cell => cell.textContent.trim()).join(' | ');
+                                result += '| ' + rowContent + ' |\\n';
                                 
-                                // Ensure proper spacing around code blocks
-                                return (
-                                    '\\n\\n' + options.fence + langString + '\\n' +
-                                    node.firstChild.textContent +
-                                    '\\n' + options.fence + '\\n\\n'
-                                );
-                            }}
-                        }});
-                        
-                        // Custom rule for inline code
-                        turndownService.addRule('inlineCode', {{
-                            filter: function (node) {{
-                                const hasSiblings = node.previousSibling || node.nextSibling;
-                                const isCodeBlock = node.parentNode.nodeName === 'PRE';
-                                return node.nodeName === 'CODE' && !isCodeBlock;
-                            }},
-                            replacement: function (content) {{
-                                if (!content) return '';
-                                // Escape backticks in inline code
-                                content = content.replace(/`/g, '\\\\`');
-                                return '`' + content + '`';
-                            }}
-                        }});
-                        
-                        // Custom rule for line numbers in code blocks (remove them)
-                        turndownService.addRule('removeLineNumbers', {{
-                            filter: function (node) {{
-                                return node.className && node.className.includes('__codelineno');
-                            }},
-                            replacement: function () {{
-                                return '';
-                            }}
-                        }});
-                        
-                        // Custom rule for preserving line breaks in certain contexts
-                        turndownService.addRule('preserveLineBreaks', {{
-                            filter: 'br',
-                            replacement: function (content, node, options) {{
-                                // Preserve line breaks in table cells
-                                if (node.closest('td') || node.closest('th')) {{
-                                    return '\\n';
+                                // Add separator after header row
+                                if (isFirstRow && row.querySelector('th')) {{
+                                    result += '|' + cells.map(() => '---').join('|') + '|\\n';
+                                    isFirstRow = false;
                                 }}
-                                return options.br + '\\n';
-                            }}
-                        }});
-                        
-                        // Better handling of divs with classes
-                        turndownService.addRule('divs', {{
-                            filter: function (node) {{
-                                return node.nodeName === 'DIV' && node.className;
-                            }},
-                            replacement: function (content, node) {{
-                                // Handle admonitions and special blocks
-                                if (node.className.includes('admonition') || 
-                                    node.className.includes('note') || 
-                                    node.className.includes('warning')) {{
-                                    const title = node.querySelector('.admonition-title');
-                                    if (title) {{
-                                        return '\\n\\n> **' + title.textContent + '**\\n> ' + 
-                                            content.trim().replace(/\\n/g, '\\n> ') + '\\n\\n';
-                                    }}
-                                }}
-                                return content;
-                            }}
-                        }});
-                        
-                        // Custom rule for definition lists
-                        turndownService.addRule('definitionList', {{
-                            filter: ['dl'],
-                            replacement: function (content) {{
-                                return '\\n\\n' + content + '\\n\\n';
-                            }}
-                        }});
-                        
-                        turndownService.addRule('definitionTerm', {{
-                            filter: ['dt'],
-                            replacement: function (content) {{
-                                return '\\n**' + content + '**\\n';
-                            }}
-                        }});
-                        
-                        turndownService.addRule('definitionDescription', {{
-                            filter: ['dd'],
-                            replacement: function (content) {{
-                                return ': ' + content + '\\n';
-                            }}
-                        }});
-                        
-                        // Better strikethrough handling
-                        turndownService.addRule('strikethrough', {{
-                            filter: ['del', 's', 'strike'],
-                            replacement: function (content) {{
-                                return '~~' + content + '~~';
-                            }}
-                        }});
-                        
-                        resolve(turndownService);
-                    }}
+                            }});
+                            
+                            return result + '\\n';
+                        }}
+                    }});
+                    
+                    resolve(turndownService);
                 }};
                 
-                script.onload = checkLoaded;
-                tableScript.onload = checkLoaded;
+                script.onerror = () => {{
+                    reject(new Error('Failed to load Turndown'));
+                }};
+                
+                document.head.appendChild(script);
             }});
         }}
         
@@ -405,7 +333,7 @@ class MetaPlugin(BasePlugin):
                 isLoading = true;
                 button.innerHTML = '<svg class="rotating" style="width:1.2rem;height:1.2rem;animation:spin 1s linear infinite" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364-6.364l-2.828 2.828M9.464 14.536l-2.828 2.828m12.728 0l-2.828-2.828M9.464 9.464 6.636 6.636" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Loading...';
                 
-                // Load Turndown if needed
+                // Load Turndown
                 const td = await loadTurndown();
                 
                 // Get the main content
@@ -420,17 +348,23 @@ class MetaPlugin(BasePlugin):
                 // Clone and clean content
                 const cleanContent = content.cloneNode(true);
                 
-                // Pre-process: clean up code blocks with line numbers
-                cleanContent.querySelectorAll('table.highlighttable').forEach(table => {{
-                    // Extract code from tables used for line numbering
-                    const codeElement = table.querySelector('pre code');
+                // Pre-process: Clean up code blocks with line numbers
+                cleanContent.querySelectorAll('.highlight').forEach(highlight => {{
+                    const codeElement = highlight.querySelector('pre code');
                     if (codeElement) {{
-                        const pre = document.createElement('pre');
-                        const code = document.createElement('code');
-                        code.className = codeElement.className;
-                        code.textContent = codeElement.textContent;
-                        pre.appendChild(code);
-                        table.replaceWith(pre);
+                        // Remove line numbers
+                        highlight.querySelectorAll('.linenos, .linenodiv, [class*="__codelineno"]').forEach(el => el.remove());
+                        
+                        // If it's in a table (for line numbers), extract just the code
+                        const table = highlight.querySelector('table.highlighttable');
+                        if (table && codeElement) {{
+                            const pre = document.createElement('pre');
+                            const code = document.createElement('code');
+                            code.className = codeElement.className;
+                            code.textContent = codeElement.textContent;
+                            pre.appendChild(code);
+                            highlight.replaceWith(pre);
+                        }}
                     }}
                 }});
                 
@@ -439,33 +373,20 @@ class MetaPlugin(BasePlugin):
                     '.md-source', '.headerlink', '.md-content__button',
                     '.share-buttons', '.git-info', '.authors-container', 
                     '.dates-container', '#__comments', '.giscus',
-                    'script', 'style', 'nav', 'aside', '.tabbed-labels',
-                    'span[class*="__codelineno"]', '.linenodiv'
+                    'script', 'style', 'nav', 'aside'
                 ];
                 
                 selectorsToRemove.forEach(selector => {{
                     cleanContent.querySelectorAll(selector).forEach(el => el.remove());
                 }});
                 
-                // Process tabbed content (like Python/CLI examples)
-                cleanContent.querySelectorAll('.tabbed-content').forEach(tabbedContent => {{
-                    const tabs = tabbedContent.querySelectorAll('.tabbed-block');
-                    if (tabs.length > 0) {{
-                        // Keep only the first tab's content by default
-                        tabs.forEach((tab, index) => {{
-                            if (index > 0) tab.remove();
-                        }});
-                    }}
-                }});
-                
                 // Convert to markdown
                 let markdown = td.turndown(cleanContent.innerHTML);
                 
-                // Post-process: clean up extra whitespace
+                // Clean up the markdown
                 markdown = markdown
-                    .replace(/\\n{{3,}}/g, '\\n\\n')  // Multiple newlines to double
-                    .replace(/^\\s+$/gm, '')  // Empty lines with whitespace
-                    .replace(/\\[\\s*\\]/g, '')  // Empty links
+                    .replace(/\\n{{3,}}/g, '\\n\\n')  // Multiple newlines
+                    .replace(/^[\\t ]+$/gm, '')  // Empty lines with whitespace
                     .trim();
                 
                 // Add page metadata
@@ -495,7 +416,6 @@ class MetaPlugin(BasePlugin):
                     button.innerHTML = originalHTML;
                 }}, 2000);
                 
-                // Fallback: show content in alert
                 if (err.name === 'NotAllowedError') {{
                     alert('Clipboard access denied. Please try again or use Ctrl+C to copy.');
                 }}
@@ -505,9 +425,12 @@ class MetaPlugin(BasePlugin):
         }}
         
         // CSS for rotating icon
-        const style = document.createElement('style');
-        style.textContent = '@keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}';
-        document.head.appendChild(style);
+        if (!document.getElementById('copy-llm-styles')) {{
+            const style = document.createElement('style');
+            style.id = 'copy-llm-styles';
+            style.textContent = '@keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}';
+            document.head.appendChild(style);
+        }}
         </script>
         """
 
