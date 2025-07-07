@@ -1,9 +1,9 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
-import re
 from subprocess import check_output
 from typing import Any, Dict, List
 
