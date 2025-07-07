@@ -373,7 +373,9 @@ class MetaPlugin(BasePlugin):
 
                         const originalHTML = button.innerHTML;
                         const checkIcon = '{self.CHECK_ICON}';
-                        const rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+                        // Handle both /blob/ and /tree/ in GitHub URLs
+                        let rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com');
+                        rawUrl = rawUrl.replace('/blob/', '/').replace('/tree/', '/');
 
                         try {{
                             const response = await fetch(rawUrl);
