@@ -350,21 +350,55 @@ class MetaPlugin(BasePlugin):
                 
                 // Pre-process: Clean up code blocks with line numbers
                 cleanContent.querySelectorAll('.highlight').forEach(highlight => {{
+                    // First, handle tables with line numbers
+                    const table = highlight.querySelector('table.highlighttable');
+                    if (table) {{
+                        // Find the code cell (usually the second td)
+                        const codeCell = table.querySelector('td:last-child');
+                        if (codeCell) {{
+                            const codeElement = codeCell.querySelector('pre code');
+                            if (codeElement) {{
+                                // Create new pre/code elements with clean content
+                                const pre = document.createElement('pre');
+                                const code = document.createElement('code');
+                                code.className = codeElement.className;
+                                
+                                // Extract text content from each line, skipping anchor elements
+                                let cleanText = '';
+                                codeElement.childNodes.forEach(node => {{
+                                    if (node.nodeType === Node.TEXT_NODE) {{
+                                        cleanText += node.textContent;
+                                    }} else if (node.nodeName !== 'A') {{
+                                        cleanText += node.textContent || '';
+                                    }}
+                                }});
+                                
+                                code.textContent = cleanText;
+                                pre.appendChild(code);
+                                highlight.replaceWith(pre);
+                                return;
+                            }}
+                        }}
+                    }}
+                    
+                    // Handle non-table code blocks
                     const codeElement = highlight.querySelector('pre code');
                     if (codeElement) {{
-                        // Remove line numbers
+                        // Remove line number elements
                         highlight.querySelectorAll('.linenos, .linenodiv, [class*="__codelineno"]').forEach(el => el.remove());
                         
-                        // If it's in a table (for line numbers), extract just the code
-                        const table = highlight.querySelector('table.highlighttable');
-                        if (table && codeElement) {{
-                            const pre = document.createElement('pre');
-                            const code = document.createElement('code');
-                            code.className = codeElement.className;
-                            code.textContent = codeElement.textContent;
-                            pre.appendChild(code);
-                            highlight.replaceWith(pre);
-                        }}
+                        // Remove anchor tags but preserve code content
+                        const anchors = codeElement.querySelectorAll('a');
+                        anchors.forEach(anchor => {{
+                            // Remove empty anchors (line number markers)
+                            if (!anchor.textContent || anchor.textContent.trim() === '') {{
+                                anchor.remove();
+                            }} else {{
+                                // Replace non-empty anchors with their text content
+                                const textNode = document.createTextNode(anchor.textContent);
+                                anchor.replaceWith(textNode);
+                            }}
+                        }});
                     }}
                 }});
                 
