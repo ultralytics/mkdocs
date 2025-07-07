@@ -3,6 +3,7 @@
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+import re
 from subprocess import check_output
 from typing import Any, Dict, List
 
@@ -343,13 +344,15 @@ class MetaPlugin(BasePlugin):
             soup.head.append(twitter_image_tag)
 
         # Add Copy for LLM button near Edit button at the top (but NOT on reference pages)
-        if self.config["add_copy_llm"] and "/reference/" not in page.url:
-            edit_container = soup.select_one(".md-content__button")
-            if edit_container:
+        if self.config["add_copy_llm"]:
+            # Find the edit button first
+            edit_btn = soup.find("a", {"title": "Edit this page"})
+            if edit_btn:
+                # Create the copy button
                 copy_button = soup.new_tag(
                     "a",
                     href="javascript:void(0)",
-                    onclick="copyMarkdownForLLM(this)",
+                    onclick="copyMarkdownForLLM(this); return false;",
                     attrs={
                         "class": "md-content__button md-icon",
                         "title": "Copy page as Markdown for LLMs",
@@ -357,36 +360,37 @@ class MetaPlugin(BasePlugin):
                 )
                 copy_button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
 
-                if edit_btn := edit_container.find("a"):
-                    edit_btn.insert_after(copy_button)
+                # Insert after the edit button
+                edit_btn.insert_after(copy_button)
 
-                # Add inline script
-                script = soup.new_tag("script")
-                script.string = f"""
-                async function copyMarkdownForLLM(button) {{
-                    const editBtn = document.querySelector('a[title="Edit this page"]');
-                    if (!editBtn) return;
+                # Add the script if not already present
+                if not soup.find("script", string=re.compile(r"copyMarkdownForLLM")):
+                    script = soup.new_tag("script")
+                    script.string = f"""
+                    async function copyMarkdownForLLM(button) {{
+                        const editBtn = document.querySelector('a[title="Edit this page"]');
+                        if (!editBtn) return;
 
-                    const originalHTML = button.innerHTML;
-                    const checkIcon = '{self.CHECK_ICON}';
-                    const rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+                        const originalHTML = button.innerHTML;
+                        const checkIcon = '{self.CHECK_ICON}';
+                        const rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
 
-                    try {{
-                        const response = await fetch(rawUrl);
-                        const markdown = await response.text();
-                        const title = document.querySelector('h1')?.textContent || document.title;
-                        const content = `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
+                        try {{
+                            const response = await fetch(rawUrl);
+                            const markdown = await response.text();
+                            const title = document.querySelector('h1')?.textContent || document.title;
+                            const content = `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
 
-                        await navigator.clipboard.writeText(content);
-                        button.innerHTML = checkIcon + ' Copied!';
-                        setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
-                    }} catch (err) {{
-                        button.innerHTML = '❌ Failed';
-                        setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                            await navigator.clipboard.writeText(content);
+                            button.innerHTML = checkIcon + ' Copied!';
+                            setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                        }} catch (err) {{
+                            button.innerHTML = '❌ Failed';
+                            setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                        }}
                     }}
-                }}
-                """
-                soup.body.append(script)
+                    """
+                    soup.body.append(script)
 
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
