@@ -355,7 +355,7 @@ class MetaPlugin(BasePlugin):
                     onclick="copyMarkdownForLLM(this); return false;",
                     attrs={
                         "class": "md-content__button md-icon",
-                        "title": "Copy page as Markdown for LLMs",
+                        "title": "Copy page in Markdown format",
                     },
                 )
                 copy_button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
