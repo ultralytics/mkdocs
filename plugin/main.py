@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
-from plugin.utils import calculate_time_difference,get_github_usernames_from_file, get_youtube_video_ids
+from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
 
 
 today = datetime.now()
@@ -67,52 +67,31 @@ class MetaPlugin(BasePlugin):
             self.git_available = False
 
     def get_git_info(self, file_path: str) -> Dict[str, Any]:
-        """
-        Retrieve git information of a specified file including hash, date, and branch.
-
-        Args:
-            file_path (str): The path to the file for which git information is to be retrieved.
-
-        Returns:
-            git_info (Dict[str, Any]): A dictionary containing git information with keys:
-                - creation_date (str): The creation date of the file.
-                - last_modified_date (str): The last modified date of the file.
-                - authors (List[Tuple[str, str, int, str]], optional): List of tuples containing author information
-                  (name, url, changes, avatar) if add_authors is enabled in the plugin config.
-
-        Notes:
-            Ensure git is installed and the file is within a git repository to retrieve accurate information.
-
-        Examples:
-            Retrieve git information for a file
-            >>> plugin = MetaPlugin()
-            >>> git_info = plugin.get_git_info('path/to/file.py')
-            >>> print(git_info['creation_date'])
-        """
+        """Retrieve git information including creation/modified dates and optional authors."""
         file_path = str(Path(file_path).resolve())
-
-        # Get the creation and last modified dates
+        git_info = {"creation_date": DEFAULT_CREATION_DATE,"last_modified_date": DEFAULT_MODIFIED_DATE}
         if self.git_available:
-            args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
-            creation_date = check_output(args).decode("utf-8").split("\n")[0]
-            last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
-        else:
-            creation_date = None
-            last_modified_date = None
-        git_info = {
-            "creation_date": creation_date or DEFAULT_CREATION_DATE,
-            "last_modified_date": last_modified_date or DEFAULT_MODIFIED_DATE,
-        }
-
-        # Get the authors and their contributions count using get_github_usernames_from_file function
-        if self.git_available and self.config["add_authors"]:
-            authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
-            # Sort authors by contributions (changes) in descending order
-            git_info["authors"] = sorted(
-                [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
-                key=lambda x: x[2],
-                reverse=True,
+            creation_date = (
+                check_output(["git", "log", "--reverse", "--pretty=format:%ai", file_path]).decode().split("\n")[0]
             )
+            last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode()
+            git_info.update(
+                {
+                    "creation_date": creation_date or DEFAULT_CREATION_DATE,
+                    "last_modified_date": last_modified_date or DEFAULT_MODIFIED_DATE,
+                }
+            )
+
+            if self.config["add_authors"]:
+                authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
+                git_info["authors"] = sorted(
+                    [
+                        (author, info["url"], info["changes"], info["avatar"])
+                        for author, info in authors_info.items()
+                    ],
+                    key=lambda x: x[2],
+                    reverse=True,
+                )
 
         return git_info
 
