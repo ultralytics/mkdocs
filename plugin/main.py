@@ -63,69 +63,35 @@ class MetaPlugin(BasePlugin):
     check_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
 
     def __init__(self):
-        self.git_available = self._check_git_available()
-
-    def on_config(self, config):
-        """Disable authors if git unavailable."""
-        if not self.git_available:
-            self.config["add_authors"] = False
-        return config
-
-    def _check_git_available(self) -> bool:
-        """Check if git is available and working."""
         try:
             check_output(["git", "--version"], stderr=subprocess.DEVNULL)
-            return True
+            self.git_available = True
         except (subprocess.CalledProcessError, FileNotFoundError):
-            return False
+            self.git_available = False
 
     def get_git_info(self, file_path: str) -> Dict[str, Any]:
-        """
-        Retrieve git information of a specified file including hash, date, and branch.
-
-        Args:
-            file_path (str): The path to the file for which git information is to be retrieved.
-
-        Returns:
-            git_info (Dict[str, Any]): A dictionary containing git information with keys:
-                - creation_date (str): The creation date of the file.
-                - last_modified_date (str): The last modified date of the file.
-                - authors (List[Tuple[str, str, int, str]], optional): List of tuples containing author information
-                  (name, url, changes, avatar) if add_authors is enabled in the plugin config.
-
-        Notes:
-            Ensure git is installed and the file is within a git repository to retrieve accurate information.
-
-        Examples:
-            Retrieve git information for a file
-            >>> plugin = MetaPlugin()
-            >>> git_info = plugin.get_git_info('path/to/file.py')
-            >>> print(git_info['creation_date'])
-        """
+        """Retrieve git information including creation/modified dates and optional authors."""
         file_path = str(Path(file_path).resolve())
-
-        # Get the creation and last modified dates
+        git_info = {"creation_date": DEFAULT_CREATION_DATE, "last_modified_date": DEFAULT_MODIFIED_DATE}
         if self.git_available:
-            args = ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
-            creation_date = check_output(args).decode("utf-8").split("\n")[0]
-            last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode("utf-8")
-        else:
-            creation_date = None
-            last_modified_date = None
-        git_info = {
-            "creation_date": creation_date or DEFAULT_CREATION_DATE,
-            "last_modified_date": last_modified_date or DEFAULT_MODIFIED_DATE,
-        }
-
-        # Get the authors and their contributions count using get_github_usernames_from_file function
-        if self.config["add_authors"]:
-            authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
-            # Sort authors by contributions (changes) in descending order
-            git_info["authors"] = sorted(
-                [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
-                key=lambda x: x[2],
-                reverse=True,
+            creation_date = (
+                check_output(["git", "log", "--reverse", "--pretty=format:%ai", file_path]).decode().split("\n")[0]
             )
+            last_modified_date = check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode()
+            git_info.update(
+                {
+                    "creation_date": creation_date or DEFAULT_CREATION_DATE,
+                    "last_modified_date": last_modified_date or DEFAULT_MODIFIED_DATE,
+                }
+            )
+
+            if self.config["add_authors"]:
+                authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
+                git_info["authors"] = sorted(
+                    [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
+                    key=lambda x: x[2],
+                    reverse=True,
+                )
 
         return git_info
 
@@ -430,7 +396,7 @@ class MetaPlugin(BasePlugin):
 
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
-        if self.config["add_authors"] and git_info["creation_date"]:
+        if self.git_available and self.config["add_authors"] and git_info["creation_date"]:
             created_ago, created_date = calculate_time_difference(git_info["creation_date"])
             updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
