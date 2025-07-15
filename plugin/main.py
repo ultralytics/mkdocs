@@ -64,8 +64,8 @@ class MetaPlugin(BasePlugin):
 
     def __init__(self):
         try:
-            check_output(["git", "--version"], stderr=subprocess.DEVNULL)
-            self.git_available = True
+            result = check_output(["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL)
+            self.git_available = result.decode().strip() == "true"
         except (subprocess.CalledProcessError, FileNotFoundError):
             self.git_available = False
 
