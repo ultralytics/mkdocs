@@ -186,7 +186,7 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
         for email in emails_blame:
             if email not in emails:
                 emails[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
-                
+
     # If no git info found but default_user provided, use default_user
     if not emails and default_user:
         emails[default_user] = 1
@@ -200,7 +200,9 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
         cache = {}
 
     try:
-        github_repo_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
+        github_repo_url = (
+            subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
+        )
         if github_repo_url.endswith(".git"):
             github_repo_url = github_repo_url[:-4]
         if github_repo_url.startswith("git@"):
