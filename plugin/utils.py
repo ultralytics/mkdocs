@@ -158,7 +158,6 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
         {'username1': {'email': 'user@example.com', 'url': 'https://github.com/username1', 'changes': 5, 'avatar': '...'}}
     """
     # Fetch author emails using 'git log'
-    emails = {}
     try:
         authors_emails_log = (
             subprocess.check_output(["git", "log", "--pretty=format:%ae", Path(file_path).resolve()])
@@ -167,7 +166,7 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
         )
         emails = dict(Counter(authors_emails_log))
     except subprocess.CalledProcessError:
-        pass  # Git not available or file not in git repo
+        emails = {}  # Git not available or file not in git repo
 
     # Fetch author emails using 'git blame'
     with contextlib.suppress(Exception):
