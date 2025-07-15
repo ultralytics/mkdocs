@@ -1,6 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import json
+import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
@@ -55,6 +56,20 @@ class MetaPlugin(BasePlugin):
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
         ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
     )
+
+    def on_config(self, config):
+        """Disable authors if git unavailable."""
+        if not self._check_git_available():
+            self.config["add_authors"] = False
+        return config
+
+    def _check_git_available(self) -> bool:
+        """Check if git is available and working."""
+        try:
+            check_output(["git", "--version"], stderr=subprocess.DEVNULL)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return False
 
     def get_git_info(self, file_path: str) -> Dict[str, Any]:
         """
@@ -340,7 +355,7 @@ class MetaPlugin(BasePlugin):
 
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
-        if (self.config["add_authors"]) and git_info["creation_date"]:
+        if self.config["add_authors"] and git_info["creation_date"]:
             created_ago, created_date = calculate_time_difference(git_info["creation_date"])
             updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
@@ -357,7 +372,7 @@ class MetaPlugin(BasePlugin):
 <div class="authors-container">
 """
 
-            if self.config["add_authors"]:
+            if self.config["add_authors"] and "authors" in git_info:
                 for author in git_info["authors"]:
                     name, url, n, avatar = author  # n is number of changes
                     div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{"s" * (n > 1)})">
