@@ -158,12 +158,15 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
         {'username1': {'email': 'user@example.com', 'url': 'https://github.com/username1', 'changes': 5, 'avatar': '...'}}
     """
     # Fetch author emails using 'git log'
-    authors_emails_log = (
-        subprocess.check_output(["git", "log", "--pretty=format:%ae", Path(file_path).resolve()])
-        .decode("utf-8")
-        .split("\n")
-    )
-    emails = dict(Counter(authors_emails_log))
+    try:
+        authors_emails_log = (
+            subprocess.check_output(["git", "log", "--pretty=format:%ae", Path(file_path).resolve()])
+            .decode("utf-8")
+            .split("\n")
+        )
+        emails = dict(Counter(authors_emails_log))
+    except subprocess.CalledProcessError:
+        emails = {}  # Git not available or file not in git repo
 
     # Fetch author emails using 'git blame'
     with contextlib.suppress(Exception):
@@ -183,6 +186,10 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
             if email not in emails:
                 emails[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
 
+    # If no git info found but default_user provided, use default_user
+    if not emails and default_user:
+        emails[default_user] = 1
+
     # Load the local cache of GitHub usernames
     local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
     if local_cache_file.is_file():
@@ -191,11 +198,16 @@ def get_github_usernames_from_file(file_path: str, default_user: Optional[str] =
     else:
         cache = {}
 
-    github_repo_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
-    if github_repo_url.endswith(".git"):
-        github_repo_url = github_repo_url[:-4]
-    if github_repo_url.startswith("git@"):
-        github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
+    try:
+        github_repo_url = (
+            subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
+        )
+        if github_repo_url.endswith(".git"):
+            github_repo_url = github_repo_url[:-4]
+        if github_repo_url.startswith("git@"):
+            github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
+    except subprocess.CalledProcessError:
+        github_repo_url = "https://github.com/ultralytics/ultralytics"  # Fallback URL
 
     info = {}
     for email, changes in emails.items():
