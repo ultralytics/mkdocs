@@ -2,6 +2,9 @@
 
 import json
 import subprocess
+
+import re
+
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
@@ -55,7 +58,12 @@ class MetaPlugin(BasePlugin):
         ("add_authors", config_options.Type(bool, default=False)),  # Add git author and date information
         ("add_json_ld", config_options.Type(bool, default=False)),  # Add JSON-LD structured data
         ("add_css", config_options.Type(bool, default=True)),  # Inline CSS for styling
+        ("add_copy_llm", config_options.Type(bool, default=True)),  # Add copy for LLM button
     )
+
+    COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>'
+    CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
+
 
     def on_config(self, config):
         """Disable authors if git unavailable."""
@@ -353,6 +361,69 @@ class MetaPlugin(BasePlugin):
             twitter_image_tag.attrs.update({"property": "twitter:image", "content": page.meta["image"]})
             soup.head.append(twitter_image_tag)
 
+        # Add Copy for LLM button near Edit button at the top (but NOT on reference pages)
+        if self.config["add_copy_llm"] and "/reference/" not in page.url:
+            # Find the edit button first
+            edit_btn = soup.find("a", {"title": "Edit this page"})
+            if edit_btn:
+                # Create the copy button
+                copy_button = soup.new_tag(
+                    "a",
+                    href="javascript:void(0)",
+                    onclick="copyMarkdownForLLM(this); return false;",
+                    attrs={
+                        "class": "md-content__button md-icon",
+                        "title": "Copy page in Markdown format",
+                    },
+                )
+                copy_button.append(BeautifulSoup(self.COPY_ICON, "html.parser"))
+
+                # Insert after the edit button
+                edit_btn.insert_after(copy_button)
+
+                # Add the script if not already present
+                if not soup.find("script", string=re.compile(r"copyMarkdownForLLM")):
+                    script = soup.new_tag("script")
+                    script.string = f"""
+                    async function copyMarkdownForLLM(button) {{
+                        const editBtn = document.querySelector('a[title="Edit this page"]');
+                        if (!editBtn) return;
+
+                        const originalHTML = button.innerHTML;
+                        const checkIcon = '{self.CHECK_ICON}';
+
+                        // Handle both /blob/ and /tree/ in GitHub URLs
+                        let rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com');
+
+                        // Remove /blob/ or /tree/ from the URL
+                        rawUrl = rawUrl.replace('/blob/', '/').replace('/tree/', '/');
+
+                        try {{
+                            const response = await fetch(rawUrl);
+                            let markdown = await response.text();
+
+                            // Remove YAML front matter if present
+                            if (markdown.startsWith('---')) {{
+                                const frontMatterEnd = markdown.indexOf('\\n---\\n', 3);
+                                if (frontMatterEnd !== -1) {{
+                                    markdown = markdown.substring(frontMatterEnd + 5).trim();
+                                }}
+                            }}
+
+                            const title = document.querySelector('h1')?.textContent || document.title;
+                            const content = `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
+
+                            await navigator.clipboard.writeText(content);
+                            button.innerHTML = checkIcon + ' Copied!';
+                            setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                        }} catch (err) {{
+                            button.innerHTML = '❌ Failed';
+                            setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
+                        }}
+                    }}
+                    """
+                    soup.body.append(script)
+
         # Add git information (dates and authors) to the footer, if enabled
         git_info = self.get_git_info(page.file.abs_src_path)
         if self.config["add_authors"] and git_info["creation_date"]:
@@ -435,6 +506,12 @@ class MetaPlugin(BasePlugin):
     def get_css() -> str:
         """Provide simplified CSS with unified hover effects, closer author circles, and larger share buttons."""
         return """
+.md-content__button[onclick*="copyMarkdownForLLM"] svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: currentColor;
+}
+
 .git-info, .dates-container, .authors-container, .share-buttons {
     display: flex;
     align-items: center;
@@ -486,11 +563,6 @@ class MetaPlugin(BasePlugin):
     opacity: 1;  /* Fade in when src is set (image loaded) */
 }
 
-.hover-item:hover {
-    transform: scale(1.2);
-    filter: grayscale(0%);
-}
-
 .share-buttons {
     margin-top: 10px;
 }
@@ -506,11 +578,6 @@ class MetaPlugin(BasePlugin):
     transition: all 0.2s ease;
 }
 
-.share-button:hover {
-    transform: scale(1.1);
-    filter: brightness(1.2);
-}
-
 .share-button.linkedin {
     background-color: #0077b5;
 }
@@ -518,6 +585,14 @@ class MetaPlugin(BasePlugin):
 .share-button i {
     margin-right: 5px;
     font-size: 1.1em;
+}
+
+/* Hover effects */
+.share-button:hover,
+.hover-item:hover {
+    color: var(--md-accent-fg-color);
+    transform: scale(1.1);
+    filter: brightness(1.2) grayscale(0%);
 }
 
 @media (max-width: 1024px) {
