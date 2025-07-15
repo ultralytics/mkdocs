@@ -12,8 +12,11 @@ from bs4 import BeautifulSoup
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
-from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
-
+from plugin.utils import (
+    calculate_time_difference,
+    get_github_usernames_from_file,
+    get_youtube_video_ids,
+)
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -69,7 +72,7 @@ class MetaPlugin(BasePlugin):
     def get_git_info(self, file_path: str) -> Dict[str, Any]:
         """Retrieve git information including creation/modified dates and optional authors."""
         file_path = str(Path(file_path).resolve())
-        git_info = {"creation_date": DEFAULT_CREATION_DATE,"last_modified_date": DEFAULT_MODIFIED_DATE}
+        git_info = {"creation_date": DEFAULT_CREATION_DATE, "last_modified_date": DEFAULT_MODIFIED_DATE}
         if self.git_available:
             creation_date = (
                 check_output(["git", "log", "--reverse", "--pretty=format:%ai", file_path]).decode().split("\n")[0]
@@ -85,10 +88,7 @@ class MetaPlugin(BasePlugin):
             if self.config["add_authors"]:
                 authors_info = get_github_usernames_from_file(file_path, default_user=self.config["default_author"])
                 git_info["authors"] = sorted(
-                    [
-                        (author, info["url"], info["changes"], info["avatar"])
-                        for author, info in authors_info.items()
-                    ],
+                    [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
                     key=lambda x: x[2],
                     reverse=True,
                 )
