@@ -3,4 +3,4 @@
 from .main import MetaPlugin
 
 __version__ = "0.1.19"
-__all__ = ["MetaPlugin"]
+__all__ = ["MetaPlugin", "__version__"]
