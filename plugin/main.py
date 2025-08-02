@@ -417,7 +417,7 @@ class MetaPlugin(BasePlugin):
                 for author in git_info["authors"]:
                     name, url, n, avatar = author  # n is number of changes
                     div += f"""<a href="{url}" class="author-link" title="{name} ({n} change{"s" * (n > 1)})">
-    <img src="{avatar}&s=96" alt="{name}" class="hover-item" loading="lazy">
+    <img src="{avatar}{"&" if "?" in avatar else "?"}s=96" alt="{name}" class="hover-item" loading="lazy">
 </a>
 """
 
