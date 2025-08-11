@@ -111,7 +111,7 @@ jobs:
         with:
           format: spdx-json
           output-file: sbom.spdx.json
-          path: sbom-env/lib/python*/site-packages
+          path: sbom-env
       - run: gh release upload ${{ needs.check.outputs.current_tag }} sbom.spdx.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
