@@ -58,7 +58,7 @@ classifiers = [
 ]  # Optional, for a list of valid classifiers, see https://pypi.org/classifiers/
 dependencies = [
     "mkdocs>=1.0",
-    "beautifulsoup4>=4.9.3,<=4.12.3",
+    "beautifulsoup4>=4.13.5",  # test unpin after >=4.13.3 crashes https://github.com/ultralytics/mkdocs/issues/128
     "pyyaml",
     "requests>=2.28.1",  # do not increase (conflicts in Ultralytics deps)
 ]
