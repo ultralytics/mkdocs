@@ -5,7 +5,7 @@
 Welcome to the documentation for the MkDocs Ultralytics Plugin! 📄 This powerful plugin enhances your [MkDocs](https://www.mkdocs.org/)-generated documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your Markdown project's visibility on the web.
 
 [![PyPI version](https://badge.fury.io/py/mkdocs-ultralytics-plugin.svg)](https://badge.fury.io/py/mkdocs-ultralytics-plugin)
-[![Downloads](https://static.pepy.tech/badge/mkdocs-ultralytics-plugin)](https://www.pepy.tech/projects/mkdocs-ultralytics-plugin)
+[![Downloads](https://static.pepy.tech/badge/mkdocs-ultralytics-plugin)](https://clickpy.clickhouse.com/dashboard/mkdocs-ultralytics-plugin)
 [![Ultralytics Actions](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml)
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
