@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-__version__ = "0.1.27"
+__version__ = "0.1.28"
 
 from .main import MetaPlugin
 
