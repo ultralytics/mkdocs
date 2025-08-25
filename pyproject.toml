@@ -60,7 +60,7 @@ dependencies = [
     "mkdocs>=1.0",
     "beautifulsoup4>=4.9.3,<=4.12.3",
     "pyyaml",
-    "requests>=2.31.0",
+    "requests>=2.28.1",  # do not increase (conflicts in Ultralytics deps)
 ]
 
 [project.urls]
