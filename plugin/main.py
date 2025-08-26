@@ -167,7 +167,7 @@ class MetaPlugin(BasePlugin):
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
         # Fallback: append the content to the md-typeset div if the comments header is not found
-        if md_typeset := soup.select_one(".md-content__inner"):
+        elif md_typeset := soup.select_one(".md-content__inner"):
             md_typeset.append(content_to_insert)
 
     @staticmethod
