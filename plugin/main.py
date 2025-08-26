@@ -63,6 +63,7 @@ class MetaPlugin(BasePlugin):
     check_icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
 
     def __init__(self):
+        """Initialize MetaPlugin with git repository detection for enhanced MkDocs documentation metadata."""
         try:
             result = check_output(["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL)
             self.git_available = result.decode().strip() == "true"
@@ -333,9 +334,7 @@ class MetaPlugin(BasePlugin):
 
         # Add Copy for LLM button near Edit button at the top (but NOT on reference pages)
         if self.config["add_copy_llm"] and "/reference/" not in page.url:
-            # Find the edit button first
-            edit_btn = soup.find("a", {"title": "Edit this page"})
-            if edit_btn:
+            if edit_btn := soup.find("a", {"title": "Edit this page"}):
                 # Create the copy button
                 copy_button = soup.new_tag(
                     "a",
