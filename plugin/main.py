@@ -1,12 +1,14 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+from __future__ import annotations
+
 import json
 import re
 import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import check_output
-from typing import Any, Dict, List
+from typing import Any
 
 from bs4 import BeautifulSoup
 from mkdocs.config import config_options
@@ -70,7 +72,7 @@ class MetaPlugin(BasePlugin):
         except (subprocess.CalledProcessError, FileNotFoundError):
             self.git_available = False
 
-    def get_git_info(self, file_path: str) -> Dict[str, Any]:
+    def get_git_info(self, file_path: str) -> dict[str, Any]:
         """Retrieve git information including creation/modified dates and optional authors."""
         file_path = str(Path(file_path).resolve())
         git_info = {"creation_date": DEFAULT_CREATION_DATE, "last_modified_date": DEFAULT_MODIFIED_DATE}
@@ -172,7 +174,7 @@ class MetaPlugin(BasePlugin):
             md_typeset.append(content_to_insert)
 
     @staticmethod
-    def parse_faq(soup: BeautifulSoup) -> List[Dict[str, Any]]:
+    def parse_faq(soup: BeautifulSoup) -> list[dict[str, Any]]:
         """
         Parse the FAQ questions and answers from the HTML page content.
 

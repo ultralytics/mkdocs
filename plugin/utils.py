@@ -1,12 +1,13 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+from __future__ import annotations
+
 import contextlib
 import re
 import subprocess
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import requests
 import yaml  # YAML is used for its readability and consistency with MkDocs ecosystem
@@ -16,7 +17,7 @@ WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
 
 
-def calculate_time_difference(date_string: str) -> Tuple[str, str]:
+def calculate_time_difference(date_string: str) -> tuple[str, str]:
     """
     Calculate the time difference between a given date and the current date in a human-readable format.
 
@@ -48,7 +49,7 @@ def calculate_time_difference(date_string: str) -> Tuple[str, str]:
     return difference, pretty_date
 
 
-def get_youtube_video_ids(soup: BeautifulSoup) -> List[str]:
+def get_youtube_video_ids(soup: BeautifulSoup) -> list[str]:
     """
     Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
 
@@ -83,8 +84,8 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> List[str]:
 
 
 def get_github_username_from_email(
-    email: str, cache: Dict, file_path: str = "", verbose: bool = True
-) -> Tuple[Optional[str], Optional[str]]:
+    email: str, cache: dict, file_path: str = "", verbose: bool = True
+) -> tuple[str | None, str | None]:
     """
     Retrieve the GitHub username and avatar URL associated with the given email address.
 
@@ -137,7 +138,7 @@ def get_github_username_from_email(
     return None, None
 
 
-def get_github_usernames_from_file(file_path: str, default_user: Optional[str] = None) -> Dict[str, Dict[str, any]]:
+def get_github_usernames_from_file(file_path: str, default_user: str | None = None) -> dict[str, dict[str, any]]:
     """
     Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
 
