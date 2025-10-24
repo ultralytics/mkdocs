@@ -2,6 +2,8 @@
 
 # 🚀 MkDocs Ultralytics Plugin
 
+
+
 Welcome to the documentation for the MkDocs Ultralytics Plugin! 📄 This powerful plugin enhances your [MkDocs](https://www.mkdocs.org/)-generated documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your Markdown project's visibility on the web.
 
 [![Ultralytics Actions](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml)
