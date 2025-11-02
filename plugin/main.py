@@ -26,16 +26,15 @@ DEFAULT_MODIFIED_DATE = (today - timedelta(days=40)).strftime("%Y-%m-%d %H:%M:%S
 
 
 class MetaPlugin(BasePlugin):
-    """
-    MetaPlugin class for enhancing MkDocs documentation with metadata, social sharing, and structured data.
+    """MetaPlugin class for enhancing MkDocs documentation with metadata, social sharing, and structured data.
 
-    This class extends the BasePlugin class from MkDocs to add various meta tags, social sharing buttons, and
-    structured data to the generated HTML pages. It also retrieves git information for each file to include
-    authorship and modification details.
+    This class extends the BasePlugin class from MkDocs to add various meta tags, social sharing buttons, and structured
+    data to the generated HTML pages. It also retrieves git information for each file to include authorship and
+    modification details.
 
     Attributes:
-        config_scheme (tuple): Configuration options for the plugin including verbose output, default images,
-            authors, and various feature toggles for descriptions, images, keywords, share buttons, and JSON-LD.
+        config_scheme (tuple): Configuration options for the plugin including verbose output, default images, authors,
+            and various feature toggles for descriptions, images, keywords, share buttons, and JSON-LD.
 
     Methods:
         get_git_info: Retrieve git information of a specified file including hash, date, and branch.
@@ -99,8 +98,7 @@ class MetaPlugin(BasePlugin):
         return git_info
 
     def on_page_content(self, content: str, page, config, files) -> str:
-        """
-        Process page content with optional enhancements like images, descriptions, and keywords.
+        """Process page content with optional enhancements like images, descriptions, and keywords.
 
         Args:
             content (str): The content of the page in HTML format.
@@ -146,17 +144,11 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def insert_content(soup: BeautifulSoup, content_to_insert) -> None:
-        """
-        Insert additional content into a BeautifulSoup object at a specified location.
+        """Insert additional content into a BeautifulSoup object at a specified location.
 
         Args:
             soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
             content_to_insert (Tag | NavigableString): The HTML content to be inserted.
-
-        Notes:
-            This function specifically searches for an HTML element with the id "__comments" and inserts the
-            content_to_insert before it. If the "__comments" element is not found, it defaults to appending
-            the content to the element with class "md-content__inner".
 
         Examples:
             Insert content into a BeautifulSoup object
@@ -166,6 +158,11 @@ class MetaPlugin(BasePlugin):
             >>> new_content = soup.new_tag('div', id='new')
             >>> new_content.string = "This is new content"
             >>> MetaPlugin.insert_content(soup, new_content)
+
+        Notes:
+            This function specifically searches for an HTML element with the id "__comments" and inserts the
+            content_to_insert before it. If the "__comments" element is not found, it defaults to appending
+            the content to the element with class "md-content__inner".
         """
         if comments_header := soup.find("h2", id="__comments"):
             comments_header.insert_before(content_to_insert)
@@ -175,20 +172,14 @@ class MetaPlugin(BasePlugin):
 
     @staticmethod
     def parse_faq(soup: BeautifulSoup) -> list[dict[str, Any]]:
-        """
-        Parse the FAQ questions and answers from the HTML page content.
+        """Parse the FAQ questions and answers from the HTML page content.
 
         Args:
             soup (BeautifulSoup): The BeautifulSoup object representing the HTML page content.
 
         Returns:
-            faqs (List[Dict[str, Any]]): A list of dictionaries, each containing a parsed FAQ entry with 'Question'
-                and 'Answer' fields following the JSON-LD schema.
-
-        Notes:
-            This method identifies the FAQ section by looking for an `h2` tag with the text "FAQ". Each question is
-            identified by an `h3` tag, and its corresponding answer is captured from `p` tags until the next `h3` or
-            `h2` tag.
+            faqs (List[Dict[str, Any]]): A list of dictionaries, each containing a parsed FAQ entry with 'Question' and
+                'Answer' fields following the JSON-LD schema.
 
         Examples:
             Parse FAQ content from HTML
@@ -196,6 +187,11 @@ class MetaPlugin(BasePlugin):
             >>> html_content = '<h2>FAQ</h2><h3>Question 1?</h3><p>Answer to question 1.</p>'
             >>> soup = BeautifulSoup(html_content, 'html.parser')
             >>> faq_data = MetaPlugin.parse_faq(soup)
+
+        Notes:
+            This method identifies the FAQ section by looking for an `h2` tag with the text "FAQ". Each question is
+            identified by an `h3` tag, and its corresponding answer is captured from `p` tags until the next `h3` or
+            `h2` tag.
         """
         faqs = []
         if faq_section := soup.find("h2", string="FAQ"):
@@ -226,8 +222,7 @@ class MetaPlugin(BasePlugin):
         return faqs
 
     def on_post_page(self, output: str, page, config) -> str:
-        """
-        Enhance the HTML output of a page with metadata tags, git information, and share buttons.
+        """Enhance the HTML output of a page with metadata tags, git information, and share buttons.
 
         Args:
             output (str): The HTML content of the rendered page.

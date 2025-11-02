@@ -18,8 +18,7 @@ DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=
 
 
 def calculate_time_difference(date_string: str) -> tuple[str, str]:
-    """
-    Calculate the time difference between a given date and the current date in a human-readable format.
+    """Calculate the time difference between a given date and the current date in a human-readable format.
 
     Args:
         date_string (str): Date and time string in the format "%Y-%m-%d %H:%M:%S %z".
@@ -50,12 +49,11 @@ def calculate_time_difference(date_string: str) -> tuple[str, str]:
 
 
 def get_youtube_video_ids(soup: BeautifulSoup) -> list[str]:
-    """
-    Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
+    """Extract YouTube video IDs from iframe elements present in the provided BeautifulSoup object.
 
     Args:
-        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need
-            to be extracted.
+        soup (BeautifulSoup): A BeautifulSoup object containing the HTML content from which YouTube video IDs need to be
+            extracted.
 
     Returns:
         (List[str]): A list containing YouTube video IDs extracted from the HTML content.
@@ -86,8 +84,7 @@ def get_youtube_video_ids(soup: BeautifulSoup) -> list[str]:
 def get_github_username_from_email(
     email: str, cache: dict, file_path: str = "", verbose: bool = True
 ) -> tuple[str | None, str | None]:
-    """
-    Retrieve the GitHub username and avatar URL associated with the given email address.
+    """Retrieve the GitHub username and avatar URL associated with the given email address.
 
     Args:
         email (str): The email address to retrieve the GitHub username for.
@@ -139,8 +136,7 @@ def get_github_username_from_email(
 
 
 def get_github_usernames_from_file(file_path: str, default_user: str | None = None) -> dict[str, dict[str, any]]:
-    """
-    Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
+    """Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
 
     Args:
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
