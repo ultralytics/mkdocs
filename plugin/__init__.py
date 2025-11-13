@@ -3,5 +3,6 @@
 __version__ = "0.2.0"
 
 from .main import MetaPlugin
+from .postprocess import postprocess_site
 
-__all__ = ["MetaPlugin", "__version__"]
+__all__ = ["MetaPlugin", "postprocess_site", "__version__"]

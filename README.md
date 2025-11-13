@@ -80,13 +80,7 @@ For static site generators that don't support MkDocs plugins, use the standalone
 **Step 1:** Create `postprocess.py` in your project root:
 
 ```python
-import sys
-from pathlib import Path
-
-# Add mkdocs plugin path
-sys.path.insert(0, str(Path(__file__).parent.parent / "mkdocs"))
-
-from plugin.postprocess import postprocess_site
+from plugin import postprocess_site
 
 if __name__ == "__main__":
     postprocess_site(
