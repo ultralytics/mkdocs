@@ -17,8 +17,8 @@ def process_html_file(
     add_image: bool = True,
     add_keywords: bool = True,
     add_share_buttons: bool = True,
-    add_authors: bool = True,
-    add_json_ld: bool = True,
+    add_authors: bool = False,
+    add_json_ld: bool = False,
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = False,
@@ -26,7 +26,13 @@ def process_html_file(
     """Process a single HTML file by delegating to shared processor."""
     from bs4 import BeautifulSoup
 
-    html = html_path.read_text(encoding="utf-8")
+    try:
+        html = html_path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, FileNotFoundError) as e:
+        if verbose:
+            print(f"Error reading {html_path}: {e}")
+        return
+
     soup = BeautifulSoup(html, "html.parser")
 
     # Get page URL
@@ -38,12 +44,19 @@ def process_html_file(
 
     # Find source markdown file
     src_path = None
-    for md_file in docs_dir.rglob("*.md"):
-        if md_file.stem == html_path.stem or (
-            html_path.stem == "index" and md_file.parent.name == html_path.parent.name
-        ):
-            src_path = str(md_file)
-            break
+    if docs_dir.exists():
+        # Try exact stem match first
+        for md_file in docs_dir.rglob("*.md"):
+            if md_file.stem == html_path.stem:
+                src_path = str(md_file)
+                break
+        
+        # For index.html, try matching parent directory name
+        if not src_path and html_path.stem == "index":
+            for md_file in docs_dir.rglob("*.md"):
+                if md_file.parent.name == html_path.parent.name or md_file.stem == "index":
+                    src_path = str(md_file)
+                    break
 
     # Process HTML
     processed_html = process_html(
@@ -64,9 +77,13 @@ def process_html_file(
     )
 
     # Write back
-    html_path.write_text(processed_html, encoding="utf-8")
-    if verbose:
-        print(f"Processed: {html_path.relative_to(html_path.parent.parent)}")
+    try:
+        html_path.write_text(processed_html, encoding="utf-8")
+        if verbose:
+            print(f"Processed: {html_path.relative_to(html_path.parent.parent)}")
+    except (OSError, PermissionError) as e:
+        if verbose:
+            print(f"Error writing {html_path}: {e}")
 
 
 def postprocess_site(
@@ -79,8 +96,8 @@ def postprocess_site(
     add_image: bool = True,
     add_keywords: bool = True,
     add_share_buttons: bool = True,
-    add_authors: bool = True,
-    add_json_ld: bool = True,
+    add_authors: bool = False,
+    add_json_ld: bool = False,
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = True,
@@ -94,8 +111,13 @@ def postprocess_site(
         return
 
     html_files = list(site_dir.rglob("*.html"))
+    if not html_files:
+        print(f"No HTML files found in {site_dir}")
+        return
+
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 
+    processed = 0
     for html_file in html_files:
         process_html_file(
             html_file,
@@ -113,8 +135,9 @@ def postprocess_site(
             add_copy_llm=add_copy_llm,
             verbose=verbose,
         )
+        processed += 1
 
-    print(f"✅ Postprocessing complete: {len(html_files)} files processed")
+    print(f"✅ Postprocessing complete: {processed}/{len(html_files)} files processed")
 
 
 if __name__ == "__main__":
