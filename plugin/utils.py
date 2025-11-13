@@ -113,7 +113,10 @@ def get_github_username_from_email(
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
         avatar = f"https://github.com/{username}.png"
-        cache[email] = {"username": username, "avatar": requests.head(avatar, allow_redirects=True).url}
+        cache[email] = {
+            "username": username,
+            "avatar": requests.head(avatar, allow_redirects=True).url,
+        }
         return username, avatar
 
     # If the email is not found in the cache, query GitHub REST API
@@ -126,7 +129,10 @@ def get_github_username_from_email(
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
             avatar = data["items"][0]["avatar_url"]  # avatar_url key is correct here
-            cache[email] = {"username": username, "avatar": requests.head(avatar, allow_redirects=True).url}
+            cache[email] = {
+                "username": username,
+                "avatar": requests.head(avatar, allow_redirects=True).url,
+            }
             return username, avatar
 
     if verbose:
@@ -169,7 +175,8 @@ def get_github_usernames_from_file(file_path: str, default_user: str | None = No
     with contextlib.suppress(Exception):
         authors_emails_blame = (
             subprocess.check_output(
-                ["git", "blame", "--line-porcelain", Path(file_path).resolve()], stderr=subprocess.DEVNULL
+                ["git", "blame", "--line-porcelain", Path(file_path).resolve()],
+                stderr=subprocess.DEVNULL,
             )
             .decode("utf-8")
             .split("\n")

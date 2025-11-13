@@ -2,7 +2,12 @@
 
 # 🚀 MkDocs Ultralytics Plugin
 
-Welcome to the documentation for the MkDocs Ultralytics Plugin! 📄 This powerful plugin enhances your [MkDocs](https://www.mkdocs.org/)-generated documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your Markdown project's visibility on the web.
+Welcome to the MkDocs Ultralytics Plugin! 📄 This powerful tool enhances your [MkDocs](https://www.mkdocs.org/), [Zensical](https://zensical.com/), or any static site documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your documentation's visibility on the web.
+
+**Two modes available:**
+
+- 🔌 **Plugin Mode**: Real-time processing during MkDocs builds
+- 🔄 **Postprocess Mode**: Process any generated static site HTML after build
 
 [![Ultralytics Actions](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/mkdocs/actions/workflows/format.yml)
 
@@ -12,7 +17,7 @@ Welcome to the documentation for the MkDocs Ultralytics Plugin! 📄 This powerf
 
 ## ✨ Features
 
-This plugin seamlessly integrates a variety of valuable features into your MkDocs site:
+This tool seamlessly integrates valuable features into your documentation site:
 
 - **Meta Tag Generation**: Automatically creates meta description and image tags using the first paragraph and image found on each page, crucial for SEO and social previews.
 - **Keyword Customization**: Allows you to define specific meta keywords directly within your Markdown front matter for targeted SEO.
@@ -21,142 +26,187 @@ This plugin seamlessly integrates a variety of valuable features into your MkDoc
 - **Git Insights**: Gathers and displays [Git](https://git-scm.com/) commit information, including update dates and authors, directly within the page footer for transparency.
 - **JSON-LD Support**: Adds structured data in JSON-LD format, helping search engines understand your content better and potentially enabling rich results.
 - **FAQ Parsing**: Automatically parses FAQ sections (if present) and includes them in the structured data for enhanced search visibility.
-- **Customizable Styling**: Includes optional inline CSS to maintain consistent styling for plugin elements across your documentation, aligning with themes like [MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
+- **Copy for LLM**: Adds a button to copy page content in Markdown format, optimized for sharing with AI assistants.
+- **Customizable Styling**: Includes optional inline CSS to maintain consistent styling across your documentation, aligning with themes like [MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
 
 ## 🛠️ Installation
 
-Getting started with the MkDocs Ultralytics Plugin is straightforward. Install it via [pip](https://pypi.org/project/pip/) using the following command:
-
 [![PyPI - Version](https://img.shields.io/pypi/v/mkdocs-ultralytics-plugin?logo=pypi&logoColor=white)](https://pypi.org/project/mkdocs-ultralytics-plugin/) [![Ultralytics Downloads](https://static.pepy.tech/badge/mkdocs-ultralytics-plugin)](https://clickpy.clickhouse.com/dashboard/mkdocs-ultralytics-plugin) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mkdocs-ultralytics-plugin?logo=python&logoColor=gold)](https://pypi.org/project/mkdocs-ultralytics-plugin/)
+
+Install via [pip](https://pypi.org/project/pip/):
 
 ```bash
 pip install mkdocs-ultralytics-plugin
 ```
 
+Or install from source for development:
+
+```bash
+git clone https://github.com/ultralytics/mkdocs
+cd mkdocs
+pip install -e .
+```
+
 ## 💻 Usage
 
-To activate the plugin within your MkDocs project, add it to the `plugins` section of your `mkdocs.yml` configuration file:
+### 🔌 Plugin Mode (MkDocs)
+
+Activate the plugin in your `mkdocs.yml`:
 
 ```yaml
 plugins:
-  - mkdocstrings # Example of another plugin
-  - search # Example of another plugin
-  - ultralytics # Add the Ultralytics plugin here
-```
-
-## ⚙️ Configuration Arguments
-
-The plugin offers several configuration arguments to customize its behavior according to your project's requirements:
-
-- `verbose` (bool): Enables or disables detailed console output during the build process. Useful for debugging. Default: `True`.
-- `enabled` (bool): Globally enables or disables the plugin. Default: `True`.
-- `default_image` (str | None): Specifies a fallback image URL to use for meta tags if no image is found within the page content. Default: `None`.
-- `default_author` (str | None): Sets a default GitHub author email to use if Git author information cannot be retrieved for a page. Default: `None`.
-- `add_desc` (bool): Controls whether meta description tags are automatically generated. Default: `True`.
-- `add_image` (bool): Controls whether meta image tags (Open Graph, Twitter) are automatically generated. Default: `True`.
-- `add_keywords` (bool): Controls whether meta keyword tags are generated based on front matter. Default: `True`.
-- `add_share_buttons` (bool): Determines if social media share buttons (Twitter, LinkedIn) are added to the page content. Default: `True`.
-- `add_authors` (bool): Controls the display of author and last updated date information in the content footer based on Git history. Default: `False`.
-- `add_json_ld` (bool): Enables the generation and injection of JSON-LD structured data into the page's head. Default: `False`.
-- `add_css` (bool): Determines if the plugin's inline CSS styles are included for elements like share buttons. Default: `True`.
-
-You can include these arguments under the `ultralytics` entry in your `mkdocs.yml` file like this:
-
-```yaml
-plugins:
-  - mkdocstrings
   - search
   - ultralytics:
-      verbose: True
-      enabled: True
-      default_image: "https://www.ultralytics.com/images/social.png" # Example default image
-      default_author: "git@ultralytics.com" # Example default author
-      add_desc: True
+      add_desc: False
       add_image: True
-      add_keywords: True
+      add_authors: True
+      add_json_ld: True
       add_share_buttons: True
-      add_authors: False # Disabled by default
-      add_json_ld: False # Disabled by default
-      add_css: True
+      default_image: https://example.com/image.png
+      default_author: you@example.com
 ```
+
+Then build normally:
+
+```bash
+mkdocs build
+mkdocs serve
+```
+
+### 🔄 Postprocess Mode (Zensical, Hugo, Jekyll, etc.)
+
+For static site generators that don't support MkDocs plugins, use the standalone postprocess script.
+
+**Step 1:** Create `postprocess.py` in your project root:
+
+```python
+from plugin import postprocess_site
+
+if __name__ == "__main__":
+    postprocess_site(
+        site_dir="site",  # Your build output directory
+        docs_dir="docs",  # Your source docs directory
+        site_url="https://example.com",
+        default_image="https://example.com/image.png",
+        default_author="you@example.com",
+        add_desc=True,
+        add_image=True,
+        add_authors=True,
+        add_json_ld=True,
+        add_share_buttons=True,
+        add_css=True,
+        add_copy_llm=True,
+        verbose=True,
+    )
+```
+
+**Step 2:** Build your site and run postprocess:
+
+```bash
+# For Zensical
+zensical build && python postprocess.py
+
+# For MkDocs (without plugin)
+mkdocs build && python postprocess.py
+
+# For Hugo
+hugo && python postprocess.py
+
+# For Jekyll
+jekyll build && python postprocess.py
+```
+
+## ⚙️ Configuration Options
+
+Both modes support the same configuration options:
+
+| Option              | Type | Default | Description                      |
+| ------------------- | ---- | ------- | -------------------------------- |
+| `verbose`           | bool | `True`  | Enable detailed console output   |
+| `enabled`           | bool | `True`  | Enable/disable processing        |
+| `default_image`     | str  | `None`  | Fallback image URL for meta tags |
+| `default_author`    | str  | `None`  | Default GitHub author email      |
+| `add_desc`          | bool | `True`  | Generate meta description tags   |
+| `add_image`         | bool | `True`  | Generate meta image tags         |
+| `add_keywords`      | bool | `True`  | Generate meta keyword tags       |
+| `add_share_buttons` | bool | `True`  | Add social share buttons         |
+| `add_authors`       | bool | `False` | Display Git author info          |
+| `add_json_ld`       | bool | `False` | Add JSON-LD structured data      |
+| `add_css`           | bool | `True`  | Include inline CSS styles        |
+| `add_copy_llm`      | bool | `True`  | Add "Copy for LLM" button        |
 
 ## 🧩 How It Works
 
-Here’s a brief overview of the plugin's core functionalities:
+The tool processes HTML pages to enhance them with metadata and interactive elements:
 
 ### Meta Description Generation
 
-When `add_desc` is enabled, the plugin extracts the first paragraph from your Markdown content and uses it to generate a `<meta name="description">` tag within the `<head>` section of the corresponding HTML page. This helps search engines and users understand the page's content at a glance.
+Extracts the first paragraph from your content and generates `<meta name="description">` tags for SEO.
 
 ### Meta Image Tagging
 
-If `add_image` is active, the plugin identifies the first image referenced in the Markdown source. This image URL is then used to populate the `<meta property="og:image">` and `<meta property="twitter:image">` tags. If no image is detected on the page, the URL provided in `default_image` (if set) is used as a fallback.
-
-### Meta Keyword Integration
-
-By defining keywords in the Markdown front matter (e.g., `keywords: machine learning, computer vision, mkdocs`), and with `add_keywords` enabled, the plugin injects a corresponding `<meta name="keywords">` tag into the page's `<head>`.
+Identifies the first image in the content or uses the default image for `og:image` and `twitter:image` tags.
 
 ### Social Share Buttons
 
-Activating `add_share_buttons` automatically appends pre-styled Twitter and LinkedIn sharing buttons to the bottom of your main content area, making it easy for readers to share your documentation.
+Appends pre-styled Twitter and LinkedIn sharing buttons to your content.
 
 ### Git Information Display
 
-When `add_authors` is enabled, the plugin leverages Git history to retrieve the commit timestamp and author(s) for each page. This information is then displayed at the bottom of the page, providing context on when the content was last updated and by whom.
+Retrieves Git history to show creation/update dates and author avatars at the bottom of pages.
 
-## 💡 Plugin Code Insight
+### JSON-LD Structured Data
 
-The core logic resides within the `MetaPlugin` class in `plugin.py`. This class hooks into the MkDocs build process to modify page content and metadata.
+Generates Article and FAQPage schema for better search engine understanding.
 
-```python
-# Import the base class for MkDocs plugins
-from mkdocs.plugins import BasePlugin
+### Copy for LLM Button
 
+Adds a button next to the "Edit this page" button that fetches the raw Markdown and copies it to clipboard, perfect for sharing with AI assistants.
 
-# Define the MetaPlugin class inheriting from BasePlugin
-class MetaPlugin(BasePlugin):
-    # This method runs after the Markdown is converted to HTML,
-    # but before the template is rendered.
-    # It's used here primarily to extract information like the first paragraph or image.
-    def on_page_content(self, content, page, config, files):
-        # Logic to find the first paragraph for meta description
-        # Logic to find the first image for meta image tags
-        # ... (details omitted for brevity)
-        # The modified or extracted data is often stored for later use.
-        return content  # Return the original content, as modifications happen later
+## 💡 Architecture
 
-    # This method runs after the page template has been rendered.
-    # It allows modification of the final HTML output.
-    def on_post_page(self, output, page, config):
-        # Logic to inject generated meta tags (description, image, keywords) into <head>
-        # Logic to add share buttons HTML to the end of the content area
-        # Logic to add author/date footer HTML
-        # Logic to add JSON-LD script tag to <head>
-        # Logic to add inline CSS if enabled
-        # ... (details omitted for brevity)
-        return output  # Return the modified HTML output
+The codebase is organized for maximum code reuse:
+
+```
+plugin/
+├── __init__.py       # Package metadata
+├── processor.py      # ⭐ Core HTML processing logic
+├── main.py          # MkDocs plugin wrapper
+├── postprocess.py   # Standalone postprocess wrapper
+└── utils.py         # Helper functions
 ```
 
-This structure allows the plugin to analyze content and then inject the necessary HTML elements and metadata into the final output effectively. Check the source code for the full implementation details.
+Both plugin mode and postprocess mode use the same `process_html()` function in `processor.py`, ensuring identical output regardless of which mode you use.
+
+## 📊 Plugin Mode vs Postprocess Mode
+
+| Feature             | Plugin Mode             | Postprocess Mode             |
+| ------------------- | ----------------------- | ---------------------------- |
+| **Works with**      | MkDocs only             | Any static site generator    |
+| **Processing time** | During build (per-page) | After build (batch)          |
+| **Configuration**   | `mkdocs.yml`            | Python script                |
+| **Hot reload**      | ✅ Yes                  | ❌ No (rebuild required)     |
+| **Git info**        | ✅ Yes                  | ✅ Yes                       |
+| **Best for**        | MkDocs projects         | Zensical, Hugo, Jekyll, etc. |
 
 ## 🤝 Contribute
 
-Collaboration fuels innovation! 🤗 The success of Ultralytics' open-source projects, including this plugin, thrives on community contributions. We welcome your involvement, whether it's fixing bugs, proposing new features, improving documentation, engaging in discussions, or sharing how you use Ultralytics tools.
+Collaboration fuels innovation! 🤗 The success of Ultralytics' open-source projects thrives on community contributions. We welcome your involvement, whether it's fixing bugs, proposing new features, improving documentation, engaging in discussions, or sharing how you use Ultralytics tools.
 
-Please see our [Contributing Guide](https://docs.ultralytics.com/help/contributing/) for more details on how you can make a difference. Filling out our short [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey) also provides valuable feedback. We sincerely appreciate 🙇‍♂️ every contribution!
+Please see our [Contributing Guide](https://docs.ultralytics.com/help/contributing/) for details. Filling out our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey) also provides valuable feedback. We sincerely appreciate 🙇‍♂️ every contribution!
 
 [![Ultralytics open-source contributors](https://raw.githubusercontent.com/ultralytics/assets/main/im/image-contributors.png)](https://github.com/ultralytics/ultralytics/graphs/contributors)
 
 ## 📜 License
 
-Ultralytics provides two licensing options to accommodate different use cases:
+Ultralytics provides two licensing options:
 
 - **AGPL-3.0 License**: Ideal for students, researchers, and enthusiasts, this [OSI-approved](https://opensource.org/license/agpl-v3) license promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/mkdocs/blob/main/LICENSE) file for details.
-- **Enterprise License**: Designed for commercial applications, this license allows seamless integration of Ultralytics software and AI models into commercial products and services, bypassing the open-source requirements of AGPL-3.0. If your project requires an Enterprise License, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).
+- **Enterprise License**: Designed for commercial applications, this license allows seamless integration of Ultralytics software into commercial products, bypassing AGPL-3.0 requirements. Visit [Ultralytics Licensing](https://www.ultralytics.com/license) for details.
 
 ## ✉️ Connect with Us
 
-Encountered a bug or have an idea for a new feature? Please visit [GitHub Issues](https://github.com/ultralytics/mkdocs/issues) to report problems or suggest enhancements. For broader discussions, questions, and community support related to Ultralytics projects, join our vibrant [Discord](https://discord.com/invite/ultralytics) server and check out the [Ultralytics Reddit](https://www.reddit.com/r/ultralytics/?rdt=34950).
+Encountered a bug or have an idea? Visit [GitHub Issues](https://github.com/ultralytics/mkdocs/issues) to report problems or suggest enhancements. For discussions and community support, join our [Discord](https://discord.com/invite/ultralytics) server and check out [Ultralytics Reddit](https://www.reddit.com/r/ultralytics/).
 
 <br>
 <div align="center">
