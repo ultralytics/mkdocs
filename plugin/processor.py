@@ -13,7 +13,11 @@ from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 
-from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
+from plugin.utils import (
+    calculate_time_difference,
+    get_github_usernames_from_file,
+    get_youtube_video_ids,
+)
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -238,7 +242,9 @@ def process_html(
     if add_image:
         if first_image := soup.find("img"):
             img_src = first_image.get("src", "")
-            if img_src and (img_src.startswith(("http://", "https://", "/")) or not img_src.startswith(("javascript:", "data:"))):
+            if img_src and (
+                img_src.startswith(("http://", "https://", "/")) or not img_src.startswith(("javascript:", "data:"))
+            ):
                 meta["image"] = img_src
         elif youtube_ids := get_youtube_video_ids(soup):
             meta["image"] = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
@@ -418,7 +424,7 @@ def process_html(
 
     # Add share buttons
     if add_share_buttons and not soup.find("div", class_="share-buttons"):
-        encoded_url = quote(page_url, safe='')
+        encoded_url = quote(page_url, safe="")
         twitter_share_link = f"https://twitter.com/intent/tweet?url={encoded_url}"
         linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={encoded_url}"
 
