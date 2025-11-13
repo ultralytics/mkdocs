@@ -14,7 +14,9 @@ import yaml  # YAML is used for its readability and consistency with MkDocs ecos
 from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
-DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
+DEFAULT_AVATAR = requests.head(
+    "https://github.com/github.png", allow_redirects=True
+).url
 
 
 def calculate_time_difference(date_string: str) -> tuple[str, str]:
@@ -113,11 +115,16 @@ def get_github_username_from_email(
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
         avatar = f"https://github.com/{username}.png"
-        cache[email] = {"username": username, "avatar": requests.head(avatar, allow_redirects=True).url}
+        cache[email] = {
+            "username": username,
+            "avatar": requests.head(avatar, allow_redirects=True).url,
+        }
         return username, avatar
 
     # If the email is not found in the cache, query GitHub REST API
-    url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
+    url = (
+        f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
+    )
     if verbose:
         print(f"Running GitHub REST API for author {email}")
     response = requests.get(url)
@@ -126,7 +133,10 @@ def get_github_username_from_email(
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
             avatar = data["items"][0]["avatar_url"]  # avatar_url key is correct here
-            cache[email] = {"username": username, "avatar": requests.head(avatar, allow_redirects=True).url}
+            cache[email] = {
+                "username": username,
+                "avatar": requests.head(avatar, allow_redirects=True).url,
+            }
             return username, avatar
 
     if verbose:
@@ -135,7 +145,9 @@ def get_github_username_from_email(
     return None, None
 
 
-def get_github_usernames_from_file(file_path: str, default_user: str | None = None) -> dict[str, dict[str, any]]:
+def get_github_usernames_from_file(
+    file_path: str, default_user: str | None = None
+) -> dict[str, dict[str, any]]:
     """Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
 
     Args:
@@ -157,7 +169,9 @@ def get_github_usernames_from_file(file_path: str, default_user: str | None = No
     # Fetch author emails using 'git log'
     try:
         authors_emails_log = (
-            subprocess.check_output(["git", "log", "--pretty=format:%ae", Path(file_path).resolve()])
+            subprocess.check_output(
+                ["git", "log", "--pretty=format:%ae", Path(file_path).resolve()]
+            )
             .decode("utf-8")
             .split("\n")
         )
@@ -169,26 +183,35 @@ def get_github_usernames_from_file(file_path: str, default_user: str | None = No
     with contextlib.suppress(Exception):
         authors_emails_blame = (
             subprocess.check_output(
-                ["git", "blame", "--line-porcelain", Path(file_path).resolve()], stderr=subprocess.DEVNULL
+                ["git", "blame", "--line-porcelain", Path(file_path).resolve()],
+                stderr=subprocess.DEVNULL,
             )
             .decode("utf-8")
             .split("\n")
         )
-        authors_emails_blame = [line.split(" ")[1] for line in authors_emails_blame if line.startswith("author-mail")]
+        authors_emails_blame = [
+            line.split(" ")[1]
+            for line in authors_emails_blame
+            if line.startswith("author-mail")
+        ]
         authors_emails_blame = [email.strip("<>") for email in authors_emails_blame]
         emails_blame = dict(Counter(authors_emails_blame))
 
         # Merge the two email lists, adding any missing authors from 'git blame' as a 1-commit change
         for email in emails_blame:
             if email not in emails:
-                emails[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
+                emails[email] = (
+                    1  # Only add new authors from 'git blame' with a 1-commit change
+                )
 
     # If no git info found but default_user provided, use default_user
     if not emails and default_user:
         emails[default_user] = 1
 
     # Load the local cache of GitHub usernames
-    local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
+    local_cache_file = (
+        Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
+    )
     if local_cache_file.is_file():
         with local_cache_file.open("r") as f:
             cache = yaml.safe_load(f) or {}
@@ -197,7 +220,9 @@ def get_github_usernames_from_file(file_path: str, default_user: str | None = No
 
     try:
         github_repo_url = (
-            subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
+            subprocess.check_output(["git", "config", "--get", "remote.origin.url"])
+            .decode("utf-8")
+            .strip()
         )
         if github_repo_url.endswith(".git"):
             github_repo_url = github_repo_url[:-4]
