@@ -1,5 +1,4 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-
 """Shared HTML processing logic for MkDocs plugin and postprocess script."""
 
 from __future__ import annotations
@@ -13,7 +12,11 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
-from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
+from plugin.utils import (
+    calculate_time_difference,
+    get_github_usernames_from_file,
+    get_youtube_video_ids,
+)
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -23,7 +26,7 @@ COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d
 CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
 
 
-def get_git_info(file_path: str, add_authors: bool = True, default_author: str = None) -> dict[str, Any]:
+def get_git_info(file_path: str, add_authors: bool = True, default_author: str | None = None) -> dict[str, Any]:
     """Retrieve git information including creation/modified dates and optional authors."""
     file_path = str(Path(file_path).resolve())
     git_info = {"creation_date": DEFAULT_CREATION_DATE, "last_modified_date": DEFAULT_MODIFIED_DATE}
@@ -199,9 +202,9 @@ def process_html(
     html: str,
     page_url: str,
     title: str,
-    src_path: str = None,
-    default_image: str = None,
-    default_author: str = None,
+    src_path: str | None = None,
+    default_image: str | None = None,
+    default_author: str | None = None,
     add_desc: bool = True,
     add_image: bool = True,
     add_keywords: bool = True,

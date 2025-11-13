@@ -1,6 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-
 """Postprocess MkDocs/Zensical site by adding metadata, git info, and social features."""
+
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -11,8 +12,8 @@ def process_html_file(
     html_path: Path,
     docs_dir: Path,
     site_url: str = "",
-    default_image: str = None,
-    default_author: str = None,
+    default_image: str | None = None,
+    default_author: str | None = None,
     add_desc: bool = True,
     add_image: bool = True,
     add_keywords: bool = True,
@@ -90,8 +91,8 @@ def postprocess_site(
     site_dir: str | Path = "site",
     docs_dir: str | Path = "docs",
     site_url: str = "",
-    default_image: str = None,
-    default_author: str = None,
+    default_image: str | None = None,
+    default_author: str | None = None,
     add_desc: bool = True,
     add_image: bool = True,
     add_keywords: bool = True,
