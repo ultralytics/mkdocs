@@ -9,7 +9,7 @@ import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 from bs4 import BeautifulSoup
 
@@ -248,10 +248,9 @@ def process_html(
     if add_image:
         if first_image := soup.find("img"):
             img_src = first_image.get("src", "")
-            if img_src and (
-                img_src.startswith(("http://", "https://", "/")) or not img_src.startswith(("javascript:", "data:"))
-            ):
-                meta["image"] = img_src
+            if img_src and not img_src.startswith(("javascript:", "data:", "#")):
+                # Convert relative URLs to absolute using urljoin
+                meta["image"] = urljoin(page_url, img_src)
         elif youtube_ids := get_youtube_video_ids(soup):
             meta["image"] = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
         elif default_image:
