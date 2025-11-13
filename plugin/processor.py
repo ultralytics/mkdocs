@@ -33,7 +33,9 @@ def get_git_info(file_path: str, add_authors: bool = True, default_author: str |
 
     try:
         subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL)
-        creation_output = subprocess.check_output(["git", "log", "--reverse", "--pretty=format:%ai", file_path]).decode()
+        creation_output = subprocess.check_output(
+            ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
+        ).decode()
         creation_date = creation_output.split("\n")[0] if creation_output else ""
         last_modified_date = subprocess.check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode()
         git_info.update(

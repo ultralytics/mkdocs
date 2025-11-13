@@ -51,7 +51,7 @@ def process_html_file(
             if md_file.stem == html_path.stem:
                 src_path = str(md_file)
                 break
-        
+
         # For index.html, try matching parent directory name
         if not src_path and html_path.stem == "index":
             for md_file in docs_dir.rglob("*.md"):
