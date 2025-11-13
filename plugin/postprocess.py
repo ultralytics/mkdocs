@@ -46,13 +46,7 @@ def process_html_file(
     page_url = f"{site_url.rstrip('/')}/{rel_path}".replace("/index.html", "/")
 
     # Get title
-    title = (
-        soup.find("h1").text
-        if soup.find("h1")
-        else soup.title.string
-        if soup.title
-        else ""
-    )
+    title = soup.find("h1").text if soup.find("h1") else soup.title.string if soup.title else ""
 
     # Extract keywords from existing meta tag if present
     keywords = None
@@ -71,10 +65,7 @@ def process_html_file(
         # For index.html, try matching parent directory name
         if not src_path and html_path.stem == "index":
             for md_file in docs_dir.rglob("*.md"):
-                if (
-                    md_file.parent.name == html_path.parent.name
-                    or md_file.stem == "index"
-                ):
+                if md_file.parent.name == html_path.parent.name or md_file.stem == "index":
                     src_path = str(md_file)
                     break
 

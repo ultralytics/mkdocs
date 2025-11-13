@@ -40,9 +40,7 @@ class MetaPlugin(BasePlugin):
         try:
             page_url = (config["site_url"] or "") + page.url.rstrip("/")
             title = page.title
-            keywords = (
-                page.meta.get("keywords", None) if hasattr(page, "meta") else None
-            )
+            keywords = page.meta.get("keywords", None) if hasattr(page, "meta") else None
 
             return process_html(
                 html=output,
@@ -63,7 +61,5 @@ class MetaPlugin(BasePlugin):
             )
         except Exception as e:
             if self.config["verbose"]:
-                print(
-                    f"ERROR - mkdocs-ultralytics-plugin: Failed to process {page.file.src_path}: {e}"
-                )
+                print(f"ERROR - mkdocs-ultralytics-plugin: Failed to process {page.file.src_path}: {e}")
             return output  # Return original output on error

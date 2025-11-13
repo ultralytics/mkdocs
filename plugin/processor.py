@@ -20,18 +20,14 @@ from plugin.utils import (
 )
 
 today = datetime.now()
-DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime(
-    "%Y-%m-%d %H:%M:%S +0000"
-)
+DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
 DEFAULT_MODIFIED_DATE = (today - timedelta(days=40)).strftime("%Y-%m-%d %H:%M:%S +0000")
 
 COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>'
 CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
 
 
-def get_git_info(
-    file_path: str, add_authors: bool = True, default_author: str | None = None
-) -> dict[str, Any]:
+def get_git_info(file_path: str, add_authors: bool = True, default_author: str | None = None) -> dict[str, Any]:
     """Retrieve git information including creation/modified dates and optional authors."""
     file_path = str(Path(file_path).resolve())
     git_info = {
@@ -40,16 +36,12 @@ def get_git_info(
     }
 
     try:
-        subprocess.check_output(
-            ["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL
-        )
+        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL)
         creation_output = subprocess.check_output(
             ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
         ).decode()
         creation_date = creation_output.split("\n")[0] if creation_output else ""
-        last_modified_date = subprocess.check_output(
-            ["git", "log", "-1", "--pretty=format:%ai", file_path]
-        ).decode()
+        last_modified_date = subprocess.check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode()
         git_info.update(
             {
                 "creation_date": creation_date or DEFAULT_CREATION_DATE,
@@ -58,14 +50,9 @@ def get_git_info(
         )
 
         if add_authors:
-            authors_info = get_github_usernames_from_file(
-                file_path, default_user=default_author
-            )
+            authors_info = get_github_usernames_from_file(file_path, default_user=default_author)
             git_info["authors"] = sorted(
-                [
-                    (author, info["url"], info["changes"], info["avatar"])
-                    for author, info in authors_info.items()
-                ],
+                [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
                 key=lambda x: x[2],
                 reverse=True,
             )
@@ -87,11 +74,7 @@ def parse_faq(soup: BeautifulSoup) -> list[dict[str, Any]]:
                 answer = ""
                 next_sibling = current_section.find_next_sibling()
 
-                while (
-                    next_sibling
-                    and next_sibling.name != "h3"
-                    and next_sibling.name != "h2"
-                ):
+                while next_sibling and next_sibling.name != "h3" and next_sibling.name != "h2":
                     if next_sibling.name == "p":
                         answer += f"{next_sibling.text.strip()} "
                     next_sibling = next_sibling.find_next_sibling()
@@ -266,26 +249,19 @@ def process_html(
         if first_image := soup.find("img"):
             img_src = first_image.get("src", "")
             if img_src and (
-                img_src.startswith(("http://", "https://", "/"))
-                or not img_src.startswith(("javascript:", "data:"))
+                img_src.startswith(("http://", "https://", "/")) or not img_src.startswith(("javascript:", "data:"))
             ):
                 meta["image"] = img_src
         elif youtube_ids := get_youtube_video_ids(soup):
-            meta["image"] = (
-                f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
-            )
+            meta["image"] = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
         elif default_image:
             meta["image"] = default_image
 
     # Add meta tags to head
     if not soup.find("meta", attrs={"name": "title"}):
-        soup.head.append(
-            soup.new_tag("meta", attrs={"name": "title", "content": title})
-        )
+        soup.head.append(soup.new_tag("meta", attrs={"name": "title", "content": title}))
 
-    if add_share_buttons and not soup.find(
-        "link", rel="stylesheet", href=re.compile("font-awesome")
-    ):
+    if add_share_buttons and not soup.find("link", rel="stylesheet", href=re.compile("font-awesome")):
         soup.head.append(
             soup.new_tag(
                 "link",
@@ -298,9 +274,7 @@ def process_html(
         if meta_keywords := soup.find("meta", attrs={"name": "keywords"}):
             meta_keywords["content"] = keywords
         else:
-            soup.head.append(
-                soup.new_tag("meta", attrs={"name": "keywords", "content": keywords})
-            )
+            soup.head.append(soup.new_tag("meta", attrs={"name": "keywords", "content": keywords}))
 
     if add_desc and "description" in meta:
         if meta_desc := soup.find("meta", attrs={"name": "description"}):
@@ -323,19 +297,13 @@ def process_html(
         if tag := soup.find("meta", attrs={"property": prop}):
             tag["content"] = value
         else:
-            soup.head.append(
-                soup.new_tag("meta", attrs={"property": prop, "content": value})
-            )
+            soup.head.append(soup.new_tag("meta", attrs={"property": prop, "content": value}))
 
     if add_image and "image" in meta:
         if og_image := soup.find("meta", attrs={"property": "og:image"}):
             og_image["content"] = meta["image"]
         else:
-            soup.head.append(
-                soup.new_tag(
-                    "meta", attrs={"property": "og:image", "content": meta["image"]}
-                )
-            )
+            soup.head.append(soup.new_tag("meta", attrs={"property": "og:image", "content": meta["image"]}))
 
     # Twitter tags
     for prop, value in [
@@ -347,20 +315,10 @@ def process_html(
         if tag := soup.find("meta", attrs={"property": prop}):
             tag["content"] = value
         else:
-            soup.head.append(
-                soup.new_tag("meta", attrs={"property": prop, "content": value})
-            )
+            soup.head.append(soup.new_tag("meta", attrs={"property": prop, "content": value}))
 
-    if (
-        add_image
-        and "image" in meta
-        and not soup.find("meta", attrs={"property": "twitter:image"})
-    ):
-        soup.head.append(
-            soup.new_tag(
-                "meta", attrs={"property": "twitter:image", "content": meta["image"]}
-            )
-        )
+    if add_image and "image" in meta and not soup.find("meta", attrs={"property": "twitter:image"}):
+        soup.head.append(soup.new_tag("meta", attrs={"property": "twitter:image", "content": meta["image"]}))
 
     # Add Copy for LLM button
     if (
@@ -421,17 +379,11 @@ def process_html(
 
     # Add git information
     if src_path:
-        git_info = get_git_info(
-            src_path, add_authors=add_authors, default_author=default_author
-        )
+        git_info = get_git_info(src_path, add_authors=add_authors, default_author=default_author)
 
         if add_authors and git_info["creation_date"]:
-            created_ago, created_date = calculate_time_difference(
-                git_info["creation_date"]
-            )
-            updated_ago, updated_date = calculate_time_difference(
-                git_info["last_modified_date"]
-            )
+            created_ago, created_date = calculate_time_difference(git_info["creation_date"])
+            updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
             div = f"""<br><br>
 <div class="git-info">
