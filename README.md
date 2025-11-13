@@ -5,6 +5,7 @@
 Welcome to the MkDocs Ultralytics Plugin! 📄 This powerful tool enhances your [MkDocs](https://www.mkdocs.org/), [Zensical](https://zensical.com/), or any static site documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your documentation's visibility on the web.
 
 **Two modes available:**
+
 - 🔌 **Plugin Mode**: Real-time processing during MkDocs builds
 - 🔄 **Postprocess Mode**: Process any generated static site HTML after build
 
@@ -89,8 +90,8 @@ from plugin.postprocess import postprocess_site
 
 if __name__ == "__main__":
     postprocess_site(
-        site_dir="site",           # Your build output directory
-        docs_dir="docs",           # Your source docs directory
+        site_dir="site",  # Your build output directory
+        docs_dir="docs",  # Your source docs directory
         site_url="https://example.com",
         default_image="https://example.com/image.png",
         default_author="you@example.com",
@@ -125,20 +126,20 @@ jekyll build && python postprocess.py
 
 Both modes support the same configuration options:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `verbose` | bool | `True` | Enable detailed console output |
-| `enabled` | bool | `True` | Enable/disable processing |
-| `default_image` | str | `None` | Fallback image URL for meta tags |
-| `default_author` | str | `None` | Default GitHub author email |
-| `add_desc` | bool | `True` | Generate meta description tags |
-| `add_image` | bool | `True` | Generate meta image tags |
-| `add_keywords` | bool | `True` | Generate meta keyword tags |
-| `add_share_buttons` | bool | `True` | Add social share buttons |
-| `add_authors` | bool | `False` | Display Git author info |
-| `add_json_ld` | bool | `False` | Add JSON-LD structured data |
-| `add_css` | bool | `True` | Include inline CSS styles |
-| `add_copy_llm` | bool | `True` | Add "Copy for LLM" button |
+| Option              | Type | Default | Description                      |
+| ------------------- | ---- | ------- | -------------------------------- |
+| `verbose`           | bool | `True`  | Enable detailed console output   |
+| `enabled`           | bool | `True`  | Enable/disable processing        |
+| `default_image`     | str  | `None`  | Fallback image URL for meta tags |
+| `default_author`    | str  | `None`  | Default GitHub author email      |
+| `add_desc`          | bool | `True`  | Generate meta description tags   |
+| `add_image`         | bool | `True`  | Generate meta image tags         |
+| `add_keywords`      | bool | `True`  | Generate meta keyword tags       |
+| `add_share_buttons` | bool | `True`  | Add social share buttons         |
+| `add_authors`       | bool | `False` | Display Git author info          |
+| `add_json_ld`       | bool | `False` | Add JSON-LD structured data      |
+| `add_css`           | bool | `True`  | Include inline CSS styles        |
+| `add_copy_llm`      | bool | `True`  | Add "Copy for LLM" button        |
 
 ## 🧩 How It Works
 
@@ -185,14 +186,14 @@ Both plugin mode and postprocess mode use the same `process_html()` function in 
 
 ## 📊 Plugin Mode vs Postprocess Mode
 
-| Feature | Plugin Mode | Postprocess Mode |
-|---------|-------------|------------------|
-| **Works with** | MkDocs only | Any static site generator |
-| **Processing time** | During build (per-page) | After build (batch) |
-| **Configuration** | `mkdocs.yml` | Python script |
-| **Hot reload** | ✅ Yes | ❌ No (rebuild required) |
-| **Git info** | ✅ Yes | ✅ Yes |
-| **Best for** | MkDocs projects | Zensical, Hugo, Jekyll, etc. |
+| Feature             | Plugin Mode             | Postprocess Mode             |
+| ------------------- | ----------------------- | ---------------------------- |
+| **Works with**      | MkDocs only             | Any static site generator    |
+| **Processing time** | During build (per-page) | After build (batch)          |
+| **Configuration**   | `mkdocs.yml`            | Python script                |
+| **Hot reload**      | ✅ Yes                  | ❌ No (rebuild required)     |
+| **Git info**        | ✅ Yes                  | ✅ Yes                       |
+| **Best for**        | MkDocs projects         | Zensical, Hugo, Jekyll, etc. |
 
 ## 🤝 Contribute
 
