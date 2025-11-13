@@ -11,7 +11,7 @@ from plugin.processor import process_html
 def process_html_file(
     html_path: Path,
     site_dir: Path,
-    docs_dir: Path,
+    md_index: dict[str, str],
     site_url: str = "",
     default_image: str | None = None,
     default_author: str | None = None,
@@ -53,21 +53,10 @@ def process_html_file(
     if meta_keywords := soup.find("meta", attrs={"name": "keywords"}):
         keywords = meta_keywords.get("content")
 
-    # Find source markdown file
-    src_path = None
-    if docs_dir.exists():
-        # Try exact stem match first
-        for md_file in docs_dir.rglob("*.md"):
-            if md_file.stem == html_path.stem:
-                src_path = str(md_file)
-                break
-
-        # For index.html, try matching parent directory name
-        if not src_path and html_path.stem == "index":
-            for md_file in docs_dir.rglob("*.md"):
-                if md_file.parent.name == html_path.parent.name or md_file.stem == "index":
-                    src_path = str(md_file)
-                    break
+    # Find source markdown file from prebuilt index
+    src_path = md_index.get(html_path.stem)
+    if not src_path and html_path.stem == "index":
+        src_path = md_index.get(html_path.parent.name)
 
     # Process HTML
     processed_html = process_html(
@@ -129,6 +118,15 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
+    # Build markdown index once (O(N) instead of O(N²))
+    md_index = {}
+    if docs_dir.exists():
+        for md_file in docs_dir.rglob("*.md"):
+            md_index[md_file.stem] = str(md_file)
+            # Also index by parent directory name for index.html matching
+            if md_file.parent.name not in md_index:
+                md_index[md_file.parent.name] = str(md_file)
+
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 
     processed = 0
@@ -136,7 +134,7 @@ def postprocess_site(
         success = process_html_file(
             html_file,
             site_dir,
-            docs_dir,
+            md_index,
             site_url=site_url,
             default_image=default_image,
             default_author=default_author,

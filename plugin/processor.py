@@ -377,7 +377,13 @@ def process_html(
             """
             soup.body.append(script)
 
-    # Add git information
+    # Initialize git info with defaults
+    git_info = {
+        "creation_date": DEFAULT_CREATION_DATE,
+        "last_modified_date": DEFAULT_MODIFIED_DATE,
+    }
+
+    # Add git information if source path available
     if src_path:
         git_info = get_git_info(src_path, add_authors=add_authors, default_author=default_author)
 
@@ -415,32 +421,32 @@ def process_html(
 
             insert_content(soup, BeautifulSoup(div, "html.parser"))
 
-        # Add JSON-LD structured data
-        if add_json_ld and not soup.find("script", type="application/ld+json"):
-            ld_json_content = {
-                "@context": "https://schema.org",
-                "@type": "Article",
-                "headline": title,
-                "image": [meta["image"]] if "image" in meta else [],
-                "datePublished": git_info["creation_date"],
-                "dateModified": git_info["last_modified_date"],
-                "author": [
-                    {
-                        "@type": "Organization",
-                        "name": "Ultralytics",
-                        "url": "https://ultralytics.com/",
-                    }
-                ],
-                "abstract": meta.get("description", ""),
-            }
+    # Add JSON-LD structured data (always generated when enabled, uses defaults if no git info)
+    if add_json_ld and not soup.find("script", type="application/ld+json"):
+        ld_json_content = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": title,
+            "image": [meta["image"]] if "image" in meta else [],
+            "datePublished": git_info["creation_date"],
+            "dateModified": git_info["last_modified_date"],
+            "author": [
+                {
+                    "@type": "Organization",
+                    "name": "Ultralytics",
+                    "url": "https://ultralytics.com/",
+                }
+            ],
+            "abstract": meta.get("description", ""),
+        }
 
-            if faqs := parse_faq(soup):
-                ld_json_content["@type"] = ["Article", "FAQPage"]
-                ld_json_content["mainEntity"] = faqs
+        if faqs := parse_faq(soup):
+            ld_json_content["@type"] = ["Article", "FAQPage"]
+            ld_json_content["mainEntity"] = faqs
 
-            ld_json_script = soup.new_tag("script", type="application/ld+json")
-            ld_json_script.string = json.dumps(ld_json_content)
-            soup.head.append(ld_json_script)
+        ld_json_script = soup.new_tag("script", type="application/ld+json")
+        ld_json_script.string = json.dumps(ld_json_content)
+        soup.head.append(ld_json_script)
 
     # Add share buttons
     if add_share_buttons and not soup.find("div", class_="share-buttons"):
