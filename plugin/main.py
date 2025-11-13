@@ -40,6 +40,7 @@ class MetaPlugin(BasePlugin):
         try:
             page_url = (config["site_url"] or "") + page.url.rstrip("/")
             title = page.title
+            keywords = page.meta.get("keywords", None) if hasattr(page, "meta") else None
 
             return process_html(
                 html=output,
@@ -48,6 +49,7 @@ class MetaPlugin(BasePlugin):
                 src_path=page.file.abs_src_path,
                 default_image=self.config["default_image"],
                 default_author=self.config["default_author"],
+                keywords=keywords,
                 add_desc=self.config["add_desc"],
                 add_image=self.config["add_image"],
                 add_keywords=self.config["add_keywords"],

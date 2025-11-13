@@ -24,8 +24,12 @@ def process_html_file(
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = False,
-) -> None:
-    """Process a single HTML file by delegating to shared processor."""
+) -> bool:
+    """Process a single HTML file by delegating to shared processor.
+    
+    Returns:
+        bool: True if file was successfully processed and written, False otherwise.
+    """
     from bs4 import BeautifulSoup
 
     try:
@@ -33,7 +37,7 @@ def process_html_file(
     except (UnicodeDecodeError, FileNotFoundError) as e:
         if verbose:
             print(f"Error reading {html_path}: {e}")
-        return
+        return False
 
     soup = BeautifulSoup(html, "html.parser")
 
@@ -43,6 +47,11 @@ def process_html_file(
 
     # Get title
     title = soup.find("h1").text if soup.find("h1") else soup.title.string if soup.title else ""
+
+    # Extract keywords from existing meta tag if present
+    keywords = None
+    if meta_keywords := soup.find("meta", attrs={"name": "keywords"}):
+        keywords = meta_keywords.get("content")
 
     # Find source markdown file
     src_path = None
@@ -68,6 +77,7 @@ def process_html_file(
         src_path=src_path,
         default_image=default_image,
         default_author=default_author,
+        keywords=keywords,
         add_desc=add_desc,
         add_image=add_image,
         add_keywords=add_keywords,
@@ -83,9 +93,11 @@ def process_html_file(
         html_path.write_text(processed_html, encoding="utf-8")
         if verbose:
             print(f"Processed: {html_path.relative_to(site_dir)}")
+        return True
     except (OSError, PermissionError) as e:
         if verbose:
             print(f"Error writing {html_path}: {e}")
+        return False
 
 
 def postprocess_site(
@@ -121,7 +133,7 @@ def postprocess_site(
 
     processed = 0
     for html_file in html_files:
-        process_html_file(
+        success = process_html_file(
             html_file,
             site_dir,
             docs_dir,
@@ -138,7 +150,8 @@ def postprocess_site(
             add_copy_llm=add_copy_llm,
             verbose=verbose,
         )
-        processed += 1
+        if success:
+            processed += 1
 
     print(f"✅ Postprocessing complete: {processed}/{len(html_files)} files processed")
 

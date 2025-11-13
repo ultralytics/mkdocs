@@ -204,6 +204,7 @@ def process_html(
     src_path: str | None = None,
     default_image: str | None = None,
     default_author: str | None = None,
+    keywords: str | None = None,
     add_desc: bool = True,
     add_image: bool = True,
     add_keywords: bool = True,
@@ -256,6 +257,12 @@ def process_html(
                 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css",
             )
         )
+
+    if add_keywords and keywords:
+        if meta_keywords := soup.find("meta", attrs={"name": "keywords"}):
+            meta_keywords["content"] = keywords
+        else:
+            soup.head.append(soup.new_tag("meta", attrs={"name": "keywords", "content": keywords}))
 
     if add_desc and "description" in meta:
         if meta_desc := soup.find("meta", attrs={"name": "description"}):
