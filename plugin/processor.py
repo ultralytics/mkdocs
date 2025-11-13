@@ -9,14 +9,11 @@ import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 
-from plugin.utils import (
-    calculate_time_difference,
-    get_github_usernames_from_file,
-    get_youtube_video_ids,
-)
+from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -232,11 +229,16 @@ def process_html(
         if soup.find("article", class_="md-content__inner")
         else soup.find("p")
     ):
-        meta["description"] = first_paragraph.text.strip()[:500]
+        desc = first_paragraph.text.strip()[:500]
+        # Ensure description is not too short
+        if len(desc) >= 10:
+            meta["description"] = desc
 
     if add_image:
         if first_image := soup.find("img"):
-            meta["image"] = first_image["src"]
+            img_src = first_image.get("src", "")
+            if img_src and (img_src.startswith(("http://", "https://", "/")) or not img_src.startswith(("javascript:", "data:"))):
+                meta["image"] = img_src
         elif youtube_ids := get_youtube_video_ids(soup):
             meta["image"] = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
         elif default_image:
@@ -409,8 +411,9 @@ def process_html(
 
     # Add share buttons
     if add_share_buttons and not soup.find("div", class_="share-buttons"):
-        twitter_share_link = f"https://twitter.com/intent/tweet?url={page_url}"
-        linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={page_url}"
+        encoded_url = quote(page_url, safe='')
+        twitter_share_link = f"https://twitter.com/intent/tweet?url={encoded_url}"
+        linkedin_share_link = f"https://www.linkedin.com/shareArticle?url={encoded_url}"
 
         share_buttons = f"""<div class="share-buttons">
     <button onclick="window.open('{twitter_share_link}', 'TwitterShare', 'width=550,height=680,menubar=no,toolbar=no'); return false;" class="share-button hover-item">

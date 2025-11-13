@@ -10,6 +10,7 @@ from plugin.processor import process_html
 
 def process_html_file(
     html_path: Path,
+    site_dir: Path,
     docs_dir: Path,
     site_url: str = "",
     default_image: str | None = None,
@@ -36,8 +37,8 @@ def process_html_file(
 
     soup = BeautifulSoup(html, "html.parser")
 
-    # Get page URL
-    rel_path = html_path.relative_to(html_path.parent.parent).as_posix()
+    # Get page URL - calculate relative path from site_dir
+    rel_path = html_path.relative_to(site_dir).as_posix()
     page_url = f"{site_url.rstrip('/')}/{rel_path}".replace("/index.html", "/")
 
     # Get title
@@ -81,7 +82,7 @@ def process_html_file(
     try:
         html_path.write_text(processed_html, encoding="utf-8")
         if verbose:
-            print(f"Processed: {html_path.relative_to(html_path.parent.parent)}")
+            print(f"Processed: {html_path.relative_to(site_dir)}")
     except (OSError, PermissionError) as e:
         if verbose:
             print(f"Error writing {html_path}: {e}")
@@ -122,6 +123,7 @@ def postprocess_site(
     for html_file in html_files:
         process_html_file(
             html_file,
+            site_dir,
             docs_dir,
             site_url=site_url,
             default_image=default_image,

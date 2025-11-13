@@ -31,28 +31,33 @@ class MetaPlugin(BasePlugin):
         if not self.config["enabled"]:
             return output
 
-        if not config["site_url"]:
+        if not config["site_url"] and self.config["verbose"]:
             print(
                 "WARNING - mkdocs-ultralytics-plugin: Please add a 'site_url' to your mkdocs.yml "
                 "to enable all Ultralytics features, i.e. 'site_url: https://docs.ultralytics.com'"
             )
 
-        page_url = (config["site_url"] or "") + page.url.rstrip("/")
-        title = page.title
+        try:
+            page_url = (config["site_url"] or "") + page.url.rstrip("/")
+            title = page.title
 
-        return process_html(
-            html=output,
-            page_url=page_url,
-            title=title,
-            src_path=page.file.abs_src_path,
-            default_image=self.config["default_image"],
-            default_author=self.config["default_author"],
-            add_desc=self.config["add_desc"],
-            add_image=self.config["add_image"],
-            add_keywords=self.config["add_keywords"],
-            add_share_buttons=self.config["add_share_buttons"],
-            add_authors=self.config["add_authors"],
-            add_json_ld=self.config["add_json_ld"],
-            add_css=self.config["add_css"],
-            add_copy_llm=self.config["add_copy_llm"],
-        )
+            return process_html(
+                html=output,
+                page_url=page_url,
+                title=title,
+                src_path=page.file.abs_src_path,
+                default_image=self.config["default_image"],
+                default_author=self.config["default_author"],
+                add_desc=self.config["add_desc"],
+                add_image=self.config["add_image"],
+                add_keywords=self.config["add_keywords"],
+                add_share_buttons=self.config["add_share_buttons"],
+                add_authors=self.config["add_authors"],
+                add_json_ld=self.config["add_json_ld"],
+                add_css=self.config["add_css"],
+                add_copy_llm=self.config["add_copy_llm"],
+            )
+        except Exception as e:
+            if self.config["verbose"]:
+                print(f"ERROR - mkdocs-ultralytics-plugin: Failed to process {page.file.src_path}: {e}")
+            return output  # Return original output on error
