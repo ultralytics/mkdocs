@@ -253,7 +253,7 @@ def process_html(
         for img in search_root.find_all("img", src=True):
             src = img["src"]
             lower = src.lower()
-            if "avif" in lower:
+            if ".avif" in lower:
                 continue
             if lower.startswith(("javascript:", "data:")):
                 continue
