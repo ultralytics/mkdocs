@@ -57,7 +57,7 @@ def process_html_file(
     html_rel = html_path.relative_to(site_dir).with_suffix("").as_posix()
     if html_rel.endswith("/index"):
         html_rel = html_rel[:-6]  # Remove /index suffix
-    src_path = md_index.get(html_rel) or md_index.get(f"{html_rel}/index")
+    src_path = md_index.get(html_rel or "index") or md_index.get(f"{html_rel}/index")
 
     # Process HTML
     processed_html = process_html(
