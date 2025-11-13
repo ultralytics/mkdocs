@@ -245,17 +245,29 @@ def process_html(
         if len(desc) >= 10:
             meta["description"] = desc
 
+    # ---------- IMAGE PICKING (body only, non-AVIF) ----------
     if add_image:
-        if first_image := soup.find("img"):
-            img_src = first_image.get("src", "")
-            if img_src and (
-                img_src.startswith(("http://", "https://", "/")) or not img_src.startswith(("javascript:", "data:"))
-            ):
-                meta["image"] = img_src
-        elif youtube_ids := get_youtube_video_ids(soup):
-            meta["image"] = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
-        elif default_image:
-            meta["image"] = default_image
+        search_root = soup.find("article", class_="md-content__inner") or soup.body or soup
+
+        image_src: str | None = None
+        for img in search_root.find_all("img", src=True):
+            src = img["src"]
+            lower = src.lower()
+            if not lower or ".avif" in lower:
+                continue
+            if lower.startswith(("javascript:", "data:")):
+                continue
+            image_src = src
+            break
+
+        if not image_src and (youtube_ids := get_youtube_video_ids(soup)):
+            image_src = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
+        if not image_src and default_image:
+            image_src = default_image
+
+        if image_src:
+            meta["image"] = image_src
+    # ---------------------------------------------------------
 
     # Add meta tags to head
     if not soup.find("meta", attrs={"name": "title"}):
