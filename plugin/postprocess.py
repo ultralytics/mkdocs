@@ -53,10 +53,11 @@ def process_html_file(
     if meta_keywords := soup.find("meta", attrs={"name": "keywords"}):
         keywords = meta_keywords.get("content")
 
-    # Find source markdown file from prebuilt index
-    src_path = md_index.get(html_path.stem)
-    if not src_path and html_path.stem == "index":
-        src_path = md_index.get(html_path.parent.name)
+    # Find source markdown file from prebuilt index using relative path
+    html_rel = html_path.relative_to(site_dir).with_suffix("").as_posix()
+    if html_rel.endswith("/index"):
+        html_rel = html_rel[:-6]  # Remove /index suffix
+    src_path = md_index.get(html_rel) or md_index.get(f"{html_rel}/index")
 
     # Process HTML
     processed_html = process_html(
@@ -118,14 +119,12 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
-    # Build markdown index once (O(N) instead of O(N²))
+    # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
     md_index = {}
     if docs_dir.exists():
         for md_file in docs_dir.rglob("*.md"):
-            md_index[md_file.stem] = str(md_file)
-            # Also index by parent directory name for index.html matching
-            if md_file.parent.name not in md_index:
-                md_index[md_file.parent.name] = str(md_file)
+            rel_path = md_file.relative_to(docs_dir).with_suffix("").as_posix()
+            md_index[rel_path] = str(md_file)
 
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 

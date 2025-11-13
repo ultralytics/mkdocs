@@ -387,7 +387,14 @@ def process_html(
     if src_path:
         git_info = get_git_info(src_path, add_authors=add_authors, default_author=default_author)
 
-        if add_authors and git_info["creation_date"]:
+        # Only render git footer if we have real git history (not placeholder defaults)
+        has_real_git_data = (
+            git_info["creation_date"] != DEFAULT_CREATION_DATE
+            or git_info["last_modified_date"] != DEFAULT_MODIFIED_DATE
+            or "authors" in git_info
+        )
+
+        if add_authors and has_real_git_data:
             created_ago, created_date = calculate_time_difference(git_info["creation_date"])
             updated_ago, updated_date = calculate_time_difference(git_info["last_modified_date"])
 
