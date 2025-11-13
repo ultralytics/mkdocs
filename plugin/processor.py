@@ -248,26 +248,20 @@ def process_html(
     # ---------- IMAGE PICKING (body only, non-AVIF) ----------
     if add_image:
         search_root = soup.find("article", class_="md-content__inner") or soup.body or soup
+
         image_src: str | None = None
-
-        for img in search_root.select("img[src]"):
-            src = (img.get("src") or "").strip()
-            if not src:
+        for img in search_root.find_all("img", src=True):
+            src = img["src"]
+            lower = src.lower()
+            if "avif" in lower:
                 continue
-            lower_src = src.lower()
-
-            # skip AVIF and JS/data URIs
-            if "avif" in lower_src:
+            if lower.startswith(("javascript:", "data:")):
                 continue
-            if lower_src.startswith(("javascript:", "data:")):
-                continue
-
             image_src = src
             break
 
         if not image_src and (youtube_ids := get_youtube_video_ids(soup)):
             image_src = f"https://img.youtube.com/vi/{youtube_ids[0]}/maxresdefault.jpg"
-
         if not image_src and default_image:
             image_src = default_image
 
