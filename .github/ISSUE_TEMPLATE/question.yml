@@ -1,0 +1,35 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+name: ❓ Question
+description: Ask a question about the MkDocs Ultralytics Plugin
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reaching out! Questions with detailed context help the community respond quickly.
+
+  - type: checkboxes
+    attributes:
+      label: Search before asking
+      description: >
+        Please review the MkDocs Ultralytics Plugin [README](https://github.com/ultralytics/mkdocs#readme),
+        [issues](https://github.com/ultralytics/mkdocs/issues) and [Ultralytics discussions](https://github.com/orgs/ultralytics/discussions) to see if your question was already answered.
+      options:
+        - label: >
+            I have searched the [issues](https://github.com/ultralytics/mkdocs/issues) and [Ultralytics discussions](https://github.com/orgs/ultralytics/discussions) and found no similar questions.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Question
+      description: What would you like to know? Include code/configuration snippets, commands, or screenshots to explain the context.
+      placeholder: |
+        💡 Tip! Include relevant sections of `mkdocs.yml`, `postprocess.py`, logs, or rendered HTML to help us answer accurately.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Anything else that might help us answer?

@@ -1,0 +1,96 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+name: 🐛 Bug Report
+description: Problems with the MkDocs Ultralytics Plugin
+labels: [bug, triage]
+type: "bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve the MkDocs Ultralytics Plugin! Providing clear details below helps us debug faster.
+
+  - type: checkboxes
+    attributes:
+      label: Search before reporting
+      description: >
+        Please search the MkDocs Ultralytics Plugin [README](https://github.com/ultralytics/mkdocs#readme) and [existing issues](https://github.com/ultralytics/mkdocs/issues) to see if a similar report already exists.
+      options:
+        - label: >
+            I have searched the MkDocs Ultralytics Plugin [issues](https://github.com/ultralytics/mkdocs/issues) and found no similar bug report.
+          required: true
+
+  - type: dropdown
+    attributes:
+      label: Component / mode
+      description: Select the part of the plugin where the bug occurs.
+      multiple: true
+      options:
+        - "MkDocs plugin mode"
+        - "Postprocess mode (Zensical/Hugo/Jekyll/etc.)"
+        - "Metadata or SEO tags"
+        - "Share buttons / Copy for LLM"
+        - "JSON-LD / FAQ schema"
+        - "Git insights footer"
+        - "Documentation"
+        - "Other"
+
+  - type: textarea
+    attributes:
+      label: Bug description
+      description: Provide as much detail as possible. Include logs, console output, stack traces, and screenshots for visual issues.
+      placeholder: |
+        💡 ProTip! Include relevant CLI output from `mkdocs build`, `mkdocs serve`, `python postprocess.py`, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Share system and package versions so we can reproduce the problem.
+      placeholder: |
+        Please include:
+        - OS (e.g., Ubuntu 22.04, macOS 14.5)
+        - Python version (e.g., 3.11.8)
+        - mkdocs-ultralytics-plugin version (`pip show mkdocs-ultralytics-plugin`)
+        - MkDocs or other site generator version
+        - Installation method (pip/pipx/source) and relevant hardware
+
+        Example:
+        ```
+        OS: macOS-14.5 (Apple M3)
+        Python: 3.11.8
+        Plugin: mkdocs-ultralytics-plugin==0.7.0
+        MkDocs: 1.5.3 (Material theme)
+        Mode: Postprocess for Hugo
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Minimal reproducible example
+      description: >
+        Provide the smallest possible example (config snippet, Markdown file, command sequence) that reproduces the issue. This dramatically increases the chance of a quick fix.
+      placeholder: |
+        ```yaml
+        # mkdocs.yml snippet or postprocess.py config here
+        ```
+        ```
+        mkdocs build && python postprocess.py
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Anything else we should know? Links to a demo repo or screenshots are welcome.
+
+  - type: checkboxes
+    attributes:
+      label: Are you willing to submit a PR?
+      description: >
+        (Optional) If you have an idea for a fix, consider opening a [Pull Request](https://github.com/ultralytics/mkdocs/pulls).
+      options:
+        - label: Yes, I'd like to help by submitting a PR!

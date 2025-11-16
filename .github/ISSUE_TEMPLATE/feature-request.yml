@@ -1,0 +1,57 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+name: 🚀 Feature Request
+description: Suggest an improvement to the MkDocs Ultralytics Plugin
+labels: [enhancement]
+type: "feature"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your ideas for the MkDocs Ultralytics Plugin! Thoughtful requests help us prioritize the roadmap.
+
+  - type: checkboxes
+    attributes:
+      label: Search before requesting
+      description: >
+        Please search the MkDocs Ultralytics Plugin [README](https://github.com/ultralytics/mkdocs#readme) and [issues](https://github.com/ultralytics/mkdocs/issues) to see if a similar request already exists.
+      options:
+        - label: >
+            I have searched the MkDocs Ultralytics Plugin [issues](https://github.com/ultralytics/mkdocs/issues) and found no similar feature request.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Feature description
+      description: Clearly describe the new capability or change you’d like to see.
+      placeholder: |
+        What should happen differently? Is the request related to plugin mode, postprocess mode, SEO metadata, sharing UI, etc.?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Use case / motivation
+      description: Tell us how this feature will improve your workflow or documentation site.
+      placeholder: |
+        Who benefits? What problem does this solve for MkDocs or other static-site builds?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Alternatives or workarounds
+      description: Share any approaches you’ve tried or considered.
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Links to docs, mockups, or sample repos are helpful.
+
+  - type: checkboxes
+    attributes:
+      label: Are you willing to submit a PR?
+      description: >
+        (Optional) If you can help implement this idea, please consider opening a [Pull Request](https://github.com/ultralytics/mkdocs/pulls).
+      options:
+        - label: Yes, I'd like to help by submitting a PR!
