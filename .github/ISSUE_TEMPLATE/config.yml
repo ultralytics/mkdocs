@@ -1,0 +1,16 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+blank_issues_enabled: true
+contact_links:
+  - name: 📘 MkDocs Ultralytics Plugin README
+    url: https://github.com/ultralytics/mkdocs#readme
+    about: Getting started, configuration options, and examples.
+  - name: 📦 PyPI Package
+    url: https://pypi.org/project/mkdocs-ultralytics-plugin/
+    about: Check the latest release, installation instructions, and metadata.
+  - name: 💬 Ultralytics Community Forum
+    url: https://community.ultralytics.com/
+    about: Ask broader Ultralytics documentation and SEO questions.
+  - name: 🎧 Ultralytics Discord
+    url: https://discord.com/invite/ultralytics
+    about: Chat with the Ultralytics community in real time.
