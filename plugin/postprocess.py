@@ -7,6 +7,7 @@ import os
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 
 try:
     from ultralytics.utils import TQDM  # progress bars
@@ -15,6 +16,39 @@ except ImportError:
 
 import plugin.processor as processor
 from plugin.processor import process_html
+
+# Shared worker state for process pools (avoids re-pickling large read-only data per task)
+_WORKER_STATE: dict[str, Any] | None = None
+
+
+def _set_worker_state(state: dict[str, Any]) -> None:
+    global _WORKER_STATE
+    _WORKER_STATE = state
+
+
+def _process_file(html_file: Path) -> bool:
+    if _WORKER_STATE is None:
+        raise RuntimeError("Worker state not initialized")
+    return process_html_file(
+        html_file,
+        _WORKER_STATE["site_dir"],
+        _WORKER_STATE["md_index"],
+        _WORKER_STATE["git_data"],
+        _WORKER_STATE["repo_url"],
+        site_url=_WORKER_STATE["site_url"],
+        default_image=_WORKER_STATE["default_image"],
+        default_author=_WORKER_STATE["default_author"],
+        add_desc=_WORKER_STATE["add_desc"],
+        add_image=_WORKER_STATE["add_image"],
+        add_keywords=_WORKER_STATE["add_keywords"],
+        add_share_buttons=_WORKER_STATE["add_share_buttons"],
+        add_authors=_WORKER_STATE["add_authors"],
+        add_json_ld=_WORKER_STATE["add_json_ld"],
+        add_css=_WORKER_STATE["add_css"],
+        add_copy_llm=_WORKER_STATE["add_copy_llm"],
+        verbose=_WORKER_STATE["verbose"],
+        log=None,
+    )
 
 
 def process_html_file(
@@ -118,6 +152,7 @@ def postprocess_site(
     add_copy_llm: bool = True,
     verbose: bool = True,
     use_processes: bool = True,
+    workers: int | None = None,
 ) -> None:
     """Process all HTML files in the site directory."""
     site_dir = Path(site_dir)
@@ -132,14 +167,10 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
-    worker_count = os.cpu_count() or 1
+    worker_count = min(os.cpu_count() or 1, workers or os.cpu_count() or 1)
 
     # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
-    md_index = {}
-    if docs_dir.exists():
-        for md_file in docs_dir.rglob("*.md"):
-            rel_path = md_file.relative_to(docs_dir).with_suffix("").as_posix()
-            md_index[rel_path] = str(md_file)
+    md_index = {md.relative_to(docs_dir).with_suffix("").as_posix(): str(md) for md in docs_dir.rglob("*.md")} if docs_dir.exists() else {}
 
     mode = "process" if use_processes else "thread"
     print(f"Processing {len(html_files)} HTML files in {site_dir} with {worker_count} {mode} worker(s)")
@@ -151,62 +182,47 @@ def postprocess_site(
         repo_url, git_data = processor.build_git_map(list(md_index.values()))
 
     progress = TQDM(total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
-    # Disable logging callback for processes (print is not pickleable in the pool). Sequential path still logs.
-    log_fn = None if use_processes else (progress.write if verbose and progress else print if verbose else None)
+    # Enable logging only for the synchronous path; pools run without per-task log_fn to remain pickle-safe.
+    log_fn = (progress.write if verbose and progress else print if verbose else None) if worker_count == 1 else None
+
+    task_kwargs = dict(
+        site_dir=site_dir,
+        md_index=md_index,
+        git_data=git_data,
+        repo_url=repo_url,
+        site_url=site_url,
+        default_image=default_image,
+        default_author=default_author,
+        add_desc=add_desc,
+        add_image=add_image,
+        add_keywords=add_keywords,
+        add_share_buttons=add_share_buttons,
+        add_authors=add_authors,
+        add_json_ld=add_json_ld,
+        add_css=add_css,
+        add_copy_llm=add_copy_llm,
+        verbose=verbose,
+    )
 
     if worker_count == 1:
         for html_file in html_files:
-            success = process_html_file(
-                html_file,
-                site_dir,
-                md_index,
-                git_data,
-                repo_url,
-                site_url=site_url,
-                default_image=default_image,
-                default_author=default_author,
-                add_desc=add_desc,
-                add_image=add_image,
-                add_keywords=add_keywords,
-                add_share_buttons=add_share_buttons,
-                add_authors=add_authors,
-                add_json_ld=add_json_ld,
-                add_css=add_css,
-                add_copy_llm=add_copy_llm,
-                verbose=verbose,
-                log=log_fn,
-            )
-            if success:
-                processed += 1
+            success = process_html_file(html_file, **task_kwargs, log=log_fn)
+            processed += bool(success)
             if progress:
                 progress.update(1)
     else:
-        ExecutorClass = ThreadPoolExecutor if not use_processes else ProcessPoolExecutor
-        with ExecutorClass(max_workers=worker_count) as executor:
-            future_to_file = {
-                executor.submit(
-                    process_html_file,
-                    html_file,
-                    site_dir,
-                    md_index,
-                    git_data,
-                    repo_url,
-                    site_url=site_url,
-                    default_image=default_image,
-                    default_author=default_author,
-                    add_desc=add_desc,
-                    add_image=add_image,
-                    add_keywords=add_keywords,
-                    add_share_buttons=add_share_buttons,
-                    add_authors=add_authors,
-                    add_json_ld=add_json_ld,
-                    add_css=add_css,
-                    add_copy_llm=add_copy_llm,
-                    verbose=verbose,
-                    log=log_fn,
-                ): html_file
-                for html_file in html_files
-            }
+        if use_processes:
+            state = {**task_kwargs}
+            executor_context = ProcessPoolExecutor(
+                max_workers=worker_count, initializer=_set_worker_state, initargs=(state,)
+            )
+            submit_fn = lambda ex, f: ex.submit(_process_file, f)
+        else:
+            executor_context = ThreadPoolExecutor(max_workers=worker_count)
+            submit_fn = lambda ex, f: ex.submit(process_html_file, f, **task_kwargs, log=log_fn)
+
+        with executor_context as executor:
+            future_to_file = {submit_fn(executor, html_file): html_file for html_file in html_files}
 
             for future in as_completed(future_to_file):
                 html_file = future_to_file[future]

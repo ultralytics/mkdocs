@@ -17,6 +17,7 @@ DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=
 
 # Shared, thread-safe cache to avoid duplicate API lookups and YAML thrash when running in parallel
 _AUTHOR_CACHE: dict[str, dict[str, str | None]] | None = None
+_AUTHOR_CACHE_MTIME: float | None = None
 _CACHE_LOCK = threading.Lock()
 
 
@@ -155,6 +156,7 @@ def get_github_usernames_from_file(
     default_user: str | None = None,
     emails: dict[str, int] | None = None,
     repo_url: str | None = None,
+    force_reload: bool = False,
 ) -> dict[str, dict[str, Any]]:
     """Fetch GitHub usernames associated with a file using provided Git email counts.
 
@@ -183,16 +185,24 @@ def get_github_usernames_from_file(
     if not emails and default_user:
         emails[default_user] = 1
 
-    # Load the local cache of GitHub usernames once per process (thread-safe)
+    # Load the local cache of GitHub usernames once per process (thread-safe, reload if changed)
     local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
-    global _AUTHOR_CACHE
+    global _AUTHOR_CACHE, _AUTHOR_CACHE_MTIME
     with _CACHE_LOCK:
-        if _AUTHOR_CACHE is None:
+        current_mtime = local_cache_file.stat().st_mtime if local_cache_file.is_file() else None
+        needs_reload = (
+            force_reload
+            or _AUTHOR_CACHE is None
+            or (_AUTHOR_CACHE_MTIME is not None and current_mtime is not None and _AUTHOR_CACHE_MTIME != current_mtime)
+        )
+        if needs_reload:
             if local_cache_file.is_file():
                 with local_cache_file.open("r") as f:
                     _AUTHOR_CACHE = yaml.safe_load(f) or {}
+                _AUTHOR_CACHE_MTIME = local_cache_file.stat().st_mtime
             else:
                 _AUTHOR_CACHE = {}
+                _AUTHOR_CACHE_MTIME = None
         cache = _AUTHOR_CACHE
 
     github_repo_url = repo_url or "https://github.com/ultralytics/ultralytics"
@@ -221,5 +231,6 @@ def get_github_usernames_from_file(
             _AUTHOR_CACHE = cache
             with local_cache_file.open("w") as f:
                 yaml.safe_dump(cache, f)
+            _AUTHOR_CACHE_MTIME = local_cache_file.stat().st_mtime
 
     return info
