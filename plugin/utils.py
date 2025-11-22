@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
 import re
-import subprocess
-from collections import Counter
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import requests
 import yaml  # YAML is used for its readability and consistency with MkDocs ecosystem
@@ -141,8 +139,13 @@ def get_github_username_from_email(
     return None, None
 
 
-def get_github_usernames_from_file(file_path: str, default_user: str | None = None) -> dict[str, dict[str, any]]:
-    """Fetch GitHub usernames associated with a file using Git Log and Git Blame commands.
+def get_github_usernames_from_file(
+    file_path: str,
+    default_user: str | None = None,
+    emails: dict[str, int] | None = None,
+    repo_url: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Fetch GitHub usernames associated with a file using provided Git email counts.
 
     Args:
         file_path (str): The path to the file for which GitHub usernames are to be retrieved.
@@ -157,38 +160,13 @@ def get_github_usernames_from_file(file_path: str, default_user: str | None = No
             - 'avatar' (str): The URL of the author's GitHub avatar.
 
     Examples:
-        >>> print(get_github_usernames_from_file('mkdocs.yml'))
-        {'username1': {'email': 'user@example.com', 'url': 'https://github.com/username1', 'changes': 5, 'avatar': '...'}}
+        >>> print(get_github_usernames_from_file('mkdocs.yml', emails={'user@example.com': 2}))
+        {'username1': {'email': 'user@example.com', 'url': 'https://github.com/username1', 'changes': 2, 'avatar': '...'}}
     """
-    # Fetch author emails using 'git log'
-    try:
-        authors_emails_log = (
-            subprocess.check_output(["git", "log", "--pretty=format:%ae", Path(file_path).resolve()])
-            .decode("utf-8")
-            .split("\n")
-        )
-        emails = dict(Counter(authors_emails_log))
-    except subprocess.CalledProcessError:
-        emails = {}  # Git not available or file not in git repo
-
-    # Fetch author emails using 'git blame'
-    with contextlib.suppress(Exception):
-        authors_emails_blame = (
-            subprocess.check_output(
-                ["git", "blame", "--line-porcelain", Path(file_path).resolve()],
-                stderr=subprocess.DEVNULL,
-            )
-            .decode("utf-8")
-            .split("\n")
-        )
-        authors_emails_blame = [line.split(" ")[1] for line in authors_emails_blame if line.startswith("author-mail")]
-        authors_emails_blame = [email.strip("<>") for email in authors_emails_blame]
-        emails_blame = dict(Counter(authors_emails_blame))
-
-        # Merge the two email lists, adding any missing authors from 'git blame' as a 1-commit change
-        for email in emails_blame:
-            if email not in emails:
-                emails[email] = 1  # Only add new authors from 'git blame' with a 1-commit change
+    if emails is None:
+        emails = {}
+    else:
+        emails = dict(emails)  # shallow copy to avoid mutating caller data
 
     # If no git info found but default_user provided, use default_user
     if not emails and default_user:
@@ -202,16 +180,7 @@ def get_github_usernames_from_file(file_path: str, default_user: str | None = No
     else:
         cache = {}
 
-    try:
-        github_repo_url = (
-            subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip()
-        )
-        if github_repo_url.endswith(".git"):
-            github_repo_url = github_repo_url[:-4]
-        if github_repo_url.startswith("git@"):
-            github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
-    except subprocess.CalledProcessError:
-        github_repo_url = "https://github.com/ultralytics/ultralytics"  # Fallback URL
+    github_repo_url = repo_url or "https://github.com/ultralytics/ultralytics"
 
     info = {}
     for email, changes in emails.items():

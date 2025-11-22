@@ -13,11 +13,7 @@ from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 
-from plugin.utils import (
-    calculate_time_difference,
-    get_github_usernames_from_file,
-    get_youtube_video_ids,
-)
+from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -27,37 +23,47 @@ COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d
 CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17z"></path></svg>'
 
 
-def get_git_info(file_path: str, add_authors: bool = True, default_author: str | None = None) -> dict[str, Any]:
-    """Retrieve git information including creation/modified dates and optional authors."""
+def get_git_info(
+    file_path: str,
+    add_authors: bool = True,
+    default_author: str | None = None,
+    git_data: dict[str, dict[str, Any]] | None = None,
+    repo_url: str | None = None,
+) -> dict[str, Any]:
+    """Retrieve git information (dates + optional authors) from precomputed git data."""
     file_path = str(Path(file_path).resolve())
     git_info = {
         "creation_date": DEFAULT_CREATION_DATE,
         "last_modified_date": DEFAULT_MODIFIED_DATE,
     }
 
-    try:
-        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"], stderr=subprocess.DEVNULL)
-        creation_output = subprocess.check_output(
-            ["git", "log", "--reverse", "--pretty=format:%ai", file_path]
-        ).decode()
-        creation_date = creation_output.split("\n")[0] if creation_output else ""
-        last_modified_date = subprocess.check_output(["git", "log", "-1", "--pretty=format:%ai", file_path]).decode()
-        git_info.update(
-            {
-                "creation_date": creation_date or DEFAULT_CREATION_DATE,
-                "last_modified_date": last_modified_date or DEFAULT_MODIFIED_DATE,
-            }
-        )
+    if not git_data or file_path not in git_data:
+        return git_info
 
-        if add_authors:
-            authors_info = get_github_usernames_from_file(file_path, default_user=default_author)
-            git_info["authors"] = sorted(
-                [(author, info["url"], info["changes"], info["avatar"]) for author, info in authors_info.items()],
-                key=lambda x: x[2],
-                reverse=True,
-            )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
+    cached = git_data[file_path]
+    git_info.update(
+        {
+            "creation_date": cached.get("creation_date", DEFAULT_CREATION_DATE),
+            "last_modified_date": cached.get("last_modified_date", DEFAULT_MODIFIED_DATE),
+        }
+    )
+
+    if add_authors and cached.get("emails"):
+        git_info["authors"] = sorted(
+            [
+                (
+                    author,
+                    info["url"],
+                    info["changes"],
+                    info["avatar"],
+                )
+                for author, info in get_github_usernames_from_file(
+                    file_path, default_user=default_author, emails=cached["emails"], repo_url=repo_url
+                ).items()
+            ],
+            key=lambda x: x[2],
+            reverse=True,
+        )
 
     return git_info
 
@@ -102,6 +108,90 @@ def insert_content(soup: BeautifulSoup, content_to_insert) -> None:
         comments_header.insert_before(content_to_insert)
     elif md_typeset := soup.select_one(".md-content__inner"):
         md_typeset.append(content_to_insert)
+
+
+def build_git_map(file_paths: list[str] | list[Path]) -> tuple[str | None, dict[str, dict[str, Any]]]:
+    """Build git metadata for provided files using a single git log pass."""
+    git_data: dict[str, dict[str, Any]] = {}
+    repo_url: str | None = None
+
+    if not file_paths:
+        return repo_url, git_data
+
+    try:
+        repo_root = Path(
+            subprocess.check_output(["git", "rev-parse", "--show-toplevel"], stderr=subprocess.DEVNULL).decode().strip()
+        )
+    except subprocess.CalledProcessError:
+        return repo_url, git_data
+
+    try:
+        github_repo_url = subprocess.check_output(
+            ["git", "-C", str(repo_root), "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL
+        ).decode("utf-8")
+        github_repo_url = github_repo_url.strip()
+        if github_repo_url.endswith(".git"):
+            github_repo_url = github_repo_url[:-4]
+        if github_repo_url.startswith("git@"):
+            github_repo_url = "https://" + github_repo_url[4:].replace(":", "/")
+        repo_url = github_repo_url or None
+    except subprocess.CalledProcessError:
+        repo_url = None
+
+    rel_paths = []
+    for fp in file_paths:
+        path = Path(fp)
+        if path.exists():
+            try:
+                rel_paths.append(path.resolve().relative_to(repo_root))
+            except ValueError:
+                continue
+    if not rel_paths:
+        return repo_url, git_data
+
+    cmd = [
+        "git",
+        "-C",
+        str(repo_root),
+        "log",
+        "--name-only",
+        "--pretty=format:%ad\t%ae",
+        "--date=format:%Y-%m-%d %H:%M:%S %z",
+        "--",
+        *[str(p) for p in rel_paths],
+    ]
+
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().splitlines()
+    except subprocess.CalledProcessError:
+        return repo_url, git_data
+
+    current_date = None
+    current_email = None
+    for line in output:
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) == 2:
+            current_date, current_email = parts
+            continue
+
+        if current_date and current_email:
+            abs_path = (repo_root / line.strip()).resolve()
+            key = str(abs_path)
+            entry = git_data.setdefault(
+                key,
+                {
+                    "creation_date": current_date,
+                    "last_modified_date": current_date,
+                    "emails": {},
+                },
+            )
+            entry.setdefault("last_modified_date", current_date)
+            entry["creation_date"] = current_date
+            entry["emails"][current_email] = entry["emails"].get(current_email, 0) + 1
+
+    return repo_url, git_data
 
 
 def get_css() -> str:
@@ -212,6 +302,8 @@ def process_html(
     page_url: str,
     title: str,
     src_path: str | None = None,
+    git_data: dict[str, dict[str, Any]] | None = None,
+    repo_url: str | None = None,
     default_image: str | None = None,
     default_author: str | None = None,
     keywords: str | None = None,
@@ -389,15 +481,17 @@ def process_html(
             """
             soup.body.append(script)
 
-    # Initialize git info with defaults
+    # Initialize git info with defaults and only call git when needed (authors or JSON-LD)
     git_info = {
         "creation_date": DEFAULT_CREATION_DATE,
         "last_modified_date": DEFAULT_MODIFIED_DATE,
     }
+    needs_git = (add_authors or add_json_ld) and src_path
 
-    # Add git information if source path available
-    if src_path:
-        git_info = get_git_info(src_path, add_authors=add_authors, default_author=default_author)
+    if needs_git:
+        git_info = get_git_info(
+            src_path, add_authors=add_authors, default_author=default_author, git_data=git_data, repo_url=repo_url
+        )
 
         # Only render git footer if we have real git history (not placeholder defaults)
         has_real_git_data = (
