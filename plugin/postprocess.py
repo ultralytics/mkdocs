@@ -3,7 +3,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+
+from tqdm.auto import tqdm
 
 from plugin.processor import process_html
 
@@ -24,6 +27,7 @@ def process_html_file(
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = False,
+    log: Callable[[str], None] | None = print,
 ) -> bool:
     """Process a single HTML file by delegating to shared processor.
 
@@ -35,8 +39,8 @@ def process_html_file(
     try:
         html = html_path.read_text(encoding="utf-8")
     except (UnicodeDecodeError, FileNotFoundError) as e:
-        if verbose:
-            print(f"Error reading {html_path}: {e}")
+        if verbose and log:
+            log(f"Error reading {html_path}: {e}")
         return False
 
     soup = BeautifulSoup(html, "html.parser")
@@ -81,12 +85,10 @@ def process_html_file(
     # Write back
     try:
         html_path.write_text(processed_html, encoding="utf-8")
-        if verbose:
-            print(f"Processed: {html_path.relative_to(site_dir)}")
         return True
     except (OSError, PermissionError) as e:
-        if verbose:
-            print(f"Error writing {html_path}: {e}")
+        if verbose and log:
+            log(f"Error writing {html_path}: {e}")
         return False
 
 
@@ -129,7 +131,9 @@ def postprocess_site(
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 
     processed = 0
-    for html_file in html_files:
+    progress = tqdm(html_files, desc="Postprocessing HTML", unit="file", disable=not verbose)
+    log_fn = progress.write if verbose else None
+    for html_file in progress:
         success = process_html_file(
             html_file,
             site_dir,
@@ -146,6 +150,7 @@ def postprocess_site(
             add_css=add_css,
             add_copy_llm=add_copy_llm,
             verbose=verbose,
+            log=log_fn,
         )
         if success:
             processed += 1
