@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import os
+from collections.abc import Callable
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 try:
@@ -151,16 +151,14 @@ def postprocess_site(
     if (add_authors or add_json_ld) and md_index:
         repo_url, git_data = processor.build_git_map(list(md_index.values()))
 
-    progress = TQDM(
-        total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose
-    ) if TQDM else None
+    progress = TQDM(total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
     # For process pools, use a simple print function to avoid pickle issues with bound methods
     log_fn = None
     if verbose:
         if use_processes:
             log_fn = print
         else:
-            log_fn = (progress.write if progress else print)
+            log_fn = progress.write if progress else print
 
     if worker_count == 1:
         for html_file in html_files:
