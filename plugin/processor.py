@@ -13,7 +13,11 @@ from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 
-from plugin.utils import calculate_time_difference, get_github_usernames_from_file, get_youtube_video_ids
+from plugin.utils import (
+    calculate_time_difference,
+    get_github_usernames_from_file,
+    get_youtube_video_ids,
+)
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
