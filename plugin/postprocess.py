@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import os
 from pathlib import Path
 
@@ -118,6 +118,7 @@ def postprocess_site(
     add_copy_llm: bool = True,
     verbose: bool = True,
     workers: int | None = None,
+    use_processes: bool = False,
 ) -> None:
     """Process all HTML files in the site directory."""
     site_dir = Path(site_dir)
@@ -132,7 +133,7 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
-    worker_count = max(1, workers or min(32, (os.cpu_count() or 1)))
+    worker_count = max(min(workers, (os.cpu_count() or 1)), 1)
 
     # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
     md_index = {}
@@ -141,7 +142,8 @@ def postprocess_site(
             rel_path = md_file.relative_to(docs_dir).with_suffix("").as_posix()
             md_index[rel_path] = str(md_file)
 
-    print(f"Processing {len(html_files)} HTML files in {site_dir} with {worker_count} worker(s)")
+    mode = "process" if use_processes else "thread"
+    print(f"Processing {len(html_files)} HTML files in {site_dir} with {worker_count} {mode} worker(s)")
 
     processed = 0
     repo_url = None
@@ -152,7 +154,13 @@ def postprocess_site(
     progress = TQDM(
         total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose
     ) if TQDM else None
-    log_fn = (progress.write if verbose and progress else print) if verbose else None
+    # For process pools, use a simple print function to avoid pickle issues with bound methods
+    log_fn = None
+    if verbose:
+        if use_processes:
+            log_fn = print
+        else:
+            log_fn = (progress.write if progress else print)
 
     if worker_count == 1:
         for html_file in html_files:
@@ -181,7 +189,8 @@ def postprocess_site(
             if progress:
                 progress.update(1)
     else:
-        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        ExecutorClass = ThreadPoolExecutor if not use_processes else ProcessPoolExecutor
+        with ExecutorClass(max_workers=worker_count) as executor:
             future_to_file = {
                 executor.submit(
                     process_html_file,
