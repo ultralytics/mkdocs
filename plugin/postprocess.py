@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
 from pathlib import Path
 
 try:
@@ -115,6 +117,7 @@ def postprocess_site(
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = True,
+    workers: int | None = None,
 ) -> None:
     """Process all HTML files in the site directory."""
     site_dir = Path(site_dir)
@@ -129,6 +132,8 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
+    worker_count = max(1, workers or min(32, (os.cpu_count() or 1)))
+
     # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
     md_index = {}
     if docs_dir.exists():
@@ -136,7 +141,7 @@ def postprocess_site(
             rel_path = md_file.relative_to(docs_dir).with_suffix("").as_posix()
             md_index[rel_path] = str(md_file)
 
-    print(f"Processing {len(html_files)} HTML files in {site_dir}")
+    print(f"Processing {len(html_files)} HTML files in {site_dir} with {worker_count} worker(s)")
 
     processed = 0
     repo_url = None
@@ -144,32 +149,77 @@ def postprocess_site(
     if (add_authors or add_json_ld) and md_index:
         repo_url, git_data = processor.build_git_map(list(md_index.values()))
 
-    progress = TQDM(html_files, desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
+    progress = TQDM(
+        total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose
+    ) if TQDM else None
     log_fn = (progress.write if verbose and progress else print) if verbose else None
-    iterator = progress if progress else html_files
-    for html_file in iterator:
-        success = process_html_file(
-            html_file,
-            site_dir,
-            md_index,
-            git_data,
-            repo_url,
-            site_url=site_url,
-            default_image=default_image,
-            default_author=default_author,
-            add_desc=add_desc,
-            add_image=add_image,
-            add_keywords=add_keywords,
-            add_share_buttons=add_share_buttons,
-            add_authors=add_authors,
-            add_json_ld=add_json_ld,
-            add_css=add_css,
-            add_copy_llm=add_copy_llm,
-            verbose=verbose,
-            log=log_fn,
-        )
-        if success:
-            processed += 1
+
+    if worker_count == 1:
+        for html_file in html_files:
+            success = process_html_file(
+                html_file,
+                site_dir,
+                md_index,
+                git_data,
+                repo_url,
+                site_url=site_url,
+                default_image=default_image,
+                default_author=default_author,
+                add_desc=add_desc,
+                add_image=add_image,
+                add_keywords=add_keywords,
+                add_share_buttons=add_share_buttons,
+                add_authors=add_authors,
+                add_json_ld=add_json_ld,
+                add_css=add_css,
+                add_copy_llm=add_copy_llm,
+                verbose=verbose,
+                log=log_fn,
+            )
+            if success:
+                processed += 1
+            if progress:
+                progress.update(1)
+    else:
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            future_to_file = {
+                executor.submit(
+                    process_html_file,
+                    html_file,
+                    site_dir,
+                    md_index,
+                    git_data,
+                    repo_url,
+                    site_url=site_url,
+                    default_image=default_image,
+                    default_author=default_author,
+                    add_desc=add_desc,
+                    add_image=add_image,
+                    add_keywords=add_keywords,
+                    add_share_buttons=add_share_buttons,
+                    add_authors=add_authors,
+                    add_json_ld=add_json_ld,
+                    add_css=add_css,
+                    add_copy_llm=add_copy_llm,
+                    verbose=verbose,
+                    log=log_fn,
+                ): html_file
+                for html_file in html_files
+            }
+
+            for future in as_completed(future_to_file):
+                html_file = future_to_file[future]
+                try:
+                    success = future.result()
+                except Exception as e:
+                    success = False
+                    if verbose and log_fn:
+                        log_fn(f"Error processing {html_file}: {e}")
+                if success:
+                    processed += 1
+                if progress:
+                    progress.update(1)
+
     if progress:
         progress.close()
 

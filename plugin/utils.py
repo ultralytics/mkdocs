@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,11 @@ from bs4 import BeautifulSoup
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
+
+# Shared, thread-safe cache to avoid duplicate API lookups and YAML thrash when running in parallel
+_AUTHOR_CACHE: dict[str, dict[str, str | None]] | None = None
+_AUTHOR_CACHE_FILE_PRESENT = False
+_CACHE_LOCK = threading.Lock()
 
 
 def calculate_time_difference(date_string: str) -> tuple[str, str]:
@@ -100,9 +106,10 @@ def get_github_username_from_email(
         you comply with GitHub's rate limits and authentication requirements when querying their API.
     """
     # First, check if the email exists in the local cache file
-    if email in cache:
-        return cache[email].get("username"), cache[email].get("avatar")
-    elif not email.strip():
+    with _CACHE_LOCK:
+        if email in cache:
+            return cache[email].get("username"), cache[email].get("avatar")
+    if not email.strip():
         if verbose:
             print(f"{WARNING} No author found for {file_path}")
         return None, None
@@ -111,13 +118,22 @@ def get_github_username_from_email(
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
         avatar = f"https://github.com/{username}.png"
-        cache[email] = {
-            "username": username,
-            "avatar": requests.head(avatar, allow_redirects=True).url,
-        }
+        with _CACHE_LOCK:
+            cache[email] = {
+                "username": username,
+                "avatar": requests.head(avatar, allow_redirects=True).url,
+            }
         return username, avatar
 
-    # If the email is not found in the cache, query GitHub REST API
+    # If the email is not found in the cache and a cache file exists, skip remote lookups
+    if _AUTHOR_CACHE_FILE_PRESENT:
+        if verbose:
+            print(f"{WARNING} No username found for {email}")
+        with _CACHE_LOCK:
+            cache[email] = cache.get(email, {"username": None, "avatar": None})
+        return None, None
+
+    # Fallback to GitHub REST API only when no local cache is available
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
     if verbose:
         print(f"Running GitHub REST API for author {email}")
@@ -127,15 +143,17 @@ def get_github_username_from_email(
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
             avatar = data["items"][0]["avatar_url"]  # avatar_url key is correct here
-            cache[email] = {
-                "username": username,
-                "avatar": requests.head(avatar, allow_redirects=True).url,
-            }
+            with _CACHE_LOCK:
+                cache[email] = {
+                    "username": username,
+                    "avatar": requests.head(avatar, allow_redirects=True).url,
+                }
             return username, avatar
 
     if verbose:
         print(f"{WARNING} No username found for {email}")
-    cache[email] = {"username": None, "avatar": None}
+    with _CACHE_LOCK:
+        cache[email] = {"username": None, "avatar": None}
     return None, None
 
 
@@ -172,20 +190,27 @@ def get_github_usernames_from_file(
     if not emails and default_user:
         emails[default_user] = 1
 
-    # Load the local cache of GitHub usernames
+    # Load the local cache of GitHub usernames once per process (thread-safe)
     local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
-    if local_cache_file.is_file():
-        with local_cache_file.open("r") as f:
-            cache = yaml.safe_load(f) or {}
-    else:
-        cache = {}
+    global _AUTHOR_CACHE, _AUTHOR_CACHE_FILE_PRESENT
+    with _CACHE_LOCK:
+        if _AUTHOR_CACHE is None:
+            _AUTHOR_CACHE_FILE_PRESENT = local_cache_file.is_file()
+            if _AUTHOR_CACHE_FILE_PRESENT:
+                with local_cache_file.open("r") as f:
+                    _AUTHOR_CACHE = yaml.safe_load(f) or {}
+            else:
+                _AUTHOR_CACHE = {}
+        cache = _AUTHOR_CACHE
 
     github_repo_url = repo_url or "https://github.com/ultralytics/ultralytics"
 
     info = {}
+    cache_updated = False
     for email, changes in emails.items():
         if not email and default_user:
             email = default_user
+        was_cached = email in cache
         username, avatar = get_github_username_from_email(email, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
@@ -195,9 +220,13 @@ def get_github_usernames_from_file(
             "changes": changes,
             "avatar": avatar or DEFAULT_AVATAR,
         }
+        cache_updated = cache_updated or (email in cache and not was_cached)
 
-    # Save the local cache of GitHub usernames and avatar URLs
-    with local_cache_file.open("w") as f:
-        yaml.safe_dump(cache, f)
+    # Save the local cache of GitHub usernames and avatar URLs if updated
+    if cache_updated:
+        with _CACHE_LOCK:
+            _AUTHOR_CACHE = cache
+            with local_cache_file.open("w") as f:
+                yaml.safe_dump(cache, f)
 
     return info
