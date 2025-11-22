@@ -170,7 +170,11 @@ def postprocess_site(
     worker_count = min(os.cpu_count() or 1, workers or os.cpu_count() or 1)
 
     # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
-    md_index = {md.relative_to(docs_dir).with_suffix("").as_posix(): str(md) for md in docs_dir.rglob("*.md")} if docs_dir.exists() else {}
+    md_index = (
+        {md.relative_to(docs_dir).with_suffix("").as_posix(): str(md) for md in docs_dir.rglob("*.md")}
+        if docs_dir.exists()
+        else {}
+    )
 
     mode = "process" if use_processes else "thread"
     print(f"Processing {len(html_files)} HTML files in {site_dir} with {worker_count} {mode} worker(s)")
@@ -216,10 +220,14 @@ def postprocess_site(
             executor_context = ProcessPoolExecutor(
                 max_workers=worker_count, initializer=_set_worker_state, initargs=(state,)
             )
-            submit_fn = lambda ex, f: ex.submit(_process_file, f)
+
+            def submit_fn(ex, f):
+                return ex.submit(_process_file, f)
         else:
             executor_context = ThreadPoolExecutor(max_workers=worker_count)
-            submit_fn = lambda ex, f: ex.submit(process_html_file, f, **task_kwargs, log=log_fn)
+
+            def submit_fn(ex, f):
+                return ex.submit(process_html_file, f, **task_kwargs, log=log_fn)
 
         with executor_context as executor:
             future_to_file = {submit_fn(executor, html_file): html_file for html_file in html_files}
