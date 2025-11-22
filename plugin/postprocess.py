@@ -132,7 +132,7 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
-    worker_count = max(min(os.cpu_count() or 1, 1), 1)
+    worker_count = os.cpu_count() or 1
 
     # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
     md_index = {}
