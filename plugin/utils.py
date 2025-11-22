@@ -17,7 +17,6 @@ DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=
 
 # Shared, thread-safe cache to avoid duplicate API lookups and YAML thrash when running in parallel
 _AUTHOR_CACHE: dict[str, dict[str, str | None]] | None = None
-_AUTHOR_CACHE_FILE_PRESENT = False
 _CACHE_LOCK = threading.Lock()
 
 
@@ -125,15 +124,7 @@ def get_github_username_from_email(
             }
         return username, avatar
 
-    # If the email is not found in the cache and a cache file exists, skip remote lookups
-    if _AUTHOR_CACHE_FILE_PRESENT:
-        if verbose:
-            print(f"{WARNING} No username found for {email}")
-        with _CACHE_LOCK:
-            cache[email] = cache.get(email, {"username": None, "avatar": None})
-        return None, None
-
-    # Fallback to GitHub REST API only when no local cache is available
+    # Fallback to GitHub REST API when not cached
     url = f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc"
     if verbose:
         print(f"Running GitHub REST API for author {email}")
@@ -192,11 +183,10 @@ def get_github_usernames_from_file(
 
     # Load the local cache of GitHub usernames once per process (thread-safe)
     local_cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
-    global _AUTHOR_CACHE, _AUTHOR_CACHE_FILE_PRESENT
+    global _AUTHOR_CACHE
     with _CACHE_LOCK:
         if _AUTHOR_CACHE is None:
-            _AUTHOR_CACHE_FILE_PRESENT = local_cache_file.is_file()
-            if _AUTHOR_CACHE_FILE_PRESENT:
+            if local_cache_file.is_file():
                 with local_cache_file.open("r") as f:
                     _AUTHOR_CACHE = yaml.safe_load(f) or {}
             else:

@@ -151,13 +151,8 @@ def postprocess_site(
         repo_url, git_data = processor.build_git_map(list(md_index.values()))
 
     progress = TQDM(total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
-    # For process pools, use a simple print function to avoid pickle issues with bound methods
-    log_fn = None
-    if verbose:
-        if use_processes:
-            log_fn = print
-        else:
-            log_fn = progress.write if progress else print
+    # Disable logging callback for processes (print is not pickleable in the pool). Sequential path still logs.
+    log_fn = None if use_processes else (progress.write if verbose and progress else print if verbose else None)
 
     if worker_count == 1:
         for html_file in html_files:
