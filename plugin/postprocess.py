@@ -214,8 +214,8 @@ def postprocess_site(
                     success = future.result()
                 except Exception as e:
                     success = False
-                    if verbose and log_fn:
-                        log_fn(f"Error processing {html_file}: {e}")
+                    if verbose:
+                        (log_fn or print)(f"Error processing {html_file}: {e}")
                 if success:
                     processed += 1
                 if progress:

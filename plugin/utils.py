@@ -117,10 +117,11 @@ def get_github_username_from_email(
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
         avatar = f"https://github.com/{username}.png"
+        avatar_url = requests.head(avatar, allow_redirects=True).url
         with _CACHE_LOCK:
             cache[email] = {
                 "username": username,
-                "avatar": requests.head(avatar, allow_redirects=True).url,
+                "avatar": avatar_url,
             }
         return username, avatar
 
@@ -134,10 +135,11 @@ def get_github_username_from_email(
         if data["total_count"] > 0:
             username = data["items"][0]["login"]
             avatar = data["items"][0]["avatar_url"]  # avatar_url key is correct here
+            avatar_url = requests.head(avatar, allow_redirects=True).url
             with _CACHE_LOCK:
                 cache[email] = {
                     "username": username,
-                    "avatar": requests.head(avatar, allow_redirects=True).url,
+                    "avatar": avatar_url,
                 }
             return username, avatar
 
@@ -201,6 +203,7 @@ def get_github_usernames_from_file(
         if not email and default_user:
             email = default_user
         was_cached = email in cache
+        prev_entry = cache.get(email)
         username, avatar = get_github_username_from_email(email, cache, file_path)
         # If we can't determine the user URL, revert to the GitHub file URL
         user_url = f"https://github.com/{username}" if username else github_repo_url
@@ -210,7 +213,7 @@ def get_github_usernames_from_file(
             "changes": changes,
             "avatar": avatar or DEFAULT_AVATAR,
         }
-        cache_updated = cache_updated or (email in cache and not was_cached)
+        cache_updated = cache_updated or (email in cache and not was_cached) or cache.get(email) != prev_entry
 
     # Save the local cache of GitHub usernames and avatar URLs if updated
     if cache_updated:
