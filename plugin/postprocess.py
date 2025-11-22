@@ -138,10 +138,6 @@ def postprocess_site(
 
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 
-    # Build git cache once when authors or JSON-LD are requested to avoid per-file git calls
-    if (add_authors or add_json_ld) and md_index:
-        processor.build_git_cache(list(md_index.values()))
-
     processed = 0
     repo_url = None
     git_data = None
