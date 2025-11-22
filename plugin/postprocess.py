@@ -3,8 +3,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
+try:
+    from ultralytics.utils import TQDM  # progress bars
+except ImportError:
+    TQDM = None
+
+import plugin.processor as processor
 from plugin.processor import process_html
 
 
@@ -12,6 +19,8 @@ def process_html_file(
     html_path: Path,
     site_dir: Path,
     md_index: dict[str, str],
+    git_data: dict[str, dict[str, str | dict]] | None,
+    repo_url: str | None,
     site_url: str = "",
     default_image: str | None = None,
     default_author: str | None = None,
@@ -24,6 +33,7 @@ def process_html_file(
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = False,
+    log: Callable[[str], None] | None = print,
 ) -> bool:
     """Process a single HTML file by delegating to shared processor.
 
@@ -35,8 +45,8 @@ def process_html_file(
     try:
         html = html_path.read_text(encoding="utf-8")
     except (UnicodeDecodeError, FileNotFoundError) as e:
-        if verbose:
-            print(f"Error reading {html_path}: {e}")
+        if verbose and log:
+            log(f"Error reading {html_path}: {e}")
         return False
 
     soup = BeautifulSoup(html, "html.parser")
@@ -65,6 +75,8 @@ def process_html_file(
         page_url=page_url,
         title=title,
         src_path=src_path,
+        git_data=git_data,
+        repo_url=repo_url,
         default_image=default_image,
         default_author=default_author,
         keywords=keywords,
@@ -81,12 +93,10 @@ def process_html_file(
     # Write back
     try:
         html_path.write_text(processed_html, encoding="utf-8")
-        if verbose:
-            print(f"Processed: {html_path.relative_to(site_dir)}")
         return True
     except (OSError, PermissionError) as e:
-        if verbose:
-            print(f"Error writing {html_path}: {e}")
+        if verbose and log:
+            log(f"Error writing {html_path}: {e}")
         return False
 
 
@@ -129,11 +139,21 @@ def postprocess_site(
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 
     processed = 0
-    for html_file in html_files:
+    repo_url = None
+    git_data = None
+    if (add_authors or add_json_ld) and md_index:
+        repo_url, git_data = processor.build_git_map(list(md_index.values()))
+
+    progress = TQDM(html_files, desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
+    log_fn = (progress.write if verbose and progress else print) if verbose else None
+    iterator = progress if progress else html_files
+    for html_file in iterator:
         success = process_html_file(
             html_file,
             site_dir,
             md_index,
+            git_data,
+            repo_url,
             site_url=site_url,
             default_image=default_image,
             default_author=default_author,
@@ -146,9 +166,12 @@ def postprocess_site(
             add_css=add_css,
             add_copy_llm=add_copy_llm,
             verbose=verbose,
+            log=log_fn,
         )
         if success:
             processed += 1
+    if progress:
+        progress.close()
 
     print(f"✅ Postprocessing complete: {processed}/{len(html_files)} files processed")
 
