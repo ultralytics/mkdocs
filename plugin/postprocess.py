@@ -117,8 +117,7 @@ def postprocess_site(
     add_css: bool = True,
     add_copy_llm: bool = True,
     verbose: bool = True,
-    workers: int | None = None,
-    use_processes: bool = False,
+    use_processes: bool = True,
 ) -> None:
     """Process all HTML files in the site directory."""
     site_dir = Path(site_dir)
@@ -133,7 +132,7 @@ def postprocess_site(
         print(f"No HTML files found in {site_dir}")
         return
 
-    worker_count = max(min(workers, (os.cpu_count() or 1)), 1)
+    worker_count = max(min(os.cpu_count() or 1), 1)
 
     # Build markdown index once (O(N) instead of O(N²)) using relative paths as keys
     md_index = {}
