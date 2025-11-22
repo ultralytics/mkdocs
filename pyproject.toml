@@ -62,7 +62,6 @@ dependencies = [
     "beautifulsoup4>=4.13.5",
     "pyyaml",
     "requests>=2.28.1",  # do not increase (conflicts in Ultralytics deps)
-    "tqdm>=4.66.5",
 ]
 
 [project.urls]

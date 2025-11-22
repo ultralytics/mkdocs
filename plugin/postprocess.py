@@ -6,7 +6,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from tqdm.auto import tqdm
+try:
+    from ultralytics.utils import TQDM  # progress bars
+except ImportError:
+    TQDM = None
 
 from plugin.processor import process_html
 
@@ -131,9 +134,10 @@ def postprocess_site(
     print(f"Processing {len(html_files)} HTML files in {site_dir}")
 
     processed = 0
-    progress = tqdm(html_files, desc="Postprocessing HTML", unit="file", disable=not verbose)
-    log_fn = progress.write if verbose else None
-    for html_file in progress:
+    progress = TQDM(html_files, desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
+    log_fn = (progress.write if verbose and progress else print) if verbose else None
+    iterator = progress if progress else html_files
+    for html_file in iterator:
         success = process_html_file(
             html_file,
             site_dir,
@@ -154,6 +158,10 @@ def postprocess_site(
         )
         if success:
             processed += 1
+        if progress:
+            progress.update(0)  # refresh display for external log writes
+    if progress:
+        progress.close()
 
     print(f"✅ Postprocessing complete: {processed}/{len(html_files)} files processed")
 
