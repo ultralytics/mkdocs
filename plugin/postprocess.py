@@ -171,7 +171,7 @@ def postprocess_site(
         if success:
             processed += 1
         if progress:
-            progress.update(0)  # refresh display for external log writes
+            progress.update(1)
     if progress:
         progress.close()
 
