@@ -170,8 +170,6 @@ def postprocess_site(
         )
         if success:
             processed += 1
-        if progress:
-            progress.update(1)
     if progress:
         progress.close()
 
