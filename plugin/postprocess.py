@@ -16,6 +16,7 @@ except ImportError:
 
 import plugin.processor as processor
 from plugin.processor import process_html
+from plugin.utils import resolve_all_authors
 
 # Shared worker state for process pools (avoids re-pickling large read-only data per task)
 _WORKER_STATE: dict[str, Any] | None = None
@@ -37,7 +38,6 @@ def _process_file(html_file: Path) -> bool:
         _WORKER_STATE["repo_url"],
         site_url=_WORKER_STATE["site_url"],
         default_image=_WORKER_STATE["default_image"],
-        default_author=_WORKER_STATE["default_author"],
         add_desc=_WORKER_STATE["add_desc"],
         add_image=_WORKER_STATE["add_image"],
         add_keywords=_WORKER_STATE["add_keywords"],
@@ -59,7 +59,6 @@ def process_html_file(
     repo_url: str | None,
     site_url: str = "",
     default_image: str | None = None,
-    default_author: str | None = None,
     add_desc: bool = True,
     add_image: bool = True,
     add_keywords: bool = True,
@@ -114,7 +113,6 @@ def process_html_file(
         git_data=git_data,
         repo_url=repo_url,
         default_image=default_image,
-        default_author=default_author,
         keywords=keywords,
         add_desc=add_desc,
         add_image=add_image,
@@ -184,6 +182,9 @@ def postprocess_site(
     git_data = None
     if (add_authors or add_json_ld) and md_index:
         repo_url, git_data = processor.build_git_map(list(md_index.values()))
+        # Resolve all authors ONCE in main process before spawning workers
+        # This prevents race conditions when workers try to write to the cache file
+        git_data = resolve_all_authors(git_data, default_author=default_author, repo_url=repo_url, verbose=verbose)
 
     progress = TQDM(total=len(html_files), desc="Postprocessing", unit="file", disable=not verbose) if TQDM else None
     # Enable logging only for the synchronous path; pools run without per-task log_fn to remain pickle-safe.
@@ -196,7 +197,6 @@ def postprocess_site(
         repo_url=repo_url,
         site_url=site_url,
         default_image=default_image,
-        default_author=default_author,
         add_desc=add_desc,
         add_image=add_image,
         add_keywords=add_keywords,
