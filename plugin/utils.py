@@ -84,7 +84,9 @@ def save_author_cache(cache: dict[str, dict[str, str | None]]) -> None:
         print(f"{WARNING} Failed to save author cache: {e}")
 
 
-def resolve_github_user(email: str, cache: dict[str, dict[str, str | None]], verbose: bool = True) -> dict[str, str | None]:
+def resolve_github_user(
+    email: str, cache: dict[str, dict[str, str | None]], verbose: bool = True
+) -> dict[str, str | None]:
     """Resolve a single email to GitHub username and avatar, updating cache in-place.
 
     Args:
@@ -138,9 +140,8 @@ def resolve_all_authors(
 ) -> dict[str, dict[str, Any]]:
     """Pre-resolve all unique emails from git_data to GitHub usernames.
 
-    This should be called ONCE in the main process before spawning workers.
-    It collects all unique emails, resolves them, saves the cache, and returns
-    git_data with 'authors' pre-populated for each file.
+    This should be called ONCE in the main process before spawning workers. It collects all unique emails, resolves
+    them, saves the cache, and returns git_data with 'authors' pre-populated for each file.
 
     Args:
         git_data (dict): The git metadata dict from build_git_map().
