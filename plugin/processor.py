@@ -13,11 +13,7 @@ from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 
-from plugin.utils import (
-    calculate_time_difference,
-    get_github_usernames_from_file,
-    get_youtube_video_ids,
-)
+from plugin.utils import calculate_time_difference, get_youtube_video_ids
 
 today = datetime.now()
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -30,11 +26,9 @@ CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path 
 def get_git_info(
     file_path: str,
     add_authors: bool = True,
-    default_author: str | None = None,
     git_data: dict[str, dict[str, Any]] | None = None,
-    repo_url: str | None = None,
 ) -> dict[str, Any]:
-    """Retrieve git information (dates + optional authors) from precomputed git data."""
+    """Retrieve git information (dates + pre-resolved authors) from precomputed git data."""
     file_path = str(Path(file_path).resolve())
     git_info = {
         "creation_date": DEFAULT_CREATION_DATE,
@@ -45,29 +39,12 @@ def get_git_info(
         return git_info
 
     cached = git_data[file_path]
-    git_info.update(
-        {
-            "creation_date": cached.get("creation_date", DEFAULT_CREATION_DATE),
-            "last_modified_date": cached.get("last_modified_date", DEFAULT_MODIFIED_DATE),
-        }
-    )
+    git_info["creation_date"] = cached.get("creation_date", DEFAULT_CREATION_DATE)
+    git_info["last_modified_date"] = cached.get("last_modified_date", DEFAULT_MODIFIED_DATE)
 
-    if add_authors and cached.get("emails"):
-        git_info["authors"] = sorted(
-            [
-                (
-                    author,
-                    info["url"],
-                    info["changes"],
-                    info["avatar"],
-                )
-                for author, info in get_github_usernames_from_file(
-                    file_path, default_user=default_author, emails=cached["emails"], repo_url=repo_url
-                ).items()
-            ],
-            key=lambda x: x[2],
-            reverse=True,
-        )
+    # Authors are pre-resolved by resolve_all_authors() in the main process
+    if add_authors and "authors" in cached:
+        git_info["authors"] = cached["authors"]
 
     return git_info
 
@@ -309,7 +286,6 @@ def process_html(
     git_data: dict[str, dict[str, Any]] | None = None,
     repo_url: str | None = None,
     default_image: str | None = None,
-    default_author: str | None = None,
     keywords: str | None = None,
     add_desc: bool = True,
     add_image: bool = True,
@@ -493,9 +469,7 @@ def process_html(
     needs_git = (add_authors or add_json_ld) and src_path
 
     if needs_git:
-        git_info = get_git_info(
-            src_path, add_authors=add_authors, default_author=default_author, git_data=git_data, repo_url=repo_url
-        )
+        git_info = get_git_info(src_path, add_authors=add_authors, git_data=git_data)
 
         # Only render git footer if we have real git history (not placeholder defaults)
         has_real_git_data = (
