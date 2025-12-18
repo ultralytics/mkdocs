@@ -11,7 +11,8 @@ import requests
 import yaml
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
-DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True).url
+TIMEOUT = 10  # seconds for network requests
+DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True, timeout=TIMEOUT).url
 
 
 def calculate_time_difference(date_string: str) -> tuple[str, str]:
@@ -107,7 +108,7 @@ def resolve_github_user(
     # Parse username directly from GitHub noreply emails
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
-        avatar = requests.head(f"https://github.com/{username}.png", allow_redirects=True).url
+        avatar = requests.head(f"https://github.com/{username}.png", allow_redirects=True, timeout=TIMEOUT).url
         cache[email] = {"username": username, "avatar": avatar}
         return cache[email]
 
@@ -115,12 +116,14 @@ def resolve_github_user(
     if verbose:
         print(f"Running GitHub REST API for author {email}")
     try:
-        response = requests.get(f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc")
+        response = requests.get(
+            f"https://api.github.com/search/users?q={email}+in:email&sort=joined&order=asc", timeout=TIMEOUT
+        )
         if response.status_code == 200:
             data = response.json()
             if data.get("total_count", 0) > 0:
                 username = data["items"][0]["login"]
-                avatar = requests.head(data["items"][0]["avatar_url"], allow_redirects=True).url
+                avatar = requests.head(data["items"][0]["avatar_url"], allow_redirects=True, timeout=TIMEOUT).url
                 cache[email] = {"username": username, "avatar": avatar}
                 return cache[email]
     except Exception:
@@ -170,7 +173,7 @@ def resolve_all_authors(
     cache = load_author_cache()
     cache_modified = False
 
-    for email in all_emails:
+    for email in sorted(all_emails):
         if email not in cache:
             resolve_github_user(email, cache, verbose=verbose)
             cache_modified = True
@@ -188,6 +191,12 @@ def resolve_all_authors(
 
         authors = []
         for email, changes in emails.items():
+            # Skip empty emails, use default_author if available
+            if not email or not email.strip():
+                if default_author:
+                    email = default_author
+                else:
+                    continue
             info = cache.get(email, {"username": None, "avatar": None})
             username = info.get("username")
             avatar = info.get("avatar") or DEFAULT_AVATAR
