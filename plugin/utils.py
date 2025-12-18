@@ -12,7 +12,19 @@ import yaml
 
 WARNING = "WARNING (mkdocs_ultralytics_plugin):"
 TIMEOUT = 10  # seconds for network requests
-DEFAULT_AVATAR = requests.head("https://github.com/github.png", allow_redirects=True, timeout=TIMEOUT).url
+DEFAULT_AVATAR_URL = "https://github.com/github.png"
+_default_avatar_cache: str | None = None
+
+
+def get_default_avatar() -> str:
+    """Get the default avatar URL, lazily fetching the resolved URL on first call."""
+    global _default_avatar_cache
+    if _default_avatar_cache is None:
+        try:
+            _default_avatar_cache = requests.head(DEFAULT_AVATAR_URL, allow_redirects=True, timeout=TIMEOUT).url
+        except Exception:
+            _default_avatar_cache = DEFAULT_AVATAR_URL  # fallback to original URL
+    return _default_avatar_cache
 
 
 def calculate_time_difference(date_string: str) -> tuple[str, str]:
@@ -63,24 +75,24 @@ def get_youtube_video_ids(soup) -> list[str]:
     return youtube_ids
 
 
+def _get_cache_file() -> Path:
+    """Get the path to the GitHub author cache file."""
+    return Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
+
+
 def load_author_cache() -> dict[str, dict[str, str | None]]:
     """Load the GitHub author cache from disk."""
-    cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
-    if cache_file.is_file():
-        try:
-            with cache_file.open("r") as f:
-                return yaml.safe_load(f) or {}
-        except Exception:
-            pass
-    return {}
+    cache_file = _get_cache_file()
+    try:
+        return yaml.safe_load(cache_file.read_text()) or {} if cache_file.is_file() else {}
+    except Exception:
+        return {}
 
 
 def save_author_cache(cache: dict[str, dict[str, str | None]]) -> None:
     """Save the GitHub author cache to disk."""
-    cache_file = Path("docs" if Path("docs").is_dir() else "") / "mkdocs_github_authors.yaml"
     try:
-        with cache_file.open("w") as f:
-            yaml.safe_dump(cache, f)
+        _get_cache_file().write_text(yaml.safe_dump(cache))
     except Exception as e:
         print(f"{WARNING} Failed to save author cache: {e}")
 
@@ -108,7 +120,10 @@ def resolve_github_user(
     # Parse username directly from GitHub noreply emails
     if email.endswith("@users.noreply.github.com"):
         username = email.split("+")[-1].split("@")[0]
-        avatar = requests.head(f"https://github.com/{username}.png", allow_redirects=True, timeout=TIMEOUT).url
+        try:
+            avatar = requests.head(f"https://github.com/{username}.png", allow_redirects=True, timeout=TIMEOUT).url
+        except Exception:
+            avatar = None
         cache[email] = {"username": username, "avatar": avatar}
         return cache[email]
 
@@ -191,15 +206,14 @@ def resolve_all_authors(
 
         authors = []
         for email, changes in emails.items():
-            # Skip empty emails, use default_author if available
-            if not email or not email.strip():
-                if default_author:
-                    email = default_author
-                else:
-                    continue
+            email = email.strip() if email else ""
+            if not email:
+                email = default_author or ""
+            if not email:
+                continue
             info = cache.get(email, {"username": None, "avatar": None})
             username = info.get("username")
-            avatar = info.get("avatar") or DEFAULT_AVATAR
+            avatar = info.get("avatar") or get_default_avatar()
             user_url = f"https://github.com/{username}" if username else github_repo_url
             authors.append((username or email, user_url, changes, avatar))
 
