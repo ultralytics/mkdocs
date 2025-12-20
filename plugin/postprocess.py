@@ -134,6 +134,94 @@ def process_html_file(
         return False
 
 
+def generate_llms_txt(site_dir: Path, docs_dir: Path, site_url: str) -> None:
+    """Generate llms.txt file for LLM consumption."""
+    import yaml
+
+    class _Loader(yaml.SafeLoader):
+        pass
+
+    _Loader.add_multi_constructor("", lambda loader, suffix, node: None)
+
+    # mkdocs.yml is in repo root (site_dir.parent)
+    mkdocs_yml = site_dir.parent / "mkdocs.yml"
+    site_name = "Documentation"
+    site_description = ""
+    nav = None
+    if mkdocs_yml.exists():
+        config = yaml.load(mkdocs_yml.read_text(), Loader=_Loader) or {}
+        site_name = config.get("site_name", site_name)
+        site_description = config.get("site_description", "")
+        nav = config.get("nav")
+
+    lines = [f"# {site_name}\n", f"> {site_description}\n"]
+    site_url = site_url.rstrip("/")
+
+    def get_description(md_path: Path) -> str:
+        """Extract description from markdown frontmatter."""
+        content = md_path.read_text()
+        if content.startswith("---"):
+            end = content.find("\n---\n", 3)
+            if end != -1:
+                fm = yaml.safe_load(content[4:end]) or {}
+                return fm.get("description", "")
+        return ""
+
+    def md_to_url(md_path: str) -> str:
+        """Convert markdown path to HTML URL."""
+        url = md_path.replace(".md", "/").replace("/index/", "/")
+        return f"{site_url}/{url}" if url != "index/" else f"{site_url}/"
+
+    if nav:
+
+        def process_items(items, indent=0):
+            """Recursively process nav items with indentation (Vercel-style)."""
+            prefix = "  " * indent + "- "
+            for item in items:
+                if isinstance(item, str):
+                    md = docs_dir / item
+                    if md.exists():
+                        url = md_to_url(item)
+                        desc = get_description(md)
+                        # Use parent dir name for index.md, else filename
+                        title = md.parent.name if md.stem == "index" else md.stem
+                        title = title.replace("-", " ").replace("_", " ").title()
+                        desc_part = f": {desc}" if desc else ""
+                        lines.append(f"{prefix}[{title}]({url}){desc_part}")
+                elif isinstance(item, dict):
+                    for k, v in item.items():
+                        if isinstance(v, str):
+                            md = docs_dir / v
+                            if md.exists():
+                                url = md_to_url(v)
+                                desc = get_description(md)
+                                desc_part = f": {desc}" if desc else ""
+                                lines.append(f"{prefix}[{k}]({url}){desc_part}")
+                        elif isinstance(v, list):
+                            # Nested section - plain text header, then recurse
+                            lines.append(f"{prefix}{k}")
+                            process_items(v, indent + 1)
+
+        # Top-level nav items become ## sections
+        for item in nav:
+            if isinstance(item, dict):
+                for section_name, section_items in item.items():
+                    lines.append(f"\n## {section_name}\n")
+                    if isinstance(section_items, list):
+                        process_items(section_items, indent=0)
+    else:
+        for md in sorted(docs_dir.rglob("*.md")):
+            desc = get_description(md)
+            rel = md.relative_to(docs_dir).as_posix()
+            url = md_to_url(rel)
+            title = md.stem.replace("-", " ").replace("_", " ").title()
+            desc_part = f": {desc}" if desc else ""
+            lines.append(f"- [{title}]({url}){desc_part}")
+
+    (site_dir / "llms.txt").write_text("\n".join(lines))
+    print("Generated llms.txt")
+
+
 def postprocess_site(
     site_dir: str | Path = "site",
     docs_dir: str | Path = "docs",
@@ -148,6 +236,7 @@ def postprocess_site(
     add_json_ld: bool = False,
     add_css: bool = True,
     add_copy_llm: bool = True,
+    add_llms_txt: bool = True,
     verbose: bool = True,
     use_processes: bool = True,
     workers: int | None = None,
@@ -249,6 +338,9 @@ def postprocess_site(
         progress.close()
 
     print(f"✅ Postprocessing complete: {processed}/{len(html_files)} files processed")
+
+    if add_llms_txt:
+        generate_llms_txt(site_dir, docs_dir, site_url)
 
 
 if __name__ == "__main__":

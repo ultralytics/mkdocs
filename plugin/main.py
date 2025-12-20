@@ -27,6 +27,7 @@ class MetaPlugin(BasePlugin):
         ("add_json_ld", config_options.Type(bool, default=False)),
         ("add_css", config_options.Type(bool, default=True)),
         ("add_copy_llm", config_options.Type(bool, default=True)),
+        ("add_llms_txt", config_options.Type(bool, default=True)),
     )
 
     def __init__(self):
@@ -84,3 +85,11 @@ class MetaPlugin(BasePlugin):
             if self.config["verbose"]:
                 print(f"ERROR - mkdocs-ultralytics-plugin: Failed to process {page.file.src_path}: {e}")
             return output  # Return original output on error
+
+    def on_post_build(self, config):
+        """Generate llms.txt after build completes."""
+        if not self.config.get("enabled", True) or not self.config.get("add_llms_txt", True):
+            return
+        from plugin.postprocess import generate_llms_txt
+
+        generate_llms_txt(Path(config["site_dir"]), Path(config["docs_dir"]), config.get("site_url", ""))
