@@ -215,11 +215,15 @@ def generate_llms_txt(
 
         # Top-level nav items become ## sections
         for item in nav:
-            if isinstance(item, dict):
-                for section_name, section_items in item.items():
-                    lines.extend(["", f"## {section_name}"])
-                    if isinstance(section_items, list):
-                        process_items(section_items, indent=0)
+            if isinstance(item, str):
+                process_items([item], indent=0)
+            elif isinstance(item, dict):
+                for k, v in item.items():
+                    if isinstance(v, list):
+                        lines.extend(["", f"## {k}"])
+                        process_items(v, indent=0)
+                    else:
+                        process_items([{k: v}], indent=0)
     else:
         for md in sorted(docs_dir.rglob("*.md")):
             desc = get_description(md)
