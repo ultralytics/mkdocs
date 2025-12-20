@@ -92,4 +92,11 @@ class MetaPlugin(BasePlugin):
             return
         from plugin.postprocess import generate_llms_txt
 
-        generate_llms_txt(Path(config["site_dir"]), Path(config["docs_dir"]), config.get("site_url", ""))
+        generate_llms_txt(
+            site_dir=Path(config["site_dir"]),
+            docs_dir=Path(config["docs_dir"]),
+            site_url=config.get("site_url", ""),
+            site_name=config.get("site_name"),
+            site_description=config.get("site_description"),
+            nav=config.get("nav"),
+        )

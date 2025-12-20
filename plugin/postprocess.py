@@ -134,25 +134,32 @@ def process_html_file(
         return False
 
 
-def generate_llms_txt(site_dir: Path, docs_dir: Path, site_url: str) -> None:
+def generate_llms_txt(
+    site_dir: Path,
+    docs_dir: Path,
+    site_url: str,
+    site_name: str | None = None,
+    site_description: str | None = None,
+    nav: list | None = None,
+) -> None:
     """Generate llms.txt file for LLM consumption."""
-    import yaml
+    # Fallback to reading mkdocs.yml if config values not provided (standalone postprocess mode)
+    if site_name is None or nav is None:
+        import yaml
 
-    class _Loader(yaml.SafeLoader):
-        pass
+        class _Loader(yaml.SafeLoader):
+            pass
 
-    _Loader.add_multi_constructor("", lambda loader, suffix, node: None)
+        _Loader.add_multi_constructor("", lambda loader, suffix, node: None)
 
-    # mkdocs.yml is in repo root (site_dir.parent)
-    mkdocs_yml = site_dir.parent / "mkdocs.yml"
-    site_name = "Documentation"
-    site_description = ""
-    nav = None
-    if mkdocs_yml.exists():
-        config = yaml.load(mkdocs_yml.read_text(), Loader=_Loader) or {}
-        site_name = config.get("site_name", site_name)
-        site_description = config.get("site_description", "")
-        nav = config.get("nav")
+        mkdocs_yml = site_dir.parent / "mkdocs.yml"
+        if mkdocs_yml.exists():
+            config = yaml.load(mkdocs_yml.read_text(), Loader=_Loader) or {}
+            site_name = site_name or config.get("site_name", "Documentation")
+            site_description = site_description or config.get("site_description", "")
+            nav = nav or config.get("nav")
+    site_name = site_name or "Documentation"
+    site_description = site_description or ""
 
     lines = [f"# {site_name}\n", f"> {site_description}\n"]
     site_url = site_url.rstrip("/")
