@@ -143,9 +143,10 @@ def generate_llms_txt(
     nav: list | None = None,
 ) -> None:
     """Generate llms.txt file for LLM consumption."""
+    import yaml
+
     # Fallback to reading mkdocs.yml if config values not provided (standalone postprocess mode)
     if site_name is None or nav is None:
-        import yaml
 
         class _Loader(yaml.SafeLoader):
             pass
@@ -161,7 +162,7 @@ def generate_llms_txt(
     site_name = site_name or "Documentation"
     site_description = site_description or ""
 
-    lines = [f"# {site_name}\n", f"> {site_description}\n"]
+    lines = [f"# {site_name}", f"> {site_description}"]
     site_url = site_url.rstrip("/")
 
     def get_description(md_path: Path) -> str:
@@ -216,7 +217,7 @@ def generate_llms_txt(
         for item in nav:
             if isinstance(item, dict):
                 for section_name, section_items in item.items():
-                    lines.append(f"\n## {section_name}\n")
+                    lines.extend(["", f"## {section_name}"])
                     if isinstance(section_items, list):
                         process_items(section_items, indent=0)
     else:
