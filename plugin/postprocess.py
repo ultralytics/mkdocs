@@ -159,12 +159,15 @@ def generate_llms_txt(site_dir: Path, docs_dir: Path, site_url: str) -> None:
 
     def get_description(md_path: Path) -> str:
         """Extract description from markdown frontmatter."""
-        content = md_path.read_text()
-        if content.startswith("---"):
-            end = content.find("\n---\n", 3)
-            if end != -1:
-                fm = yaml.safe_load(content[4:end]) or {}
-                return fm.get("description", "")
+        try:
+            content = md_path.read_text()
+            if content.startswith("---"):
+                end = content.find("\n---\n", 3)
+                if end != -1:
+                    fm = yaml.safe_load(content[4:end]) or {}
+                    return fm.get("description", "")
+        except Exception:
+            pass
         return ""
 
     def md_to_url(md_path: str) -> str:
