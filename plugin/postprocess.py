@@ -163,6 +163,7 @@ def generate_llms_txt(
     site_description = site_description or ""
 
     lines = [f"# {site_name}", f"> {site_description}"]
+    seen_urls: set[str] = set()
     site_url = site_url.rstrip("/")
 
     def get_description(md_path: Path) -> str:
@@ -193,6 +194,9 @@ def generate_llms_txt(
                     md = docs_dir / item
                     if md.exists():
                         url = md_to_url(item)
+                        if url in seen_urls:
+                            continue
+                        seen_urls.add(url)
                         desc = get_description(md)
                         # Use parent dir name for index.md, else filename
                         title = md.parent.name if md.stem == "index" else md.stem
@@ -205,6 +209,9 @@ def generate_llms_txt(
                             md = docs_dir / v
                             if md.exists():
                                 url = md_to_url(v)
+                                if url in seen_urls:
+                                    continue
+                                seen_urls.add(url)
                                 desc = get_description(md)
                                 desc_part = f": {desc}" if desc else ""
                                 lines.append(f"{prefix}[{k}]({url}){desc_part}")
@@ -226,9 +233,12 @@ def generate_llms_txt(
                         process_items([{k: v}], indent=0)
     else:
         for md in sorted(docs_dir.rglob("*.md")):
-            desc = get_description(md)
             rel = md.relative_to(docs_dir).as_posix()
             url = md_to_url(rel)
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            desc = get_description(md)
             title = md.stem.replace("-", " ").replace("_", " ").title()
             desc_part = f": {desc}" if desc else ""
             lines.append(f"- [{title}]({url}){desc_part}")
