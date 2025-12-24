@@ -9,6 +9,7 @@ from mkdocs.plugins import BasePlugin
 
 import plugin.processor as processor
 from plugin.processor import process_html
+from plugin.utils import resolve_all_authors
 
 
 class MetaPlugin(BasePlugin):
@@ -43,6 +44,12 @@ class MetaPlugin(BasePlugin):
             docs_dir = Path(config["docs_dir"])
             md_files = [str(p) for p in docs_dir.rglob("*.md")] if docs_dir.exists() else []
             self.git_repo_url, self.git_data = processor.build_git_map(md_files)
+            self.git_data = resolve_all_authors(
+                self.git_data,
+                default_author=self.config.get("default_author"),
+                repo_url=self.git_repo_url,
+                verbose=self.config.get("verbose", True),
+            )
         return config
 
     def on_post_page(self, output: str, page, config) -> str:
@@ -69,7 +76,6 @@ class MetaPlugin(BasePlugin):
                 git_data=self.git_data,
                 repo_url=self.git_repo_url,
                 default_image=self.config["default_image"],
-                default_author=self.config["default_author"],
                 keywords=keywords,
                 add_desc=self.config["add_desc"],
                 add_image=self.config["add_image"],
