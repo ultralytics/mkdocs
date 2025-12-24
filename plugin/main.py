@@ -87,7 +87,7 @@ class MetaPlugin(BasePlugin):
             return output  # Return original output on error
 
     def on_post_build(self, config):
-        """Generate llms.txt after build completes."""
+        """Generate llms.txt after build completes. Added for mkdocs build compatibility. Not needed for zensical build."""
         if not self.config.get("enabled", True) or not self.config.get("add_llms_txt", True):
             return
         from plugin.postprocess import generate_llms_txt
