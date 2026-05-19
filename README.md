@@ -21,7 +21,7 @@ This tool seamlessly integrates valuable features into your documentation site:
 
 - **Meta Tag Generation**: Automatically creates meta description and image tags using the first paragraph and image found on each page, crucial for SEO and social previews.
 - **Keyword Customization**: Allows you to define specific meta keywords directly within your Markdown front matter for targeted SEO.
-- **Social Media Optimization**: Generates [Open Graph](https://ogp.me/) and [Twitter Card](https://developer.x.com/en/docs/x-for-websites/cards/overview/summary-card-with-large-image) meta tags to ensure your content looks great when shared on social platforms.
+- **Social Media Optimization**: Generates [Open Graph](https://ogp.me/) and [Twitter Card](https://docs.x.com/overview) meta tags to ensure your content looks great when shared on social platforms.
 - **Simple Sharing**: Inserts convenient share buttons for Twitter and LinkedIn at the end of your content, encouraging readers to share.
 - **Git Insights**: Gathers and displays [Git](https://git-scm.com/) commit information, including update dates and authors, directly within the page footer for transparency.
 - **JSON-LD Support**: Adds structured data in JSON-LD format, helping search engines understand your content better and potentially enabling rich results.
@@ -201,7 +201,7 @@ Please see our [Contributing Guide](https://docs.ultralytics.com/help/contributi
 
 Ultralytics provides two licensing options:
 
-- **AGPL-3.0 License**: Ideal for students, researchers, and enthusiasts, this [OSI-approved](https://opensource.org/license/agpl-v3) license promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/mkdocs/blob/main/LICENSE) file for details.
+- **AGPL-3.0 License**: Ideal for students, researchers, and enthusiasts, this [OSI-approved](https://opensource.org/license/agpl-3.0) license promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/mkdocs/blob/main/LICENSE) file for details.
 - **Enterprise License**: Designed for commercial applications, this license allows seamless integration of Ultralytics software into commercial products, bypassing AGPL-3.0 requirements. Visit [Ultralytics Licensing](https://www.ultralytics.com/license) for details.
 
 ## ✉️ Connect with Us
@@ -216,7 +216,7 @@ Encountered a bug or have an idea? Visit [GitHub Issues](https://github.com/ultr
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://twitter.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-twitter.png" width="3%" alt="Ultralytics Twitter"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
+  <a href="https://www.youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">

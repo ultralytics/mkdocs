@@ -436,21 +436,22 @@ def process_html(
                 let rawUrl = editBtn.href.replace('github.com', 'raw.githubusercontent.com');
                 rawUrl = rawUrl.replace('/blob/', '/').replace('/tree/', '/');
 
-                try {{
+                async function getContent() {{
                     const response = await fetch(rawUrl);
                     let markdown = await response.text();
-
                     if (markdown.startsWith('---')) {{
                         const frontMatterEnd = markdown.indexOf('\\n---\\n', 3);
-                        if (frontMatterEnd !== -1) {{
-                            markdown = markdown.substring(frontMatterEnd + 5).trim();
-                        }}
+                        if (frontMatterEnd !== -1) markdown = markdown.substring(frontMatterEnd + 5).trim();
                     }}
-
                     const title = document.querySelector('h1')?.textContent || document.title;
-                    const content = `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
+                    return `# ${{title}}\\n\\nSource: ${{window.location.href}}\\n\\n---\\n\\n${{markdown}}`;
+                }}
 
-                    await navigator.clipboard.writeText(content);
+                try {{
+                    const clipboardItem = new ClipboardItem({{
+                        'text/plain': getContent().then(text => new Blob([text], {{ type: 'text/plain' }}))
+                    }});
+                    await navigator.clipboard.write([clipboardItem]);
                     button.innerHTML = checkIcon + ' Copied!';
                     setTimeout(() => {{ button.innerHTML = originalHTML; }}, 2000);
                 }} catch (err) {{
