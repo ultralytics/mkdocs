@@ -2,7 +2,7 @@
 
 # 🚀 MkDocs Ultralytics Plugin
 
-Welcome to the MkDocs Ultralytics Plugin! 📄 This powerful tool enhances your [MkDocs](https://www.mkdocs.org/), [Zensical](https://zensical.com/), or any static site documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your documentation's visibility on the web.
+Welcome to the MkDocs Ultralytics Plugin! 📄 This powerful tool enhances your [MkDocs](https://www.mkdocs.org/), [Zensical](https://zensical.org/), or any static site documentation with advanced Search Engine Optimization (SEO) features, interactive social elements, and structured data support. It automates the generation of essential meta tags, incorporates social sharing capabilities, and adds [JSON-LD](https://json-ld.org/) structured data to elevate user engagement and improve your documentation's visibility on the web.
 
 **Two modes available:**
 
@@ -27,6 +27,7 @@ This tool seamlessly integrates valuable features into your documentation site:
 - **JSON-LD Support**: Adds structured data in JSON-LD format, helping search engines understand your content better and potentially enabling rich results.
 - **FAQ Parsing**: Automatically parses FAQ sections (if present) and includes them in the structured data for enhanced search visibility.
 - **Copy for LLM**: Adds a button to copy page content in Markdown format, optimized for sharing with AI assistants.
+- **LLMs.txt Generation**: Generates an `llms.txt` index after builds for LLM-friendly site discovery.
 - **Customizable Styling**: Includes optional inline CSS to maintain consistent styling across your documentation, aligning with themes like [MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
 
 ## 🛠️ Installation
@@ -134,6 +135,7 @@ Both modes support the same configuration options:
 | `add_json_ld`       | bool | `False` | Add JSON-LD structured data      |
 | `add_css`           | bool | `True`  | Include inline CSS styles        |
 | `add_copy_llm`      | bool | `True`  | Add "Copy for LLM" button        |
+| `add_llms_txt`      | bool | `True`  | Generate an `llms.txt` index     |
 
 ## 🧩 How It Works
 
