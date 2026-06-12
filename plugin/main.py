@@ -1,5 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+"""MkDocs plugin entrypoint for Ultralytics documentation metadata."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,6 +34,7 @@ class MetaPlugin(BasePlugin):
     )
 
     def __init__(self):
+        """Initialize cached repository metadata for page processing."""
         super().__init__()
         self.git_repo_url = None
         self.git_data = None
@@ -43,7 +46,9 @@ class MetaPlugin(BasePlugin):
 
         if self.config.get("add_authors") or self.config.get("add_json_ld"):
             docs_dir = Path(config["docs_dir"])
-            md_files = [str(p) for p in docs_dir.rglob("*.md")] if docs_dir.exists() else []
+            md_files = (
+                [str(p) for p in docs_dir.rglob("*.md")] if docs_dir.exists() else []
+            )
             self.git_repo_url, self.git_data = processor.build_git_map(md_files)
             self.git_data = resolve_all_authors(
                 self.git_data,
@@ -67,7 +72,9 @@ class MetaPlugin(BasePlugin):
         try:
             page_url = (config["site_url"] or "") + page.url.rstrip("/")
             title = page.title
-            keywords = page.meta.get("keywords", None) if hasattr(page, "meta") else None
+            keywords = (
+                page.meta.get("keywords", None) if hasattr(page, "meta") else None
+            )
 
             return process_html(
                 html=output,
@@ -89,13 +96,16 @@ class MetaPlugin(BasePlugin):
             )
         except Exception as e:
             if self.config["verbose"]:
-                print(f"ERROR - mkdocs-ultralytics-plugin: Failed to process {page.file.src_path}: {e}")
+                print(
+                    f"ERROR - mkdocs-ultralytics-plugin: Failed to process {page.file.src_path}: {e}"
+                )
             return output  # Return original output on error
 
     def on_post_build(self, config):
-        """Generate llms.txt after build completes. Added for mkdocs build compatibility. Not needed for zensical build.
-        """
-        if not self.config.get("enabled", True) or not self.config.get("add_llms_txt", True):
+        """Generate llms.txt after build completes. Added for mkdocs build compatibility. Not needed for zensical build."""
+        if not self.config.get("enabled", True) or not self.config.get(
+            "add_llms_txt", True
+        ):
             return
         from plugin.postprocess import generate_llms_txt
 
