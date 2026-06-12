@@ -1,4 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+"""MkDocs plugin entrypoint for Ultralytics documentation metadata."""
 
 from __future__ import annotations
 
@@ -32,6 +33,7 @@ class MetaPlugin(BasePlugin):
     )
 
     def __init__(self):
+        """Initialize cached repository metadata for page processing."""
         super().__init__()
         self.git_repo_url = None
         self.git_data = None
