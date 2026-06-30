@@ -103,9 +103,10 @@ def _github_repo_path(repo_url: str | None) -> str | None:
     if not repo_url:
         return None
     parsed = urlparse(repo_url)
-    if parsed.netloc != "github.com":
+    if parsed.hostname != "github.com":
         return None
-    return parsed.path.strip("/") or None
+    path = parsed.path.strip("/")
+    return path[:-4] if path.endswith(".git") else path or None
 
 
 def resolve_github_user(
@@ -212,7 +213,8 @@ def resolve_all_authors(
     commits: dict[str, str] = {}
     for entry in git_data.values():
         all_emails.update(entry.get("emails", {}).keys())
-        commits.update(entry.get("commits", {}))
+        for email, commit in entry.get("commits", {}).items():
+            commits.setdefault(email, commit)
     if default_author:
         all_emails.add(default_author)
     all_emails.discard("")
