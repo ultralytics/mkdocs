@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 import yaml
@@ -97,14 +98,31 @@ def save_author_cache(cache: dict[str, dict[str, str | None]]) -> None:
         print(f"{WARNING} Failed to save author cache: {e}")
 
 
+def _github_repo_path(repo_url: str | None) -> str | None:
+    """Return the owner/repo path for a GitHub repository URL."""
+    if not repo_url:
+        return None
+    parsed = urlparse(repo_url)
+    if parsed.hostname != "github.com":
+        return None
+    path = parsed.path.strip("/")
+    return path[:-4] if path.endswith(".git") else path or None
+
+
 def resolve_github_user(
-    email: str, cache: dict[str, dict[str, str | None]], verbose: bool = True
+    email: str,
+    cache: dict[str, dict[str, str | None]],
+    repo_url: str | None = None,
+    commit_sha: str | None = None,
+    verbose: bool = True,
 ) -> dict[str, str | None]:
     """Resolve a single email to GitHub username and avatar, updating cache in-place.
 
     Args:
         email (str): The email address to resolve.
         cache (dict): The author cache dict (modified in-place if new entry added).
+        repo_url (str, optional): GitHub repository URL used for commit API fallback.
+        commit_sha (str, optional): Commit SHA authored by the email.
         verbose (bool): Whether to print API call info.
 
     Returns:
@@ -113,8 +131,8 @@ def resolve_github_user(
     if not email or not email.strip():
         return {"username": None, "avatar": None}
 
-    # Return cached result if available
-    if email in cache:
+    # Return complete cached results immediately. Incomplete cached entries may be refreshed from commit metadata.
+    if email in cache and cache[email].get("username") and cache[email].get("avatar"):
         return cache[email]
 
     # Parse username directly from GitHub noreply emails
@@ -126,6 +144,23 @@ def resolve_github_user(
             avatar = None
         cache[email] = {"username": username, "avatar": avatar}
         return cache[email]
+
+    # Query the commit API when git history provides a commit for this email. This resolves authors whose commit email
+    # is linked to a GitHub account but hidden from user search.
+    if repo_path := _github_repo_path(repo_url):
+        if commit_sha:
+            try:
+                response = requests.get(
+                    f"https://api.github.com/repos/{repo_path}/commits/{commit_sha}", timeout=TIMEOUT
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    author = data.get("author") or {}
+                    if author.get("login") and author.get("avatar_url"):
+                        cache[email] = {"username": author["login"], "avatar": author["avatar_url"]}
+                        return cache[email]
+            except Exception:
+                pass
 
     # Query GitHub REST API
     if verbose:
@@ -173,10 +208,13 @@ def resolve_all_authors(
     if not git_data:
         return git_data
 
-    # Collect all unique emails across all files
+    # Collect all unique emails across all files, with one representative commit SHA per email.
     all_emails: set[str] = set()
+    commits: dict[str, str] = {}
     for entry in git_data.values():
         all_emails.update(entry.get("emails", {}).keys())
+        for email, commit in entry.get("commits", {}).items():
+            commits.setdefault(email, commit)
     if default_author:
         all_emails.add(default_author)
     all_emails.discard("")
@@ -189,8 +227,9 @@ def resolve_all_authors(
     cache_modified = False
 
     for email in sorted(all_emails):
-        if email not in cache:
-            resolve_github_user(email, cache, verbose=verbose)
+        cached = cache.get(email, {})
+        if email not in cache or (commits.get(email) and not (cached.get("username") and cached.get("avatar"))):
+            resolve_github_user(email, cache, repo_url=repo_url, commit_sha=commits.get(email), verbose=verbose)
             cache_modified = True
 
     if cache_modified:

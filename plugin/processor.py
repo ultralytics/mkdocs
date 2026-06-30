@@ -136,7 +136,7 @@ def build_git_map(file_paths: list[str] | list[Path]) -> tuple[str | None, dict[
         str(repo_root),
         "log",
         "--name-only",
-        "--pretty=format:%ad\t%ae",
+        "--pretty=format:%H\t%ad\t%ae",
         "--date=format:%Y-%m-%d %H:%M:%S %z",
         "--",
         *[str(p) for p in rel_paths],
@@ -147,17 +147,18 @@ def build_git_map(file_paths: list[str] | list[Path]) -> tuple[str | None, dict[
     except subprocess.CalledProcessError:
         return repo_url, git_data
 
+    current_commit = None
     current_date = None
     current_email = None
     for line in output:
         if not line.strip():
             continue
         parts = line.split("\t")
-        if len(parts) == 2:
-            current_date, current_email = parts
+        if len(parts) == 3:
+            current_commit, current_date, current_email = parts
             continue
 
-        if current_date and current_email:
+        if current_commit and current_date and current_email:
             abs_path = (repo_root / line.strip()).resolve()
             key = str(abs_path)
             entry = git_data.setdefault(
@@ -166,11 +167,13 @@ def build_git_map(file_paths: list[str] | list[Path]) -> tuple[str | None, dict[
                     "creation_date": current_date,
                     "last_modified_date": current_date,
                     "emails": {},
+                    "commits": {},
                 },
             )
             entry.setdefault("last_modified_date", current_date)
             entry["creation_date"] = current_date
             entry["emails"][current_email] = entry["emails"].get(current_email, 0) + 1
+            entry["commits"].setdefault(current_email, current_commit)
 
     return repo_url, git_data
 
