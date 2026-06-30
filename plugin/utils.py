@@ -149,7 +149,9 @@ def resolve_github_user(
     if repo_path := _github_repo_path(repo_url):
         if commit_sha:
             try:
-                response = requests.get(f"https://api.github.com/repos/{repo_path}/commits/{commit_sha}", timeout=TIMEOUT)
+                response = requests.get(
+                    f"https://api.github.com/repos/{repo_path}/commits/{commit_sha}", timeout=TIMEOUT
+                )
                 if response.status_code == 200:
                     data = response.json()
                     author = data.get("author") or {}
