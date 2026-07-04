@@ -39,6 +39,7 @@ uv pip install -e ".[dev]"
 # Lint and format, mirroring CI (.github/workflows/format.yml runs ultralytics/actions@main; there is no local ruff/lint config — that action is the source of truth for these flags)
 uvx ruff check --fix --unsafe-fixes --extend-select F,I,D,UP,RUF,FA --target-version py39 --ignore D100,D104,D203,D205,D212,D213,D401,D406,D407,D413,RUF001,RUF002,RUF012 .
 uvx ruff format --line-length 120 .
+uvx --from ultralytics-actions ultralytics-actions-format-python-docstrings .
 
 # Build sdist + wheel (as publish.yml does)
 uv pip install build && python -m build
@@ -56,7 +57,7 @@ This repo is `mkdocs-ultralytics-plugin`, a PyPI package that enhances built doc
 - `plugin/postprocess.py` provides `postprocess_site()`, a standalone batch mode for any static site generator (Zensical, Hugo, Jekyll): it walks a built `site/` dir with a process or thread pool and calls the same `process_html()`; `generate_llms_txt()` lives here and is shared by both modes.
 - `plugin/utils.py` resolves commit emails to GitHub usernames/avatars (noreply parsing → commits API → user search) with results cached in `mkdocs_github_authors.yaml`.
 
-Publishing is gated in `.github/workflows/publish.yml`: it runs on every push to `main` (plus manual dispatch) but only for repo `ultralytics/mkdocs` and actor `glenn-jocher`, and only proceeds when `__version__` in `plugin/__init__.py` is ahead of PyPI — then it tags `v{version}`, creates a GitHub release, builds with `python -m build`, publishes via PyPI trusted publishing, uploads an SBOM, and notifies Slack.
+Publishing is gated in `.github/workflows/publish.yml`: it runs on every push to `main` (plus manual dispatch) but only for repo `ultralytics/mkdocs` and actor `glenn-jocher`, and only proceeds when `__version__` in `plugin/__init__.py` is a valid increment over the PyPI version (a patch bump of 1–2, a new minor ending in `.0`, or a new major ending in `.0.0`, per `should_publish()` in ultralytics-actions) — then it tags `v{version}`, creates a GitHub release, builds with `python -m build`, publishes via PyPI trusted publishing, uploads an SBOM, and notifies Slack.
 
 ## Conventions
 
@@ -64,4 +65,4 @@ Publishing is gated in `.github/workflows/publish.yml`: it runs on every push to
 - Formatting is enforced by the Ultralytics Actions bot on PRs (`format.yml`): Ruff + docformatter for Python (120-char lines, Google-style docstrings with parenthesized types), Prettier for YAML/JSON/Markdown, codespell for spelling.
 - Author resolution hits the live GitHub API and github.com at build time when `add_authors` or `add_json_ld` is enabled; results are cached in `mkdocs_github_authors.yaml` (written to `docs/` when it exists, else the cwd).
 - Keep `requests>=2.28.1` unpinned upward — the pyproject.toml comment says not to raise it (conflicts with Ultralytics deps).
-- Release process: bump `__version__` in `plugin/__init__.py` in a PR; merging to `main` auto-publishes to PyPI via the gating above. No manual tagging.
+- Release process: bump `__version__` in `plugin/__init__.py` in a PR (patch bump of 1–2, or a new minor/major ending in zero); merging to `main` auto-publishes to PyPI via the gating above. No manual tagging.
