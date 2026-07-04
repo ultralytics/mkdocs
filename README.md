@@ -119,7 +119,7 @@ jekyll build && python postprocess.py
 
 ## ⚙️ Configuration Options
 
-Both modes support the same configuration options:
+Both modes support the feature options below. Differences: `enabled` applies to plugin mode only, while postprocess mode reads `site_dir`, `docs_dir`, and `site_url` as arguments (plugin mode gets these from `mkdocs.yml`) and additionally accepts `use_processes` (default `True`) and `workers` (default: CPU count) to control parallelism.
 
 | Option              | Type | Default | Description                      |
 | ------------------- | ---- | ------- | -------------------------------- |
