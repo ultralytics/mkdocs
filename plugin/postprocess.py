@@ -14,7 +14,7 @@ try:
 except ImportError:
     TQDM = None
 
-import plugin.processor as processor
+from plugin import processor
 from plugin.processor import process_html
 from plugin.utils import resolve_all_authors
 
@@ -304,23 +304,23 @@ def postprocess_site(
     # Enable logging only for the synchronous path; pools run without per-task log_fn to remain pickle-safe.
     log_fn = (progress.write if verbose and progress else print if verbose else None) if worker_count == 1 else None
 
-    task_kwargs = dict(
-        site_dir=site_dir,
-        md_index=md_index,
-        git_data=git_data,
-        repo_url=repo_url,
-        site_url=site_url,
-        default_image=default_image,
-        add_desc=add_desc,
-        add_image=add_image,
-        add_keywords=add_keywords,
-        add_share_buttons=add_share_buttons,
-        add_authors=add_authors,
-        add_json_ld=add_json_ld,
-        add_css=add_css,
-        add_copy_llm=add_copy_llm,
-        verbose=verbose,
-    )
+    task_kwargs = {
+        "site_dir": site_dir,
+        "md_index": md_index,
+        "git_data": git_data,
+        "repo_url": repo_url,
+        "site_url": site_url,
+        "default_image": default_image,
+        "add_desc": add_desc,
+        "add_image": add_image,
+        "add_keywords": add_keywords,
+        "add_share_buttons": add_share_buttons,
+        "add_authors": add_authors,
+        "add_json_ld": add_json_ld,
+        "add_css": add_css,
+        "add_copy_llm": add_copy_llm,
+        "verbose": verbose,
+    }
 
     if worker_count == 1:
         for html_file in html_files:

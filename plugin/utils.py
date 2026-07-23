@@ -147,20 +147,17 @@ def resolve_github_user(
 
     # Query the commit API when git history provides a commit for this email. This resolves authors whose commit email
     # is linked to a GitHub account but hidden from user search.
-    if repo_path := _github_repo_path(repo_url):
-        if commit_sha:
-            try:
-                response = requests.get(
-                    f"https://api.github.com/repos/{repo_path}/commits/{commit_sha}", timeout=TIMEOUT
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    author = data.get("author") or {}
-                    if author.get("login") and author.get("avatar_url"):
-                        cache[email] = {"username": author["login"], "avatar": author["avatar_url"]}
-                        return cache[email]
-            except Exception:
-                pass
+    if (repo_path := _github_repo_path(repo_url)) and commit_sha:
+        try:
+            response = requests.get(f"https://api.github.com/repos/{repo_path}/commits/{commit_sha}", timeout=TIMEOUT)
+            if response.status_code == 200:
+                data = response.json()
+                author = data.get("author") or {}
+                if author.get("login") and author.get("avatar_url"):
+                    cache[email] = {"username": author["login"], "avatar": author["avatar_url"]}
+                    return cache[email]
+        except Exception:
+            pass
 
     # Query GitHub REST API
     if verbose:
@@ -238,7 +235,7 @@ def resolve_all_authors(
     # Build authors list for each file entry
     github_repo_url = repo_url or "https://github.com/ultralytics/ultralytics"
 
-    for file_path, entry in git_data.items():
+    for entry in git_data.values():
         emails = entry.get("emails", {})
         if not emails and default_author:
             emails = {default_author: 1}
