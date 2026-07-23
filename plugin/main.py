@@ -8,7 +8,7 @@ from pathlib import Path
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
-import plugin.processor as processor
+from plugin import processor
 from plugin.processor import process_html
 from plugin.utils import resolve_all_authors
 

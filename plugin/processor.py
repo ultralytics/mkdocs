@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from plugin.utils import calculate_time_difference, get_youtube_video_ids
 
-today = datetime.now()
+today = datetime.now(timezone.utc)
 DEFAULT_CREATION_DATE = (today - timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S +0000")
 DEFAULT_MODIFIED_DATE = (today - timedelta(days=40)).strftime("%Y-%m-%d %H:%M:%S +0000")
 
