@@ -77,8 +77,5 @@ ultralytics = "plugin:MetaPlugin"  # executes the function `MetaPlugin` from thi
 [project.optional-dependencies]  # Optional
 dev = ["pytest"]
 
-[tool.setuptools]  # This is configuration specific to the `setuptools` build backend.
-package-data = { "sample" = ["*.yaml"] }
-
 [tool.setuptools.dynamic]
 version = {attr = "plugin.__version__"}
