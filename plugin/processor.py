@@ -529,7 +529,7 @@ def process_html(
                 {
                     "@type": "Organization",
                     "name": "Ultralytics",
-                    "url": "https://ultralytics.com/",
+                    "url": "https://ultralytics.com",
                 }
             ],
             "abstract": meta.get("description", ""),

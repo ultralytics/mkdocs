@@ -88,7 +88,7 @@ def process_html_file(
 
     # Get page URL - calculate relative path from site_dir
     rel_path = html_path.relative_to(site_dir).as_posix()
-    page_url = f"{site_url.rstrip('/')}/{rel_path}".replace("/index.html", "/")
+    page_url = f"{site_url.rstrip('/')}/{rel_path}".replace("/index.html", "")
 
     # Get title
     title = soup.find("h1").text if soup.find("h1") else soup.title.string if soup.title else ""
@@ -181,8 +181,9 @@ def generate_llms_txt(
 
     def md_to_url(md_path: str) -> str:
         """Convert markdown path to HTML URL."""
-        url = md_path.replace(".md", "/").replace("/index/", "/")
-        return f"{site_url}/{url}" if url != "index/" else f"{site_url}/"
+        url = md_path[:-3] if md_path.endswith(".md") else md_path
+        url = url[:-6] if url.endswith("/index") else url
+        return site_url if url == "index" else f"{site_url}/{url}"
 
     if nav:
 

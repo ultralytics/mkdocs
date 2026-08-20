@@ -67,7 +67,8 @@ class MetaPlugin(BasePlugin):
             )
 
         try:
-            page_url = (config["site_url"] or "") + page.url.rstrip("/")
+            # MkDocs normalizes site_url to end in "/" and gives the home page url "./"
+            page_url = f"{(config['site_url'] or '').rstrip('/')}/{page.url}".rstrip("/.")
             title = page.title
             keywords = page.meta.get("keywords", None) if hasattr(page, "meta") else None
 

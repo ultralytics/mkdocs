@@ -9,7 +9,7 @@ contact_links:
     url: https://pypi.org/project/mkdocs-ultralytics-plugin/
     about: Check the latest release, installation instructions, and metadata.
   - name: 💬 Ultralytics Community Forum
-    url: https://community.ultralytics.com/
+    url: https://community.ultralytics.com
     about: Ask broader Ultralytics documentation and SEO questions.
   - name: 🎧 Ultralytics Discord
     url: https://discord.com/invite/ultralytics
