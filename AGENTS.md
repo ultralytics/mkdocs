@@ -44,7 +44,7 @@ uv pip install build && python -m build
 ```
 
 - There is no test suite and no test/coverage CI: `pytest` is declared in the `dev` extra of pyproject.toml, but the repo contains no tests.
-- No CI version matrix; `requires-python >=3.8` is the floor declared in pyproject.toml, and package classifiers cover Python 3.8–3.14.
+- No CI version matrix; `requires-python >=3.8` is the floor declared in pyproject.toml, and package classifiers cover Python 3.8–3.15.
 
 ## Architecture
 
